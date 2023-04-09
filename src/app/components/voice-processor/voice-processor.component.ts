@@ -1,11 +1,14 @@
-import {Component, Input} from '@angular/core';
-import {AzureCognitiveService, AzureCognitiveState} from '../../states/azure-cognitive.service';
-import {SpeakerService} from '../../states/speaker.service';
+import { Component, Input } from '@angular/core';
+import {
+  AzureCognitiveService,
+  AzureCognitiveState,
+} from '../../states/azure-cognitive.service';
+import { SpeakerService } from '../../states/speaker.service';
 
 @Component({
   selector: 'app-voice-processor',
   templateUrl: './voice-processor.component.html',
-  styleUrls: ['./voice-processor.component.scss']
+  styleUrls: ['./voice-processor.component.scss'],
 })
 export class VoiceProcessorComponent {
   @Input()
@@ -14,9 +17,7 @@ export class VoiceProcessorComponent {
   @Input()
   source!: string;
 
-  constructor(private speaker: SpeakerService) {
-
-  }
+  constructor(private speaker: SpeakerService) {}
 
   play() {
     if (!this.value) {

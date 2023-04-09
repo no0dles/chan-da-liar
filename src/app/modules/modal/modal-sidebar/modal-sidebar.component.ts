@@ -1,11 +1,13 @@
 import {
   AfterViewInit,
-  Component, ElementRef,
+  Component,
+  ElementRef,
   HostListener,
   Type,
-  ViewChild, ViewContainerRef
-} from "@angular/core";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
+  ViewChild,
+  ViewContainerRef,
+} from '@angular/core';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ModalHandle, SidebarOrigin } from '../modal.service';
 
 @Component({
@@ -21,7 +23,7 @@ export class ModalSidebarComponent implements AfterViewInit {
 
   component!: Type<any>;
   componentProps!: any;
-  canDismiss!: boolean
+  canDismiss!: boolean;
   origin!: SidebarOrigin;
   modal!: ModalHandle<any>;
   closeIcon = faTimes;
@@ -42,11 +44,10 @@ export class ModalSidebarComponent implements AfterViewInit {
     }
 
     if (this.container.nativeElement.contains(evt.target as Node)) {
-      return
+      return;
     }
     this.modal.dismiss(null);
   }
-
 
   ngAfterViewInit(): void {
     Promise.resolve(null).then(() => {

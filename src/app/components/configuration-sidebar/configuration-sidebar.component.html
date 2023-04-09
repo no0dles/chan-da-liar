@@ -1,8 +1,11 @@
 <ng-container *ngIf="state$ | async as state">
   <div class="flex flex-col flex-grow min-h-0 space-y-3">
-    <app-configuration-item [heading]="configuration.heading" [description]="configuration.description"
-                            *ngFor="let configuration of configurations"
-                            [component]="configuration.component" [state]="configuration.state"></app-configuration-item>
+    <app-configuration-item
+      [heading]="configuration.heading"
+      [description]="configuration.description"
+      *ngFor="let configuration of configurations"
+      [component]="configuration.component"
+      [state]="configuration.state"></app-configuration-item>
   </div>
 
   <app-button [disabled]="!state.ready" (click)="dismiss()">Start</app-button>

@@ -1,18 +1,17 @@
 import { Component, HostListener, Input, OnInit } from '@angular/core';
 import { ModalHandle, ModalInstance } from '../modal.service';
-import {faQuestionCircle} from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'common-modal-confirm',
   templateUrl: './modal-confirm.component.html',
-  styleUrls: ['./modal-confirm.component.scss']
+  styleUrls: ['./modal-confirm.component.scss'],
 })
 export class ModalConfirmComponent implements ModalInstance<boolean> {
-
   questionIcon = faQuestionCircle;
 
   @Input()
-  title!: string
+  title!: string;
 
   @Input()
   subtitle?: string;
@@ -26,5 +25,4 @@ export class ModalConfirmComponent implements ModalInstance<boolean> {
   preventBubbleUp(evt: MouseEvent) {
     evt.stopPropagation();
   }
-
 }

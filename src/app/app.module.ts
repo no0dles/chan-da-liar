@@ -16,11 +16,11 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { BoxContainerComponent } from './components/box-container/box-container.component';
 import { ExplainationComponent } from './components/explaination/explaination.component';
 import { OutputQueueItemComponent } from './components/output-queue-item/output-queue-item.component';
-import {ModalModule} from './modules/modal/modal.module';
+import { ModalModule } from './modules/modal/modal.module';
 import { InputComponent } from './components/input/input.component';
 import { TextareaComponent } from './components/textarea/textarea.component';
 import { SubheaderComponent } from './components/subheader/subheader.component';
-import {FormsModule} from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { ConfigurationOpenaiSidebarComponent } from './components/configuration-openai-sidebar/configuration-openai-sidebar.component';
 import { ConfigurationAzureCognitiveSidebarComponent } from './components/configuration-azure-cognitive-sidebar/configuration-azure-cognitive-sidebar.component';
 import { ConfigurationDeviceSidebarComponent } from './components/configuration-device-sidebar/configuration-device-sidebar.component';
@@ -49,7 +49,7 @@ import { ConfigurationItemComponent } from './components/configuration-item/conf
     ConfigurationOpenaiSidebarComponent,
     ConfigurationAzureCognitiveSidebarComponent,
     ConfigurationDeviceSidebarComponent,
-    ConfigurationItemComponent
+    ConfigurationItemComponent,
   ],
   imports: [
     BrowserModule,
@@ -58,6 +58,6 @@ import { ConfigurationItemComponent } from './components/configuration-item/conf
     FormsModule,
   ],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

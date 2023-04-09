@@ -1,24 +1,34 @@
-import {AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {faMicrophone} from '@fortawesome/free-solid-svg-icons';
-import {MicrophoneState} from '../../states/device.service';
-import {AzureCognitiveService, AzureCognitiveState} from '../../states/azure-cognitive.service';
-import {SpeechRecognizer} from 'microsoft-cognitiveservices-speech-sdk';
+import {
+  AfterViewInit,
+  Component,
+  Input,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
+import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
+import { MicrophoneState } from '../../states/device.service';
+import {
+  AzureCognitiveService,
+  AzureCognitiveState,
+} from '../../states/azure-cognitive.service';
+import { SpeechRecognizer } from 'microsoft-cognitiveservices-speech-sdk';
 import {
   Recognizer,
   SpeechRecognitionEventArgs,
 } from 'microsoft-cognitiveservices-speech-sdk/distrib/lib/src/sdk/Exports';
-import {TranscriptComponent} from '../transcript/transcript.component';
-import {OpenAiService} from '../../states/open-ai.service';
-import {ToggleComponent} from '../toggle/toggle.component';
-import {ConfigService} from '../../config.service';
-import {firstValueFrom, Subscription} from 'rxjs';
-import {OpenAiChatPreviewComponent} from '../chat-gpt-preview/open-ai-chat-preview.component';
-import {SpeakerService} from '../../states/speaker.service';
+import { TranscriptComponent } from '../transcript/transcript.component';
+import { OpenAiService } from '../../states/open-ai.service';
+import { ToggleComponent } from '../toggle/toggle.component';
+import { ConfigService } from '../../config.service';
+import { firstValueFrom, Subscription } from 'rxjs';
+import { OpenAiChatPreviewComponent } from '../chat-gpt-preview/open-ai-chat-preview.component';
+import { SpeakerService } from '../../states/speaker.service';
 
 @Component({
   selector: 'app-microphone-lane',
   templateUrl: './microphone-lane.component.html',
-  styleUrls: ['./microphone-lane.component.scss']
+  styleUrls: ['./microphone-lane.component.scss'],
 })
 export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   private recognizer?: SpeechRecognizer;
@@ -27,78 +37,85 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   microphoneIcon = faMicrophone;
 
   @Input()
-  microphone!: MicrophoneState
+  microphone!: MicrophoneState;
 
   @ViewChild('processToggle')
-  processToggle?: ToggleComponent
+  processToggle?: ToggleComponent;
 
   @ViewChild('enabledToggle')
-  enabledToggle?: ToggleComponent
+  enabledToggle?: ToggleComponent;
 
   @ViewChild('transcript')
-  transcript?: TranscriptComponent
+  transcript?: TranscriptComponent;
 
   @ViewChild(OpenAiChatPreviewComponent)
   openAiChatPreview?: OpenAiChatPreviewComponent;
 
   enabledMic = false;
   automaticMode = false;
-  speakValue = ''
+  speakValue = '';
 
-  constructor(private azureCognitive: AzureCognitiveService,
-              private config: ConfigService,
-              private speaker: SpeakerService,
-              private openAI: OpenAiService) {
-  }
+  constructor(
+    private azureCognitive: AzureCognitiveService,
+    private config: ConfigService,
+    private speaker: SpeakerService,
+    private openAI: OpenAiService,
+  ) {}
 
   ngOnInit() {
-    const enabled = this.config.get<boolean>(this.getEnabledKey())
+    const enabled = this.config.get<boolean>(this.getEnabledKey());
     if (enabled !== null) {
       this.enabledMic = enabled;
       if (enabled) {
-        this.startListening()
+        this.startListening();
       }
     }
-    const mode = this.config.get<boolean>(this.getModeKey())
+    const mode = this.config.get<boolean>(this.getModeKey());
     if (mode !== null) {
       this.automaticMode = mode;
     }
   }
 
   toggleMode(enabled: boolean) {
-    this.config.save(this.getModeKey(), enabled)
+    this.config.save(this.getModeKey(), enabled);
     this.automaticMode = enabled;
   }
 
   toggleMicrophone(enabled: boolean) {
     if (enabled) {
-      this.startListening()
+      this.startListening();
     } else if (this.recognizer) {
-      this.recognizer.stopContinuousRecognitionAsync()
-      this.recognizer.close()
+      this.recognizer.stopContinuousRecognitionAsync();
+      this.recognizer.close();
     }
 
-    this.config.save(this.getEnabledKey(), enabled)
+    this.config.save(this.getEnabledKey(), enabled);
   }
 
   private async startListening() {
-    const state = await firstValueFrom(this.azureCognitive.state$)
+    const state = await firstValueFrom(this.azureCognitive.state$);
     if (!state.speechConfig) {
       return;
     }
 
-    const recognizer = this.azureCognitive.listen(state.speechConfig, this.microphone.deviceId);
-    recognizer.recognized = (sender: Recognizer, event: SpeechRecognitionEventArgs) => {
+    const recognizer = this.azureCognitive.listen(
+      state.speechConfig,
+      this.microphone.deviceId,
+    );
+    recognizer.recognized = (
+      sender: Recognizer,
+      event: SpeechRecognitionEventArgs,
+    ) => {
       if (!event.result.text || !this.transcript) {
-        return
+        return;
       }
 
       this.transcript.value += `${event.result.text}\n`;
 
       if (this.automaticMode) {
-        this.processOpenAI()
+        this.processOpenAI();
       }
-    }
+    };
     this.recognizer = recognizer;
   }
 
@@ -111,7 +128,7 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
 
   transcriptChanged(script: string) {
     if (this.microphone.mode === 'OpenAI') {
-      this.processOpenAI()
+      this.processOpenAI();
     } else {
       this.speakValue = script;
     }
@@ -120,14 +137,14 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   async processOpenAI() {
     const value = this.transcript?.value;
     if (!value) {
-      return
+      return;
     }
 
     if (!this.openAiChatPreview) {
-      return
+      return;
     }
 
-    const result = await this.openAI.push(this.microphone.name, value)
+    const result = await this.openAI.push(this.microphone.name, value);
     if (!result) {
       return;
     }

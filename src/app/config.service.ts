@@ -1,11 +1,11 @@
-import {Injectable} from '@angular/core';
-import {BehaviorSubject, Observable} from 'rxjs';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ConfigService {
-  private subjects: { [key:string]: BehaviorSubject<any> } = {};
+  private subjects: { [key: string]: BehaviorSubject<any> } = {};
 
   get<T>(key: string): T | null {
     const value = localStorage.getItem(key);
@@ -28,7 +28,7 @@ export class ConfigService {
 
   save(key: string, value: unknown) {
     localStorage.setItem(key, JSON.stringify(value));
-    if(this.subjects[key]) {
+    if (this.subjects[key]) {
       this.subjects[key].next(value);
     }
   }

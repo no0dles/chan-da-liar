@@ -1,17 +1,21 @@
-import {Component, Input, OnInit, Type, ViewContainerRef} from '@angular/core';
-import {ModalInstance, ModalService} from '../../modules/modal/modal.service';
 import {
-  ConfigurationOpenaiSidebarComponent,
-} from '../configuration-openai-sidebar/configuration-openai-sidebar.component';
-import {faCaretRight} from '@fortawesome/free-solid-svg-icons';
-import {map, Observable} from 'rxjs';
+  Component,
+  Input,
+  OnInit,
+  Type,
+  ViewContainerRef,
+} from '@angular/core';
+import { ModalInstance, ModalService } from '../../modules/modal/modal.service';
+import { ConfigurationOpenaiSidebarComponent } from '../configuration-openai-sidebar/configuration-openai-sidebar.component';
+import { faCaretRight } from '@fortawesome/free-solid-svg-icons';
+import { map, Observable } from 'rxjs';
 
 export interface ReadyState {
-  ready: boolean
+  ready: boolean;
 }
 
 export interface ReadyStateService {
-  state$: Observable<ReadyState>
+  state$: Observable<ReadyState>;
 }
 
 @Component({
@@ -34,18 +38,20 @@ export class ConfigurationItemComponent implements OnInit {
   @Input()
   state!: ReadyStateService;
 
-  readyStatus$!: Observable<{ ready: boolean, label: string }>
+  readyStatus$!: Observable<{ ready: boolean; label: string }>;
 
   constructor(
     private viewContainerRef: ViewContainerRef,
-    private modal: ModalService) {
-  }
+    private modal: ModalService,
+  ) {}
 
   ngOnInit() {
-    this.readyStatus$ = this.state.state$.pipe(map(state => ({
-      label: state.ready ? 'Ready' : 'Requires setup',
-      ready: state.ready,
-    })))
+    this.readyStatus$ = this.state.state$.pipe(
+      map((state) => ({
+        label: state.ready ? 'Ready' : 'Requires setup',
+        ready: state.ready,
+      })),
+    );
   }
 
   openSidebar() {
@@ -55,5 +61,4 @@ export class ConfigurationItemComponent implements OnInit {
       subtitle: this.description,
     });
   }
-
 }

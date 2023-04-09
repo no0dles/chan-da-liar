@@ -1,14 +1,14 @@
-import {Component, Input} from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-textarea',
   templateUrl: './textarea.component.html',
-  styleUrls: ['./textarea.component.scss']
+  styleUrls: ['./textarea.component.scss'],
 })
 export class TextareaComponent {
   @Input()
-  heading!: string
+  heading!: string;
 
   @Input()
-  placeholder?: string
+  placeholder?: string;
 }

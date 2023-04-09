@@ -1,9 +1,9 @@
-import {Component, Input} from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-button',
   templateUrl: './button.component.html',
-  styleUrls: ['./button.component.scss']
+  styleUrls: ['./button.component.scss'],
 })
 export class ButtonComponent {
   @Input()

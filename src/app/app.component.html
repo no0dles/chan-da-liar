@@ -1,16 +1,23 @@
 <ng-container *ngIf="state$ | async as state">
   <div class="flex flex-col flex-grow min-w-0">
     <div class="flex flex-grow min-h-0">
-      <app-microphone-lane *ngFor="let mic of state.microphones" [microphone]="mic"
-                           class="ml-3 my-3"></app-microphone-lane>
+      <app-microphone-lane
+        *ngFor="let mic of state.microphones"
+        [microphone]="mic"
+        class="ml-3 my-3"></app-microphone-lane>
     </div>
-    <app-output-queue class="flex-shrink-0 mb-3 ml-3" *ngIf="state.output" [output]="state.output"></app-output-queue>
+    <app-output-queue
+      class="flex-shrink-0 mb-3 ml-3"
+      *ngIf="state.output"
+      [output]="state.output"></app-output-queue>
   </div>
 
   <div class="flex flex-col m-3 space-y-3">
-    <app-prerecoding-lane class="flex-grow min-h-0 "></app-prerecoding-lane>
+    <app-prerecoding-lane class="flex-grow min-h-0"></app-prerecoding-lane>
     <app-box-container class="flex justify-between">
-      <app-explaination [heading]="'Configurations'" [description]="'Credentials and Settings'"></app-explaination>
+      <app-explaination
+        [heading]="'Configurations'"
+        [description]="'Credentials and Settings'"></app-explaination>
       <app-button (click)="openConfigurations(true)">Edit</app-button>
     </app-box-container>
   </div>
