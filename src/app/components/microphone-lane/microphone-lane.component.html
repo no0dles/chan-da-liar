@@ -3,31 +3,52 @@
 </app-header>
 
 <app-box-container class="flex space-x-3">
-  <app-toggle #enabledToggle [enabled]="enabledMic" (enabledChanged)="toggleMicrophone($event)">
+  <app-toggle
+    #enabledToggle
+    [enabled]="enabledMic"
+    (enabledChanged)="toggleMicrophone($event)">
   </app-toggle>
-  <app-explaination *ngIf="enabledToggle.enabled" [heading]="'Enabled'" [description]="'Audio is processed to text'"></app-explaination>
-  <app-explaination *ngIf="!enabledToggle.enabled" [heading]="'Disabled'" [description]="'Microphone is turned off'"></app-explaination>
+  <app-explaination
+    *ngIf="enabledToggle.enabled"
+    [heading]="'Enabled'"
+    [description]="'Audio is processed to text'"></app-explaination>
+  <app-explaination
+    *ngIf="!enabledToggle.enabled"
+    [heading]="'Disabled'"
+    [description]="'Microphone is turned off'"></app-explaination>
 </app-box-container>
 
-
-<app-transcript #transcript class="flex-grow min-h-0" (valueChange)="transcriptChanged($event)"></app-transcript>
+<app-transcript
+  #transcript
+  class="flex-grow min-h-0"
+  (valueChange)="transcriptChanged($event)"></app-transcript>
 
 <ng-container *ngIf="microphone.mode === 'OpenAI'">
-
   <app-box-container class="flex space-x-3">
-    <app-toggle #processToggle [enabled]="automaticMode" (enabledChanged)="toggleMode($event)"></app-toggle>
+    <app-toggle
+      #processToggle
+      [enabled]="automaticMode"
+      (enabledChanged)="toggleMode($event)"></app-toggle>
 
     <div *ngIf="processToggle.enabled">
-      <app-explaination [heading]="'Auto mode'" [description]="'Process text as soon as possible'"></app-explaination>
+      <app-explaination
+        [heading]="'Auto mode'"
+        [description]="'Process text as soon as possible'"></app-explaination>
     </div>
-    <div *ngIf="!processToggle.enabled" class="flex justify-between items-center w-full">
-      <app-explaination [heading]="'Manual mode'" [description]="'Process text on button press'"></app-explaination>
+    <div
+      *ngIf="!processToggle.enabled"
+      class="flex justify-between items-center w-full">
+      <app-explaination
+        [heading]="'Manual mode'"
+        [description]="'Process text on button press'"></app-explaination>
       <app-button (click)="processOpenAI()">Process</app-button>
     </div>
   </app-box-container>
 
-
-  <app-open-ai-chat-preview class="flex-grow min-h-0"></app-open-ai-chat-preview>
+  <app-open-ai-chat-preview
+    class="flex-grow min-h-0"></app-open-ai-chat-preview>
 </ng-container>
 
-<app-voice-processor [value]="speakValue" [source]="microphone.name"></app-voice-processor>
+<app-voice-processor
+  [value]="speakValue"
+  [source]="microphone.name"></app-voice-processor>

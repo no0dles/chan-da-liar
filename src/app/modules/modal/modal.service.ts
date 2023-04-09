@@ -11,7 +11,7 @@ import { ModalConfirmComponent } from './modal-confirm/modal-confirm.component';
 export type OmitByValue<T, ValueType> = Pick<
   T,
   { [Key in keyof T]-?: T[Key] extends ValueType ? never : Key }[keyof T]
-  >;
+>;
 
 export interface ModalInstance<T> {
   modal: ModalHandle<T>;
@@ -26,21 +26,30 @@ export interface ModalHandle<T> {
 
 @Injectable()
 export class ModalService {
-  private modalHandles: { resolver: () => void, handle: ModalHandle<any> }[] = [];
+  private modalHandles: { resolver: () => void; handle: ModalHandle<any> }[] =
+    [];
 
   constructor() {
-    document.addEventListener('keydown', (evt) => {
-      if (evt.key === 'Escape') {
-        const handle = this.modalHandles.pop();
-        if (handle) {
-          handle.handle.dismiss(null);
-          evt.stopPropagation()
+    document.addEventListener(
+      'keydown',
+      (evt) => {
+        if (evt.key === 'Escape') {
+          const handle = this.modalHandles.pop();
+          if (handle) {
+            handle.handle.dismiss(null);
+            evt.stopPropagation();
+          }
         }
-      }
-    }, {capture: false});
+      },
+      { capture: false },
+    );
   }
 
-  private createHandle<T>(viewContainerRef: ViewContainerRef, componentRef: ComponentRef<any>, resolve: (value: T) => void): ModalHandle<T> {
+  private createHandle<T>(
+    viewContainerRef: ViewContainerRef,
+    componentRef: ComponentRef<any>,
+    resolve: (value: T) => void,
+  ): ModalHandle<T> {
     const handle: ModalHandle<T> = {
       viewContainerRef: viewContainerRef,
       dismiss: (res: T) => {
@@ -55,24 +64,32 @@ export class ModalService {
   }
 
   private removeHandle(handle: ModalHandle<any>) {
-    const item = this.modalHandles.find(h => h.handle === handle);
+    const item = this.modalHandles.find((h) => h.handle === handle);
     if (item) {
       this.modalHandles.splice(this.modalHandles.indexOf(item), 1);
     }
   }
 
-  async confirm(viewContainerRef: ViewContainerRef, options: {
-    title: string;
-    subtitle?: string;
-  }): Promise<boolean> {
+  async confirm(
+    viewContainerRef: ViewContainerRef,
+    options: {
+      title: string;
+      subtitle?: string;
+    },
+  ): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
-      const componentRef = viewContainerRef.createComponent(ModalConfirmComponent);
+      const componentRef = viewContainerRef.createComponent(
+        ModalConfirmComponent,
+      );
 
       componentRef.instance.title = options.title;
       componentRef.instance.subtitle = options.subtitle;
 
-      const handle = this.createHandle(viewContainerRef,componentRef, resolve);
-      this.modalHandles.push({resolver: () => resolve(false), handle: handle});
+      const handle = this.createHandle(viewContainerRef, componentRef, resolve);
+      this.modalHandles.push({
+        resolver: () => resolve(false),
+        handle: handle,
+      });
       componentRef.instance.modal = handle;
     });
   }
@@ -85,13 +102,15 @@ export class ModalService {
       hideClose?: boolean;
       subtitle?: string;
       props?: Partial<OmitByValue<T, ModalInstance<any>>>;
-      component: Type<T>,
-      origin?: SidebarOrigin,
-      canDismiss?: boolean
+      component: Type<T>;
+      origin?: SidebarOrigin;
+      canDismiss?: boolean;
     },
   ): Promise<R | null> {
     return new Promise<R | null>((resolve) => {
-      const componentRef = viewContainerRef.createComponent(ModalSidebarComponent);
+      const componentRef = viewContainerRef.createComponent(
+        ModalSidebarComponent,
+      );
       componentRef.instance.title = options.title;
       componentRef.instance.subtitle = options.subtitle;
       componentRef.instance.subtitle = options.subtitle;
@@ -116,7 +135,7 @@ export class ModalService {
       hideClose?: boolean;
       subtitle?: string;
       props?: Partial<OmitByValue<T, ModalInstance<any>>>;
-      component: Type<T>,
+      component: Type<T>;
     },
   ): Promise<R | null> {
     return new Promise<R | null>((resolve) => {
@@ -130,7 +149,7 @@ export class ModalService {
       componentRef.instance.classNames = options.classNames ?? [];
       componentRef.instance.componentProps = options.props;
 
-      const handle = this.createHandle(viewContainerRef,componentRef, resolve);
+      const handle = this.createHandle(viewContainerRef, componentRef, resolve);
       this.modalHandles.push({ handle, resolver: () => resolve(null) });
       componentRef.instance.modal = handle;
     });

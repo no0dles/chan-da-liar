@@ -1,32 +1,38 @@
 import { Injectable } from '@angular/core';
-import {Configuration, Model, OpenAIApi} from 'openai';
-import {ConfigService} from '../config.service';
-import {combineLatest, firstValueFrom, mergeMap, share, shareReplay} from 'rxjs';
-import {fromPromise} from 'rxjs/internal/observable/innerFrom';
-import {Cache} from '../utils/cache';
-import {ChatCompletionRequestMessage} from 'openai/api';
+import { Configuration, Model, OpenAIApi } from 'openai';
+import { ConfigService } from '../config.service';
+import {
+  combineLatest,
+  firstValueFrom,
+  mergeMap,
+  share,
+  shareReplay,
+} from 'rxjs';
+import { fromPromise } from 'rxjs/internal/observable/innerFrom';
+import { Cache } from '../utils/cache';
+import { ChatCompletionRequestMessage } from 'openai/api';
 
 export interface OpenAISettings {
-  apiKey: string
+  apiKey: string;
 }
 
 export interface OpenAIState {
-  settings: OpenAISettings | null
+  settings: OpenAISettings | null;
 
-  rolePlayScript: string | null
-  openai: OpenAIApi | null
-  models: Model[]
-  selectedModel: Model | null
+  rolePlayScript: string | null;
+  openai: OpenAIApi | null;
+  models: Model[];
+  selectedModel: Model | null;
   ready: boolean;
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class OpenAiService {
-  private configApiKey = 'openai-api'
-  private configRolePlayKey = 'openai-roleplay'
-  private configModelKey = 'openai-model'
+  private configApiKey = 'openai-api';
+  private configRolePlayKey = 'openai-roleplay';
+  private configModelKey = 'openai-model';
 
   private modalCache = new Cache<Model[]>();
   private apiCache = new Cache<OpenAIApi>();
@@ -38,26 +44,32 @@ export class OpenAiService {
     this.config.watch<string>(this.configRolePlayKey),
     this.config.watch<string>(this.configModelKey),
   ]).pipe(
-    mergeMap(([api, rolePlay, model]) => fromPromise(this.mapState(api, rolePlay, model))),
+    mergeMap(([api, rolePlay, model]) =>
+      fromPromise(this.mapState(api, rolePlay, model)),
+    ),
     shareReplay(),
-  )
+  );
 
-  constructor(private config: ConfigService) { }
+  constructor(private config: ConfigService) {}
 
   async push(deviceName: string, text: string) {
-    this.conversation.push({content: `${deviceName}: ${text}`, name: deviceName, role: 'user'});
+    this.conversation.push({
+      content: `${deviceName}: ${text}`,
+      name: deviceName,
+      role: 'user',
+    });
     return await this.prompt();
   }
 
   async prompt() {
-    const state = await firstValueFrom(this.state$)
+    const state = await firstValueFrom(this.state$);
     if (!state.openai || !state.selectedModel) {
-      return
+      return;
     }
     const result = await state.openai.createChatCompletion({
       messages: this.conversation,
       model: state.selectedModel.id,
-    })
+    });
     const responseMessage = result.data.choices[0].message;
     if (!responseMessage) {
       return;
@@ -66,27 +78,30 @@ export class OpenAiService {
     this.conversation.push({
       content: responseMessage.content,
       role: responseMessage.role,
-      name: 'ChanDaLiar'
-    })
+      name: 'ChanDaLiar',
+    });
 
     return responseMessage.content;
   }
 
   async getModels(openai: OpenAIApi) {
     const result = await openai.listModels();
-    return result.data.data
-      .filter(d => d.owned_by === 'openai');
+    return result.data.data.filter((d) => d.owned_by === 'openai');
   }
 
   setKey(key: string) {
     this.config.save(this.configApiKey, key);
   }
 
-  setModel(model: string){
+  setModel(model: string) {
     this.config.save(this.configModelKey, model);
   }
 
-  async mapState(key: string | null, rolePlay: string | null, selectedModel: string | null): Promise<OpenAIState> {
+  async mapState(
+    key: string | null,
+    rolePlay: string | null,
+    selectedModel: string | null,
+  ): Promise<OpenAIState> {
     if (!key) {
       return {
         ready: false,
@@ -95,7 +110,7 @@ export class OpenAiService {
         rolePlayScript: null,
         settings: null,
         openai: null,
-      }
+      };
     }
 
     const openai = await this.apiCache.getOrCreate(key, () => {
@@ -103,17 +118,19 @@ export class OpenAiService {
         apiKey: key,
       });
       return new OpenAIApi(configuration);
-    })
+    });
 
-    const models = await this.modalCache.getOrCreate(key, () => this.getModels(openai))
-    const model = models.find(m => m.id === selectedModel) ?? null;
+    const models = await this.modalCache.getOrCreate(key, () =>
+      this.getModels(openai),
+    );
+    const model = models.find((m) => m.id === selectedModel) ?? null;
     return {
       ready: model !== null,
       selectedModel: model,
-      settings: {apiKey: key},
+      settings: { apiKey: key },
       rolePlayScript: rolePlay,
       openai,
       models,
-    }
+    };
   }
 }

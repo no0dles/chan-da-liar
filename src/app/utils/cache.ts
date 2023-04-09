@@ -1,5 +1,5 @@
 export class Cache<T> {
-  private cache: {[key:string]: T} = {}
+  private cache: { [key: string]: T } = {};
 
   async getOrCreate(key: string, factory: () => T | Promise<T>): Promise<T> {
     if (!this.cache[key]) {

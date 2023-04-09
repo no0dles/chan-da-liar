@@ -1,4 +1,11 @@
-<app-transcript #transcript class="flex-grow min-h-0" [value]="content"></app-transcript>
-<app-voice-processor [value]="transcript.value" [source]="'Prerecording'"></app-voice-processor>
+<app-transcript
+  #transcript
+  class="flex-grow min-h-0"
+  [value]="content"></app-transcript>
+<app-voice-processor
+  [value]="transcript.value"
+  [source]="'Prerecording'"></app-voice-processor>
 
-<app-button class="w-full" (click)="create()">{{editMode?'Edit':'Create'}}</app-button>
+<app-button class="w-full" (click)="create()">{{
+  editMode ? 'Edit' : 'Create'
+}}</app-button>
