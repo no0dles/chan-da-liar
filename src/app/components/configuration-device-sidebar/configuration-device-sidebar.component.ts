@@ -17,6 +17,15 @@ export class ConfigurationDeviceSidebarComponent {
 
   constructor(private device: DeviceService) {}
 
+  async requestPermission() {
+    try {
+      await navigator.mediaDevices.getUserMedia({audio: true})
+      this.device.setPermission();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   identify(index: number, item: MicrophoneState) {
     return item.deviceId;
   }

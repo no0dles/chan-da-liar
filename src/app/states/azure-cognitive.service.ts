@@ -10,7 +10,7 @@ import {
   VoiceInfo,
   SpeakerAudioDestination,
 } from 'microsoft-cognitiveservices-speech-sdk';
-import { combineLatest, mergeMap, shareReplay } from 'rxjs';
+import {catchError, combineLatest, mergeMap, shareReplay} from 'rxjs';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 import { Cache } from '../utils/cache';
 import {
@@ -32,6 +32,7 @@ export interface AzureCognitiveState {
   selectedLocale: string | null;
   selectedVoice: VoiceInfo | null;
   ready: boolean;
+  error: string | null
 }
 
 @Injectable({
@@ -92,13 +93,19 @@ export class AzureCognitiveService {
         ready: false,
         selectedLocale: null,
         selectedVoice: null,
+        error: null,
       };
     }
 
     const cacheKey = `${apiKey}-${region}`;
     const api: AzureCognitiveSettings = { apiKey, region };
+    let error = ''
     const voices = await this.voiceCache.getOrCreate(cacheKey, () =>
-      this.getVoices(api),
+      this.getVoices(api).catch(err => {
+        error = 'Failed to load voices'
+        console.error(err);
+        return [];
+      }),
     );
 
     const locales = voices.reduce<string[]>((locales, voice) => {
@@ -141,6 +148,7 @@ export class AzureCognitiveService {
       ready: !!selectedVoice && !!selectedLocale,
       settings: api,
       speechConfig,
+      error,
     };
   }
 
@@ -152,7 +160,10 @@ export class AzureCognitiveService {
     const synthAudio = AudioConfig.fromDefaultSpeakerOutput();
     const synth = new SpeechSynthesizer(speech, synthAudio);
     const result = await synth.getVoicesAsync();
-    return result.voices;
+    if (result.errorDetails) {
+      throw new Error(result.errorDetails)
+    }
+    return result.voices ?? [];
   }
 
   async speak(

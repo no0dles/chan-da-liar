@@ -16,10 +16,10 @@ import { ConfigurationDeviceSidebarComponent } from '../configuration-device-sid
 export class ConfigurationSidebarComponent implements ModalInstance<void> {
   configurations = [
     {
-      heading: 'Open AI',
-      description: 'Configure API Keys and Models',
-      component: ConfigurationOpenaiSidebarComponent,
-      state: this.openAI,
+      heading: 'Devices',
+      description: 'Configure Microphones and a Output Speaker',
+      component: ConfigurationDeviceSidebarComponent,
+      state: this.device,
     },
     {
       heading: 'Azure Cognitive',
@@ -28,10 +28,10 @@ export class ConfigurationSidebarComponent implements ModalInstance<void> {
       state: this.azureCognitive,
     },
     {
-      heading: 'Devices',
-      description: 'Configure Microphones and a Output Speaker',
-      component: ConfigurationDeviceSidebarComponent,
-      state: this.device,
+      heading: 'Open AI',
+      description: 'Configure API Keys and Models',
+      component: ConfigurationOpenaiSidebarComponent,
+      state: this.openAI,
     },
   ];
 

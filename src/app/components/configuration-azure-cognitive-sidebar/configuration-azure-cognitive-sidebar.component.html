@@ -49,6 +49,10 @@
     <app-button (click)="play(state, transcript.value)">Play</app-button>
   </div>
 
+  <div *ngIf="state.error" class="bg-orange-100 border rounded-md border-orange-700 text-orange-700 px-3 py-2">
+    {{state.error}}
+  </div>
+
   <app-button [disabled]="!state.ready" (click)="modal.dismiss()"
     >Save</app-button
   >

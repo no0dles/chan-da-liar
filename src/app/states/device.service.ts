@@ -2,8 +2,10 @@ import { Injectable } from '@angular/core';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 import { ConfigService } from '../config.service';
 import { combineLatest, map, mergeMap, shareReplay } from 'rxjs';
+import {Cache} from '../utils/cache';
 
 export interface DeviceState {
+  hasPermission: boolean
   outputs: MediaDeviceInfo[];
   inputs: MediaDeviceInfo[];
 
@@ -28,23 +30,28 @@ export type MicrophoneMode = 'OpenAI' | 'Regie';
 export class DeviceService {
   private outputKey = 'device-output-speaker';
   private microphoneKey = 'device-input-microphones';
+  private mediaPermissionKey = 'media-permission';
 
-  outputs$ = fromPromise(this.getOutputDevices());
-  inputs$ = fromPromise(this.getInputDevices());
+  private mediaCache = new Cache<MediaDeviceInfo[]>()
 
   state$ = combineLatest([
-    this.inputs$,
-    this.outputs$,
+    this.config.watch<boolean>(this.mediaPermissionKey),
     this.config.watch<string>(this.outputKey),
     this.config.watch<MicrophoneState[]>(this.microphoneKey),
   ]).pipe(
-    map(([inputs, outputs, outputId, microphones]) =>
-      this.mapState(inputs, outputs, outputId, microphones),
+    mergeMap(([permissions, outputId, microphones]) =>
+      this.mapState(permissions, outputId, microphones),
     ),
     shareReplay(),
   );
 
-  constructor(private config: ConfigService) {}
+  constructor(private config: ConfigService) {
+
+  }
+
+  setPermission() {
+    this.config.save(this.mediaPermissionKey, true)
+  }
 
   async getInputDevices() {
     const devices = await navigator.mediaDevices.enumerateDevices();
@@ -103,12 +110,25 @@ export class DeviceService {
     this.config.save(this.microphoneKey, mics);
   }
 
-  private mapState(
-    inputs: MediaDeviceInfo[],
-    outputs: MediaDeviceInfo[],
+  private async mapState(
+    permission: boolean | null,
     outputId: string | null,
     microphoneStates: MicrophoneState[] | null,
-  ): DeviceState {
+  ): Promise<DeviceState> {
+    if (!permission) {
+      return {
+        inputs: [],
+        outputs: [],
+        hasPermission: false,
+        microphones: [],
+        selectedOutput: null,
+        ready: false,
+      }
+    }
+
+    const inputs = await this.mediaCache.getOrCreate('inputs', () => this.getInputDevices())
+    const outputs = await this.mediaCache.getOrCreate('outputs', () => this.getOutputDevices())
+
     const selectedOutput = outputs.find((o) => o.deviceId === outputId) ?? null;
 
     const states: MicrophoneState[] = [];
@@ -130,6 +150,7 @@ export class DeviceService {
     }
 
     return {
+      hasPermission: true,
       inputs,
       outputs,
       selectedOutput,

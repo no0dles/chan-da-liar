@@ -24,6 +24,7 @@ export interface OpenAIState {
   models: Model[];
   selectedModel: Model | null;
   ready: boolean;
+  error: string | null
 }
 
 @Injectable({
@@ -110,6 +111,7 @@ export class OpenAiService {
         rolePlayScript: null,
         settings: null,
         openai: null,
+        error: null,
       };
     }
 
@@ -120,8 +122,16 @@ export class OpenAiService {
       return new OpenAIApi(configuration);
     });
 
+    let error = ''
     const models = await this.modalCache.getOrCreate(key, () =>
-      this.getModels(openai),
+      this.getModels(openai).catch(err => {
+        if (err.message === 'Request failed with status code 401') {
+          error = 'Invalid api key or no permission/quota'
+        } else {
+          error = 'Failed to load OpenAI models';
+        }
+        return [];
+      }),
     );
     const model = models.find((m) => m.id === selectedModel) ?? null;
     return {
@@ -130,6 +140,7 @@ export class OpenAiService {
       settings: { apiKey: key },
       rolePlayScript: rolePlay,
       openai,
+      error,
       models,
     };
   }
