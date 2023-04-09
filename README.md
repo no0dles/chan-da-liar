@@ -1,4 +1,6 @@
 # ChanDaLiar
+Connect OpenAI with Azure Cognitive services and create the speaking ChanDaLiar.
+Hosted demo can be viewed here https://chan-da-liar.vercel.app/
 
 ## Start development
 ```
