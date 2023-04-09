@@ -1,0 +1,7 @@
+<button class="flex w-full justify-between items-center border border-teal-500 rounded-md px-3 py-2" (click)="openSidebar()">
+  <app-explaination [heading]="heading" [description]="description"></app-explaination>
+  <div class="flex items-center space-x-3">
+    <div class="label" [ngClass]="{'ready': readyStatus.ready}" *ngIf="readyStatus$ | async as readyStatus">{{readyStatus.label}}</div>
+    <fa-icon [icon]="rightCaret" class="text-teal-800"></fa-icon>
+  </div>
+</button>

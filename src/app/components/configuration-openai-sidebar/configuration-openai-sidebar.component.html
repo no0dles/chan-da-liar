@@ -1,0 +1,21 @@
+<ng-container *ngIf="state$ | async as state">
+  <div class="flex-grow min-h-0 space-y-4 flex flex-col">
+    <div>
+      <app-input [heading]="'API Key'" [placeholder]="'sk-....'"
+                 [value]="state.settings?.apiKey" (valueChanged)="setKey($event)"></app-input>
+      <a target="_blank" class="underline text-xs text-gray-500"
+         href="https://platform.openai.com/account/api-keys">https://platform.openai.com/account/api-keys</a>
+    </div>
+
+    <label class="flex flex-col bg-gray-200 rounded-md text-sm text-gray-500 pt-1 px-3 select-none">
+      OpenAI Model
+      <select [ngModel]="state.selectedModel?.id" (ngModelChange)="setModel($event)" class="bg-gray-200 rounded-md py-2">
+        <option *ngFor="let model of state.models" [value]="model.id">{{model.id}}</option>
+      </select>
+    </label>
+
+    <app-textarea [heading]="'Chan Da Liar Prescript'" class="flex-grow min-h-0"></app-textarea>
+  </div>
+
+  <app-button [disabled]="!state.ready" (click)="modal.dismiss()">Save</app-button>
+</ng-container>

@@ -1,0 +1,6 @@
+<span class="px-3 mt-1">
+  <app-explaination [heading]="output.label"></app-explaination>
+</span>
+<div class="flex mt-3">
+  <app-output-queue-item class="mx-2" *ngFor="let item of queue$ | async" [item]="item"></app-output-queue-item>
+</div>

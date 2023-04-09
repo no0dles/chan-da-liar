@@ -1,0 +1,6 @@
+<button class="text-white bg-teal-500 rounded-l-md px-2" *ngIf="!item.playing" (click)="remove()">
+  <fa-icon [icon]="removeIcon"></fa-icon>
+</button>
+<div class="border border-teal-500 px-3 bg-teal-100" [ngClass]="{'rounded-md': item.playing, 'rounded-r-md': !item.playing}">
+  <app-explaination [heading]="item.source" [description]="item.content"></app-explaination>
+</div>

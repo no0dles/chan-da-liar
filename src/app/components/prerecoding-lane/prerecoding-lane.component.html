@@ -1,0 +1,14 @@
+<app-header [heading]="'Prerecordings'" [description]="'Scripted responses'">
+  <button (click)="openCreate()">
+    <fa-icon [icon]="plusIcon" class="text-2xl"></fa-icon>
+  </button>
+</app-header>
+
+<div class="flex flex-col px-3 py-3 space-y-3" *ngIf="state$ | async as state">
+  <div class="flex items-center space-x-3" *ngFor="let rec of state.recordings; let index = index;">
+    <app-button (click)="play(rec)" class="flex-grow min-w-0">{{rec.content}}</app-button>
+    <button (click)="edit(index, rec.content)">
+      <fa-icon [icon]="editIcon" class="mx-4 text-2xl"></fa-icon>
+    </button>
+  </div>
+</div>

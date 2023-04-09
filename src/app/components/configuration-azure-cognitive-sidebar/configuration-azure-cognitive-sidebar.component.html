@@ -1,0 +1,33 @@
+<ng-container *ngIf="state$ | async as state">
+  <div class="flex-grow min-h-0 space-y-4 flex flex-col">
+    <app-input [heading]="'Subscription Key'" [placeholder]="'7918e........'"
+               [value]="state.settings?.apiKey" (valueChanged)="setKey($event)"></app-input>
+    <div>
+      <app-input [heading]="'Region'" [placeholder]="'westeurope'"
+                 [value]="state.settings?.region" (valueChanged)="setRegion($event)"></app-input>
+      <a target="_blank" class="underline text-xs text-gray-500"
+         href="https://learn.microsoft.com/en-gb/azure/cognitive-services/cognitive-services-apis-create-account">https://learn.microsoft.com</a>
+    </div>
+
+
+    <label class="flex flex-col bg-gray-200 rounded-md text-sm text-gray-500 pt-1 px-3 select-none">
+      Locale
+      <select [ngModel]="state.selectedLocale" (ngModelChange)="setLocale($event)" class="bg-gray-200 rounded-md py-2">
+        <option *ngFor="let locale of state.locales" [value]="locale">{{locale}}</option>
+      </select>
+    </label>
+
+
+    <label class="flex flex-col bg-gray-200 rounded-md text-sm text-gray-500 pt-1 px-3 select-none">
+      Voice Model
+      <select [ngModel]="state.selectedVoice?.name" (ngModelChange)="setVoice($event)" class="bg-gray-200 rounded-md py-2">
+        <option *ngFor="let voice of state.localeVoices" [value]="voice.name">{{voice.localName}}</option>
+      </select>
+    </label>
+
+    <app-transcript #transcript></app-transcript>
+    <app-button (click)="play(state, transcript.value)">Play</app-button>
+  </div>
+
+  <app-button [disabled]="!state.ready" (click)="modal.dismiss()">Save</app-button>
+</ng-container>

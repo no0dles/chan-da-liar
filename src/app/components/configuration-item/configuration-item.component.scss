@@ -1,0 +1,11 @@
+:host {
+  @apply w-full;
+}
+
+.label {
+  @apply bg-orange-100 text-xs text-orange-800 rounded-md px-2 py-1;
+
+  &.ready {
+    @apply bg-teal-100 text-teal-800;
+  }
+}
