@@ -54,6 +54,13 @@ Once processed they disapear, items in the queue can be deleted if not already i
 ![Cockpit](docs/Cockpit.png)
 
 
+### Roadmap
+- [ ] Spoken text gets picked up from microphone and ends up in the input. Pause microphones on play may help or if the speak recognization detects the speaker voice.
+- [ ] Improve OpenAI conversation
+  - [ ] Role play prompt currently ignored
+  - [ ] visualize current conversation
+  - [ ] reset for conversation / clear single items
+
 ## Code overview
 Code is seperated into two main directories.
 - Components in `src/app/components` are for visual UI elements
