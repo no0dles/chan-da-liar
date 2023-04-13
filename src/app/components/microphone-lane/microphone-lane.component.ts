@@ -63,13 +63,6 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    const enabled = this.config.get<boolean>(this.getEnabledKey());
-    if (enabled !== null) {
-      this.enabledMic = enabled;
-      if (enabled) {
-        this.startListening();
-      }
-    }
     const mode = this.config.get<boolean>(this.getModeKey());
     if (mode !== null) {
       this.automaticMode = mode;
@@ -93,8 +86,10 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   }
 
   private async startListening() {
+    console.log('listening on ' + this.microphone.deviceName)
     const state = await firstValueFrom(this.azureCognitive.state$);
     if (!state.speechConfig) {
+      console.warn('no speech config')
       return;
     }
 
@@ -106,6 +101,7 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
       sender: Recognizer,
       event: SpeechRecognitionEventArgs,
     ) => {
+      console.log('recognized on ' + this.microphone.deviceName)
       if (!event.result.text || !this.transcript) {
         return;
       }
