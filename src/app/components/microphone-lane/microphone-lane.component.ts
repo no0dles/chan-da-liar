@@ -1,9 +1,9 @@
 import {
   AfterViewInit,
-  Component,
+  Component, EventEmitter,
   Input,
   OnDestroy,
-  OnInit,
+  OnInit, Output,
   ViewChild,
 } from '@angular/core';
 import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
@@ -12,13 +12,13 @@ import {
   AzureCognitiveService,
   AzureCognitiveState,
 } from '../../states/azure-cognitive.service';
-import { SpeechRecognizer } from 'microsoft-cognitiveservices-speech-sdk';
+import { SpeechRecognizer, SpeechSynthesizer } from 'microsoft-cognitiveservices-speech-sdk';
 import {
   Recognizer,
   SpeechRecognitionEventArgs,
 } from 'microsoft-cognitiveservices-speech-sdk/distrib/lib/src/sdk/Exports';
 import { TranscriptComponent } from '../transcript/transcript.component';
-import { OpenAiService } from '../../states/open-ai.service';
+import { ConversationMessage, OpenAiService } from '../../states/open-ai.service';
 import { ToggleComponent } from '../toggle/toggle.component';
 import { ConfigService } from '../../config.service';
 import { firstValueFrom, Subscription } from 'rxjs';
@@ -36,24 +36,21 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
 
   microphoneIcon = faMicrophone;
 
+  @Output()
+  spoke = new EventEmitter<string>();
+
   @Input()
   microphone!: MicrophoneState;
 
-  @ViewChild('processToggle')
-  processToggle?: ToggleComponent;
-
   @ViewChild('enabledToggle')
   enabledToggle?: ToggleComponent;
-
-  @ViewChild('transcript')
-  transcript?: TranscriptComponent;
 
   @ViewChild(OpenAiChatPreviewComponent)
   openAiChatPreview?: OpenAiChatPreviewComponent;
 
   enabledMic = false;
   automaticMode = false;
-  speakValue = '';
+  speakValue: string[] = [];
 
   constructor(
     private azureCognitive: AzureCognitiveService,
@@ -77,6 +74,9 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   toggleMicrophone(enabled: boolean) {
     if (enabled) {
       this.startListening();
+      // navigator.mediaDevices.getUserMedia({audio: {deviceId: this.microphone.deviceId}}).then(stream => {
+      //   this.speaker.stream(stream);
+      // })
     } else if (this.recognizer) {
       this.recognizer.stopContinuousRecognitionAsync();
       this.recognizer.close();
@@ -93,24 +93,27 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const recognizer = this.azureCognitive.listen(
+    const recognizer = await this.azureCognitive.listen(
       state.speechConfig,
       this.microphone.deviceId,
     );
+
+    // const synthesizer = new SpeechSynthesizer(
+    //   this.speechConfig, download ? null : audioConfig);
+    // synthesizer.visemeReceived = (sender, evt) => {
+    //   sender.
+    // }
+
     recognizer.recognized = (
       sender: Recognizer,
       event: SpeechRecognitionEventArgs,
     ) => {
       console.log('recognized on ' + this.microphone.deviceName)
-      if (!event.result.text || !this.transcript) {
+      if (!event.result.text) {
         return;
       }
 
-      this.transcript.value += `${event.result.text}\n`;
-
-      if (this.automaticMode) {
-        this.processOpenAI();
-      }
+      this.spoke.emit(event.result.text)
     };
     this.recognizer = recognizer;
   }
@@ -120,32 +123,6 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   }
   private getModeKey() {
     return `${this.microphone.deviceId}-mode`;
-  }
-
-  transcriptChanged(script: string) {
-    if (this.microphone.mode === 'OpenAI') {
-      this.processOpenAI();
-    } else {
-      this.speakValue = script;
-    }
-  }
-
-  async processOpenAI() {
-    const value = this.transcript?.value;
-    if (!value) {
-      return;
-    }
-
-    if (!this.openAiChatPreview) {
-      return;
-    }
-
-    const result = await this.openAI.push(this.microphone.name, value);
-    if (!result) {
-      return;
-    }
-    this.openAiChatPreview.value = result;
-    this.speakValue = result;
   }
 
   ngOnDestroy() {

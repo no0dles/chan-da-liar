@@ -20,4 +20,8 @@ export class ConfigurationOpenaiSidebarComponent {
   setModel(model: string) {
     this.openAi.setModel(model);
   }
+
+  setRolePlay(script: string) {
+    this.openAi.setRolePlay(script)
+  }
 }

@@ -2,4 +2,6 @@
   heading
 }}</label>
 <textarea
+  [value]="value"
+  (input)="change($event)" (keydown)="keydown($event)"
   class="w-full bg-gray-200 rounded-md pt-6 text-teal-600 px-3 pb-2 resize-none flex-grow min-h-0"></textarea>

@@ -45,7 +45,7 @@
       </select>
     </label>
 
-    <app-transcript #transcript></app-transcript>
+    <app-textarea [heading]="'Voice sample'" #transcript></app-textarea>
     <app-button (click)="play(state, transcript.value)">Play</app-button>
   </div>
 

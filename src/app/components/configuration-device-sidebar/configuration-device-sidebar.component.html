@@ -28,44 +28,44 @@
             class="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-600"/>
           <span class="text-sm uppercase px-3">{{ microphone.deviceName }}</span>
         </label>
-        <div class="pl-10 mt-1">
-          <div class="flex flex-col space-y-2">
-            <app-input
-              [heading]="'Name'"
-              #name
-              (valueChanged)="updateName(microphone, $event)"
-              [value]="microphone.name"></app-input>
-            <div class="flex flex-col bg-gray-200 rounded-md px-3 py-2 space-y-1">
-              <label class="text-sm text-gray-500">Mode</label>
-              <label class="flex space-x-3 items-center">
-                <input
-                  type="radio"
-                  value="OpenAI"
-                  [name]="'type-' + microphone.deviceId"
-                  [attr.checked]="microphone.mode === 'OpenAI' ? true : undefined"
-                  (change)="updateType(microphone, $event)"/>
-                <app-explaination
-                  [heading]="'OpenAI'"
-                  [description]="
-                  'Process input into text, ask open AI and convert it to speak'
-                "></app-explaination>
-              </label>
-              <label class="flex space-x-3 items-center">
-                <input
-                  type="radio"
-                  value="Regie"
-                  [name]="'type-' + microphone.deviceId"
-                  [attr.checked]="microphone.mode === 'Regie' ? true : undefined"
-                  (change)="updateType(microphone, $event)"/>
-                <app-explaination
-                  [heading]="'Regie'"
-                  [description]="
-                  'Process input into text and convert it to speak'
-                "></app-explaination>
-              </label>
-            </div>
-          </div>
-        </div>
+<!--        <div class="pl-10 mt-1">-->
+<!--          <div class="flex flex-col space-y-2">-->
+<!--            <app-input-->
+<!--              [heading]="'Name'"-->
+<!--              #name-->
+<!--              (valueChanged)="updateName(microphone, $event)"-->
+<!--              [value]="microphone.name"></app-input>-->
+<!--            <div class="flex flex-col bg-gray-200 rounded-md px-3 py-2 space-y-1">-->
+<!--              <label class="text-sm text-gray-500">Mode</label>-->
+<!--              <label class="flex space-x-3 items-center">-->
+<!--                <input-->
+<!--                  type="radio"-->
+<!--                  value="OpenAI"-->
+<!--                  [name]="'type-' + microphone.deviceId"-->
+<!--                  [attr.checked]="microphone.mode === 'OpenAI' ? true : undefined"-->
+<!--                  (change)="updateType(microphone, $event)"/>-->
+<!--                <app-explaination-->
+<!--                  [heading]="'OpenAI'"-->
+<!--                  [description]="-->
+<!--                  'Process input into text, ask open AI and convert it to speak'-->
+<!--                "></app-explaination>-->
+<!--              </label>-->
+<!--              <label class="flex space-x-3 items-center">-->
+<!--                <input-->
+<!--                  type="radio"-->
+<!--                  value="Regie"-->
+<!--                  [name]="'type-' + microphone.deviceId"-->
+<!--                  [attr.checked]="microphone.mode === 'Regie' ? true : undefined"-->
+<!--                  (change)="updateType(microphone, $event)"/>-->
+<!--                <app-explaination-->
+<!--                  [heading]="'Regie'"-->
+<!--                  [description]="-->
+<!--                  'Process input into text and convert it to speak'-->
+<!--                "></app-explaination>-->
+<!--              </label>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
       </div>
 
       <app-button [disabled]="!state.ready" (click)="modal.dismiss()">Save</app-button>

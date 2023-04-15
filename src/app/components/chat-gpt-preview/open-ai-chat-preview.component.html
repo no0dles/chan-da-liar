@@ -4,7 +4,7 @@
 <button class="text-xs text-black absolute top-1 right-3 text-right w-12">
   Retry
 </button>
-<textarea
-  class="pt-5 px-3 bg-gray-200 rounded-md w-full resize-none flex-grow min-h-0"
-  [value]="value"
-  [disabled]="true"></textarea>
+
+<div class="flex flex-col">
+  <div *ngFor="let message of value">{{message}}</div>
+</div>

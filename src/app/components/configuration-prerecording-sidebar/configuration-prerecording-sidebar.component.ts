@@ -2,6 +2,7 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ModalHandle, ModalInstance } from '../../modules/modal/modal.service';
 import { PrerecordingService } from '../../states/prerecording.service';
 import { TranscriptComponent } from '../transcript/transcript.component';
+import { TextareaComponent } from '../textarea/textarea.component';
 
 @Component({
   selector: 'app-configuration-prerecording-sidebar',
@@ -14,8 +15,8 @@ export class ConfigurationPrerecordingSidebarComponent
   modal!: ModalHandle<void>;
   editMode = false;
 
-  @ViewChild(TranscriptComponent)
-  transcript?: TranscriptComponent;
+  @ViewChild(TextareaComponent)
+  transcript?: TextareaComponent;
 
   @Input()
   content: string = '';

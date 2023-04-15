@@ -5,8 +5,11 @@ import {
   combineLatest,
   firstValueFrom,
   mergeMap,
+  Observable,
+  of,
   share,
   shareReplay,
+  take,
 } from 'rxjs';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 import { Cache } from '../utils/cache';
@@ -14,6 +17,15 @@ import { ChatCompletionRequestMessage } from 'openai/api';
 
 export interface OpenAISettings {
   apiKey: string;
+}
+
+export interface ConversationMessage {
+  role: 'assistant' | 'user' | 'system'
+  content: string;
+}
+
+export interface MessageResponse {
+  choices: string[];
 }
 
 export interface OpenAIState {
@@ -24,7 +36,7 @@ export interface OpenAIState {
   models: Model[];
   selectedModel: Model | null;
   ready: boolean;
-  error: string | null
+  error: string | null;
 }
 
 @Injectable({
@@ -37,8 +49,6 @@ export class OpenAiService {
 
   private modalCache = new Cache<Model[]>();
   private apiCache = new Cache<OpenAIApi>();
-
-  private conversation: ChatCompletionRequestMessage[] = [];
 
   state$ = combineLatest([
     this.config.watch<string>(this.configApiKey),
@@ -53,36 +63,29 @@ export class OpenAiService {
 
   constructor(private config: ConfigService) {}
 
-  async push(deviceName: string, text: string) {
-    this.conversation.push({
-      content: `${deviceName}: ${text}`,
-      name: deviceName,
-      role: 'user',
-    });
-    return await this.prompt();
-  }
-
-  async prompt() {
-    const state = await firstValueFrom(this.state$);
-    if (!state.openai || !state.selectedModel) {
-      return;
-    }
-    const result = await state.openai.createChatCompletion({
-      messages: this.conversation,
-      model: state.selectedModel.id,
-    });
-    const responseMessage = result.data.choices[0].message;
-    if (!responseMessage) {
-      return;
+  async prompt(
+    messages: ConversationMessage[],
+  ): Promise<ConversationMessage | null> {
+    const openAiState = await firstValueFrom(this.state$);
+    if (!openAiState.openai || !openAiState.selectedModel) {
+      return null;
     }
 
-    this.conversation.push({
-      content: responseMessage.content,
-      role: responseMessage.role,
-      name: 'ChanDaLiar',
-    });
+    const response = await openAiState.openai
+      .createChatCompletion({
+        messages,
+        model: openAiState.selectedModel.id,
+        //stream: true,
+      });
+    const choice = response.data.choices[0];
+    if (!choice || !choice.message) {
+      return null;
+    }
 
-    return responseMessage.content;
+    return {
+      role: 'assistant',
+      content: choice.message.content,
+    }
   }
 
   async getModels(openai: OpenAIApi) {
@@ -96,6 +99,10 @@ export class OpenAiService {
 
   setModel(model: string) {
     this.config.save(this.configModelKey, model);
+  }
+
+  setRolePlay(script: string) {
+    this.config.save(this.configRolePlayKey, script);
   }
 
   async mapState(
@@ -122,11 +129,11 @@ export class OpenAiService {
       return new OpenAIApi(configuration);
     });
 
-    let error = ''
+    let error = '';
     const models = await this.modalCache.getOrCreate(key, () =>
-      this.getModels(openai).catch(err => {
+      this.getModels(openai).catch((err) => {
         if (err.message === 'Request failed with status code 401') {
-          error = 'Invalid api key or no permission/quota'
+          error = 'Invalid api key or no permission/quota';
         } else {
           error = 'Failed to load OpenAI models';
         }

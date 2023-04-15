@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, combineLatest, of } from 'rxjs';
+import { BehaviorSubject, combineLatest, firstValueFrom, of } from 'rxjs';
 import { AzureCognitiveService } from './azure-cognitive.service';
 import { DeviceService } from './device.service';
 
@@ -59,6 +59,23 @@ export class SpeakerService {
       }
     });
   }
+
+  // stream(stream: MediaStream) {
+  //   const context = new AudioContext();
+  //   const source = context.createMediaStreamSource(stream);
+  //   console.log(source)
+  //
+  //   firstValueFrom( this.device.state$).then(state => {
+  //     if(state.selectedOutput?.deviceId) {
+  //       navigator.mediaDevices.getUserMedia({audio: {deviceId: state.selectedOutput?.deviceId}}).then(output => {
+  //
+  //         const outSrc = context.createMediaStreamSource(output)
+  //         console.log(outSrc)
+  //         source.connect(outSrc)
+  //       })
+  //     }
+  //   })
+  // }
 
   push(source: string, content: string) {
     this.queueSubject.value.push({

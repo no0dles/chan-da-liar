@@ -27,7 +27,7 @@
       </select>
     </label>
 
-    <app-textarea
+    <app-textarea (valueChange)="setRolePlay($event)" [value]="state.rolePlayScript ?? ''"
       [heading]="'Chan Da Liar Prescript'"
       class="flex-grow min-h-0"></app-textarea>
   </div>
@@ -37,6 +37,5 @@
   </div>
 
   <app-button [disabled]="!state.ready" (click)="modal.dismiss()"
-    >Save</app-button
-  >
+    >Save</app-button>
 </ng-container>

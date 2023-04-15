@@ -12,7 +12,7 @@ import { SpeakerService } from '../../states/speaker.service';
 })
 export class VoiceProcessorComponent {
   @Input()
-  value?: string;
+  value?: string | string[];
 
   @Input()
   source!: string;
@@ -24,6 +24,12 @@ export class VoiceProcessorComponent {
       return;
     }
 
-    this.speaker.push(this.source, this.value);
+    if (this.value instanceof Array) {
+     for (const item of this.value) {
+       this.speaker.push(this.source, item);
+     }
+    } else {
+      this.speaker.push(this.source, this.value);
+    }
   }
 }

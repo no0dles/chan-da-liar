@@ -7,5 +7,5 @@ import { Component, Input } from '@angular/core';
 })
 export class OpenAiChatPreviewComponent {
   @Input()
-  value: string = '';
+  value: string[] = [];
 }

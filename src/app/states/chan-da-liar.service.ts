@@ -11,6 +11,7 @@ export interface ChanDaLiarState {
   ready: boolean;
   microphones: MicrophoneState[];
   output: MediaDeviceInfo | null;
+  systemMessage: string | null;
 }
 
 @Injectable({
@@ -42,6 +43,7 @@ export class ChanDaLiarService {
     return {
       ready: openAi.ready && azureCognitive.ready && device.ready,
       output: device.selectedOutput,
+      systemMessage: openAi.rolePlayScript,
       microphones: device.microphones.filter((m) => m.enabled),
     };
   }

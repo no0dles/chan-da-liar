@@ -1,3 +1,19 @@
 :host {
-  @apply flex flex-col relative;
+  @apply flex flex-col bg-gray-100 rounded-md;
+}
+
+.message {
+  @apply px-2 py-1 rounded-md;
+
+  &.system {
+    @apply text-xs bg-teal-100 border border-teal-700;
+  }
+
+  &.assistant {
+    @apply bg-teal-100 border border-teal-700;
+  }
+
+  &.user {
+    @apply bg-gray-200 text-gray-800 border border-gray-700;
+  }
 }

@@ -1,46 +1,66 @@
 import {
   Component,
   EventEmitter,
-  Input,
-  OnDestroy,
-  OnInit,
+  Input, OnInit,
   Output,
 } from '@angular/core';
-import { debounceTime, Subject, Subscription } from 'rxjs';
+import { ConversationMessage } from '../../states/open-ai.service';
+import { faPlay, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { SpeakerService } from '../../states/speaker.service';
 
 @Component({
   selector: 'app-transcript',
   templateUrl: './transcript.component.html',
   styleUrls: ['./transcript.component.scss'],
 })
-export class TranscriptComponent implements OnInit, OnDestroy {
-  private subscription?: Subscription;
-  private changeSubject = new Subject<string>();
+export class TranscriptComponent implements OnInit {
+  clearIcon = faTimes;
+  playIcon = faPlay;
 
   @Input()
-  value: string = '';
+  systemMessage?: string | null;
+
+  @Input()
+  messages: ConversationMessage[] = [];
 
   @Output()
-  valueChange = new EventEmitter<string>();
+  messagesChange = new EventEmitter<ConversationMessage[]>();
+
+  constructor(private speaker: SpeakerService) {
+  }
 
   ngOnInit() {
-    this.subscription = this.changeSubject
-      .pipe(debounceTime(500))
-      .subscribe((value) => {
-        this.valueChange.emit(value);
-      });
+    this.addSystemMessage();
   }
 
-  ngOnDestroy() {
-    this.subscription?.unsubscribe();
-  }
-
-  change(evt: Event) {
-    this.value = (evt.target as HTMLTextAreaElement).value;
-    this.changeSubject.next(this.value);
+  private addSystemMessage() {
+    if (this.systemMessage) {
+      this.messages.push({
+        role: 'system',
+        content: this.systemMessage,
+      })
+    }
   }
 
   clear() {
-    this.value = '';
+    this.messages = [];
+    this.addSystemMessage();
+    this.messagesChange.emit(this.messages)
+  }
+
+  removeMessage(message: ConversationMessage) {
+    const index = this.messages.indexOf(message)
+    if (index >= 0) {
+      if (this.messages[index+1] && this.messages[index+1].role === 'assistant') {
+        this.messages.splice(index, 2);
+      } else {
+        this.messages.splice(index, 1);
+      }
+    }
+    this.messagesChange.emit(this.messages)
+  }
+
+  playMessage(message: string) {
+    this.speaker.push('Response', message);
   }
 }

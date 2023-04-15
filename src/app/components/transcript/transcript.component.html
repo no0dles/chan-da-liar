@@ -1,10 +1,24 @@
-<span class="absolute top-1 left-3 text-gray-400 text-xs">Transscript</span>
-<button
-  class="text-xs text-black absolute top-1 right-3 text-right w-12"
-  (click)="clear()">
-  Clear
-</button>
-<textarea
-  class="pt-5 px-3 bg-gray-200 rounded-md w-full resize-none flex-grow min-h-0"
-  [value]="value"
-  (input)="change($event)"></textarea>
+<div class="flex justify-between px-3 py-1">
+  <span class="text-gray-400 text-xs">Transscript</span>
+  <button
+    class="text-xs text-black text-right w-12"
+    (click)="clear()">
+    Clear
+  </button>
+</div>
+
+<div class="flex flex-col items-start flex-grow min-h-0 px-3 space-y-3 overflow-y-scroll">
+  <div *ngFor="let message of messages" class="flex flex-col" [ngClass]="{'self-end': message.role === 'assistant'}">
+    <div class="message" [ngClass]="message.role">
+      <div>{{message.content}}</div>
+    </div>
+    <div>
+      <button (click)="removeMessage(message)" *ngIf="message.role === 'user'" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">
+        Remove
+      </button>
+      <button (click)="playMessage(message.content)" *ngIf="message.role === 'assistant'" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">
+        Play
+      </button>
+    </div>
+  </div>
+</div>
