@@ -1,6 +1,6 @@
-<app-header [heading]="microphone.name" [description]="microphone.deviceName">
-  <fa-icon [icon]="microphoneIcon" class="text-2xl"></fa-icon>
-</app-header>
+<!--<app-header [heading]="microphone.name" [description]="microphone.deviceName">-->
+<!--  <fa-icon [icon]="microphoneIcon" class="text-2xl"></fa-icon>-->
+<!--</app-header>-->
 
 <app-box-container class="flex space-x-3">
   <app-toggle
@@ -11,9 +11,9 @@
   <app-explaination
     *ngIf="enabledToggle.enabled"
     [heading]="'Enabled'"
-    [description]="'Audio is processed to text'"></app-explaination>
+    [description]="microphone.name"></app-explaination>
   <app-explaination
     *ngIf="!enabledToggle.enabled"
     [heading]="'Disabled'"
-    [description]="'Microphone is turned off'"></app-explaination>
+    [description]="microphone.name"></app-explaination>
 </app-box-container>

@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 import { ConfigService } from '../config.service';
-import { combineLatest, map, mergeMap, shareReplay } from 'rxjs';
+import { combineLatest, mergeMap, shareReplay } from 'rxjs';
 import {Cache} from '../utils/cache';
 
 export interface DeviceState {
@@ -19,10 +18,9 @@ export interface MicrophoneState {
   deviceId: string;
   deviceName: string;
   enabled: boolean;
-  mode: MicrophoneMode;
+  prefix?: string
 }
 
-export type MicrophoneMode = 'OpenAI' | 'Regie';
 
 @Injectable({
   providedIn: 'root',
@@ -77,15 +75,9 @@ export class DeviceService {
     });
   }
 
-  updateName(device: MicrophoneState, name: string) {
+  updatePrefix(device: MicrophoneState, name: string) {
     this.updateMicrophoneState(device, (mic) => {
-      mic.name = name;
-    });
-  }
-
-  updateMode(device: MicrophoneState, mode: MicrophoneMode) {
-    this.updateMicrophoneState(device, (mic) => {
-      mic.mode = mode;
+      mic.prefix = name;
     });
   }
 
@@ -101,7 +93,7 @@ export class DeviceService {
         name: device.name,
         deviceName: device.deviceName,
         deviceId: device.deviceId,
-        mode: device.mode,
+        prefix: device.prefix,
       };
       mics.push(mic);
     }
@@ -141,7 +133,7 @@ export class DeviceService {
       } else {
         states.push({
           deviceId: input.deviceId,
-          mode: 'OpenAI',
+          prefix: '',
           enabled: true,
           deviceName: input.label,
           name: input.label,
@@ -149,6 +141,7 @@ export class DeviceService {
       }
     }
 
+    console.log('device')
     return {
       hasPermission: true,
       inputs,

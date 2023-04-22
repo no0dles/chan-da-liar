@@ -9,7 +9,7 @@
 
     <app-transcript
       [systemMessage]="state.systemMessage"
-      class="flex-grow min-h-0 ml-3 mb-3" [(messages)]="messages" (messagesChange)="updateMessages($event)"></app-transcript>
+      class="flex-grow min-h-0 ml-3 mb-3"></app-transcript>
 
     <div class="mb-3 ml-3 space-y-3 flex flex-col">
       <app-textarea #moderatorText [heading]="'Direct response'" (onEnter)="fakeResponse($event)"></app-textarea>

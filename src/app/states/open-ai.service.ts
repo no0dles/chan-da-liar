@@ -141,6 +141,8 @@ export class OpenAiService {
       }),
     );
     const model = models.find((m) => m.id === selectedModel) ?? null;
+    console.log('openai')
+
     return {
       ready: model !== null,
       selectedModel: model,

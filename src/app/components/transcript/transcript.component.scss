@@ -16,4 +16,10 @@
   &.user {
     @apply bg-gray-200 text-gray-800 border border-gray-700;
   }
+
+  .part {
+    &.highlight {
+      @apply bg-teal-100;
+    }
+  }
 }

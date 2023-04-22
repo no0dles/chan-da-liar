@@ -7,6 +7,7 @@ import {
 import { ConversationMessage } from '../../states/open-ai.service';
 import { faPlay, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { SpeakerService } from '../../states/speaker.service';
+import {ConversationService} from '../../states/conversation.service';
 
 @Component({
   selector: 'app-transcript',
@@ -20,13 +21,9 @@ export class TranscriptComponent implements OnInit {
   @Input()
   systemMessage?: string | null;
 
-  @Input()
-  messages: ConversationMessage[] = [];
+  messages$ = this.conversation.messages$;
 
-  @Output()
-  messagesChange = new EventEmitter<ConversationMessage[]>();
-
-  constructor(private speaker: SpeakerService) {
+  constructor(private speaker: SpeakerService, private conversation: ConversationService) {
   }
 
   ngOnInit() {
@@ -35,30 +32,30 @@ export class TranscriptComponent implements OnInit {
 
   private addSystemMessage() {
     if (this.systemMessage) {
-      this.messages.push({
-        role: 'system',
-        content: this.systemMessage,
-      })
+      // this.messages.push({
+      //   role: 'system',
+      //   content: this.systemMessage,
+      // })
     }
   }
 
   clear() {
-    this.messages = [];
-    this.addSystemMessage();
-    this.messagesChange.emit(this.messages)
+    // this.messages = [];
+    // this.addSystemMessage();
+    // this.messagesChange.emit(this.messages)
   }
 
-  removeMessage(message: ConversationMessage) {
-    const index = this.messages.indexOf(message)
-    if (index >= 0) {
-      if (this.messages[index+1] && this.messages[index+1].role === 'assistant') {
-        this.messages.splice(index, 2);
-      } else {
-        this.messages.splice(index, 1);
-      }
-    }
-    this.messagesChange.emit(this.messages)
-  }
+  // removeMessage(message: ConversationMessage) {
+  //   const index = this.messages.indexOf(message)
+  //   if (index >= 0) {
+  //     if (this.messages[index+1] && this.messages[index+1].role === 'assistant') {
+  //       this.messages.splice(index, 2);
+  //     } else {
+  //       this.messages.splice(index, 1);
+  //     }
+  //   }
+  //   this.messagesChange.emit(this.messages)
+  // }
 
   playMessage(message: string) {
     this.speaker.push('Response', message);

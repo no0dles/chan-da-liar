@@ -35,6 +35,26 @@ export interface AzureCognitiveState {
   error: string | null
 }
 
+export interface SpeakResult {
+  duration: number
+  visums: SpeakVisum[];
+}
+
+export interface SpeakVisum {
+  value: number
+  offset: number;
+}
+
+// const options = {
+//   host: '172.16.23.15'
+// }
+
+//const artnet = require('artnet')(options);
+// set channel 1 to 255 and disconnect afterwards.
+//         artnet.set(1, 255, function (err, res) {
+//           artnet.close();
+//         });
+
 @Injectable({
   providedIn: 'root',
 })
@@ -139,6 +159,8 @@ export class AzureCognitiveService {
       speechConfig.speechRecognitionLanguage = selectedLocale;
     }
 
+    console.log('speech')
+
     return {
       selectedVoice,
       selectedLocale,
@@ -170,13 +192,17 @@ export class AzureCognitiveService {
     speechConfig: SpeechConfig,
     deviceId: string,
     text: string,
-  ): Promise<number> {
+  ): Promise<SpeakResult> {
     const player = new SpeakerAudioDestination(deviceId);
     const synthAudio = AudioConfig.fromSpeakerOutput(player);
     const synth = new SpeechSynthesizer(speechConfig, synthAudio);
-    return new Promise<number>((resolve) => {
+    return new Promise<SpeakResult>((resolve) => {
+      const visums: SpeakVisum[] = [];
+      synth.visemeReceived = (sender, e) => {
+        visums.push({value: e.visemeId, offset: e.audioOffset / 10000 })
+      }
       synth.speakTextAsync(text, (e) => {
-        resolve(e.audioDuration / 10000); // ticks to ms
+        resolve({duration: e.audioDuration / 10000, visums }); // ticks to ms
       });
     });
   }

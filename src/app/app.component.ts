@@ -1,11 +1,13 @@
-import { Component, ViewChild, ViewContainerRef } from '@angular/core';
-import { ModalService } from './modules/modal/modal.service';
-import { ConfigurationSidebarComponent } from './components/configuration-sidebar/configuration-sidebar.component';
-import { firstValueFrom } from 'rxjs';
-import { ChanDaLiarService } from './states/chan-da-liar.service';
-import { ConversationMessage, OpenAiService } from './states/open-ai.service';
-import { SpeakerService } from './states/speaker.service';
-import { TextareaComponent } from './components/textarea/textarea.component';
+import {Component, ViewChild, ViewContainerRef} from '@angular/core';
+import {ModalService} from './modules/modal/modal.service';
+import {ConfigurationSidebarComponent} from './components/configuration-sidebar/configuration-sidebar.component';
+import {firstValueFrom} from 'rxjs';
+import {ChanDaLiarService} from './states/chan-da-liar.service';
+import {ConversationMessage, OpenAiService} from './states/open-ai.service';
+import {SpeakerService} from './states/speaker.service';
+import {TextareaComponent} from './components/textarea/textarea.component';
+import {TextRecogniztion} from './components/microphone-lane/microphone-lane.component';
+import {ConversationService} from './states/conversation.service';
 
 @Component({
   selector: 'app-root',
@@ -25,6 +27,7 @@ export class AppComponent {
     private viewContainerRef: ViewContainerRef,
     private openAI: OpenAiService,
     private chanDaLiar: ChanDaLiarService,
+    private conversation: ConversationService,
     private speaker: SpeakerService,
   ) {
     firstValueFrom(this.state$).then((state) => {
@@ -43,30 +46,22 @@ export class AppComponent {
     });
   }
 
-  spoke(content: string) {
-    const newMessage: ConversationMessage = {
-      role: 'user',
-      content,
-    }
-    this.messages.push(newMessage)
-    this.openAI.prompt(this.messages).then(response => {
-      if (response && this.messages[this.messages.length-1] === newMessage) {
-        this.messages.push(response);
-      }
-    })
+  spoke(content: TextRecogniztion) {
+    console.log(content)
+    this.conversation.push(content);
   }
 
   fakeResponse(content: string) {
     this.messages.push({
       content,
       role: 'assistant',
-    })
+    });
     this.speaker.push('direct', content);
     this.moderatorText?.clear();
   }
 
   updateMessages(messages: ConversationMessage[]) {
-    if (messages.length > 0 && messages[messages.length-1].role === 'assistant') {
+    if (messages.length > 0 && messages[messages.length - 1].role === 'assistant') {
       return;
     }
 
@@ -74,7 +69,7 @@ export class AppComponent {
       if (response) {
         this.messages.push(response);
       }
-    })
+    });
   }
 
 }

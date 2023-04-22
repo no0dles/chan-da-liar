@@ -1,29 +1,41 @@
-import {
-  AfterViewInit,
-  Component, EventEmitter,
-  Input,
-  OnDestroy,
-  OnInit, Output,
-  ViewChild,
-} from '@angular/core';
-import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
-import { MicrophoneState } from '../../states/device.service';
-import {
-  AzureCognitiveService,
-  AzureCognitiveState,
-} from '../../states/azure-cognitive.service';
-import { SpeechRecognizer, SpeechSynthesizer } from 'microsoft-cognitiveservices-speech-sdk';
+import {Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild} from '@angular/core';
+import {MicrophoneState} from '../../states/device.service';
+import {AzureCognitiveService} from '../../states/azure-cognitive.service';
+import {OutputFormat, SpeechRecognizer} from 'microsoft-cognitiveservices-speech-sdk';
 import {
   Recognizer,
   SpeechRecognitionEventArgs,
 } from 'microsoft-cognitiveservices-speech-sdk/distrib/lib/src/sdk/Exports';
-import { TranscriptComponent } from '../transcript/transcript.component';
-import { ConversationMessage, OpenAiService } from '../../states/open-ai.service';
-import { ToggleComponent } from '../toggle/toggle.component';
-import { ConfigService } from '../../config.service';
-import { firstValueFrom, Subscription } from 'rxjs';
-import { OpenAiChatPreviewComponent } from '../chat-gpt-preview/open-ai-chat-preview.component';
-import { SpeakerService } from '../../states/speaker.service';
+import {ToggleComponent} from '../toggle/toggle.component';
+import {firstValueFrom, Observable, ReplaySubject, Subscription} from 'rxjs';
+import {OpenAiChatPreviewComponent} from '../chat-gpt-preview/open-ai-chat-preview.component';
+import {ConversationRole} from '../../states/conversation.service';
+
+export interface OngoingRecogniztion {
+  messageId: number;
+  partId: number
+  text$: Observable<string>
+  completed: false
+  textPrefix?: string
+  role: ConversationRole;
+}
+
+export interface CompleteRecogniztion {
+  messageId: number;
+  partId: number
+  text: string
+  completed: true;
+  textPrefix?: string
+  role: ConversationRole;
+}
+
+export type TextRecogniztion = CompleteRecogniztion | OngoingRecogniztion;
+
+export interface RecongniztionState {
+  messageStartedAt: number
+  partStartedAt: number;
+  updateSubject: ReplaySubject<string>
+}
 
 @Component({
   selector: 'app-microphone-lane',
@@ -34,10 +46,8 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   private recognizer?: SpeechRecognizer;
   private subscription?: Subscription;
 
-  microphoneIcon = faMicrophone;
-
   @Output()
-  spoke = new EventEmitter<string>();
+  spoke = new EventEmitter<TextRecogniztion>();
 
   @Input()
   microphone!: MicrophoneState;
@@ -49,40 +59,24 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   openAiChatPreview?: OpenAiChatPreviewComponent;
 
   enabledMic = false;
-  automaticMode = false;
-  speakValue: string[] = [];
+
+  private state: RecongniztionState | null = null;
 
   constructor(
     private azureCognitive: AzureCognitiveService,
-    private config: ConfigService,
-    private speaker: SpeakerService,
-    private openAI: OpenAiService,
   ) {}
 
   ngOnInit() {
-    const mode = this.config.get<boolean>(this.getModeKey());
-    if (mode !== null) {
-      this.automaticMode = mode;
-    }
-  }
 
-  toggleMode(enabled: boolean) {
-    this.config.save(this.getModeKey(), enabled);
-    this.automaticMode = enabled;
   }
 
   toggleMicrophone(enabled: boolean) {
     if (enabled) {
       this.startListening();
-      // navigator.mediaDevices.getUserMedia({audio: {deviceId: this.microphone.deviceId}}).then(stream => {
-      //   this.speaker.stream(stream);
-      // })
     } else if (this.recognizer) {
       this.recognizer.stopContinuousRecognitionAsync();
       this.recognizer.close();
     }
-
-    this.config.save(this.getEnabledKey(), enabled);
   }
 
   private async startListening() {
@@ -98,11 +92,32 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
       this.microphone.deviceId,
     );
 
-    // const synthesizer = new SpeechSynthesizer(
-    //   this.speechConfig, download ? null : audioConfig);
-    // synthesizer.visemeReceived = (sender, evt) => {
-    //   sender.
-    // }
+    recognizer.recognizing = (
+      sender: Recognizer,
+      event: SpeechRecognitionEventArgs,
+    ) => {
+      console.log('recognizing on ' + this.microphone.deviceName)
+      const text = event.result.text;
+      if (!text) {
+        return;
+      }
+
+      if (this.state) {
+        this.updateMessage(this.state, text)
+      } else {
+        this.state = this.createState()
+        this.state.updateSubject.next(text)
+
+        this.spoke.emit({
+          completed: false,
+          text$: this.state.updateSubject.asObservable(),
+          textPrefix: this.microphone.prefix,
+          messageId: this.state.messageStartedAt,
+          partId: this.state.partStartedAt,
+          role: 'user',
+        })
+      }
+    };
 
     recognizer.recognized = (
       sender: Recognizer,
@@ -113,16 +128,69 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
         return;
       }
 
-      this.spoke.emit(event.result.text)
+      if (this.state) {
+        this.completeMessage(this.state, event.result.text)
+      } else {
+        this.state = this.createState();
+        this.completeMessage(this.state, event.result.text)
+      }
     };
     this.recognizer = recognizer;
   }
 
-  private getEnabledKey() {
-    return `${this.microphone.deviceId}-listening`;
+  private updateMessage(state: RecongniztionState, text: string) {
+    console.log(text)
+    const cs = Date.now() - state.partStartedAt > 1000 ? '?!.,-' : '?!.';
+    for (const c of cs) {
+      const i = text.lastIndexOf(c);
+      if (i !== -1) {
+        this.completePart(state, text.substring(0, i + 1), text.substring(i + 1))
+      }
+    }
+    state.updateSubject.next(text)
   }
-  private getModeKey() {
-    return `${this.microphone.deviceId}-mode`;
+
+  private completePart(state: RecongniztionState, text: string, openText: string) {
+    this.spoke.emit({
+      completed: true,
+      text,
+      textPrefix: this.microphone.prefix,
+      messageId: state.messageStartedAt,
+      partId: state.partStartedAt,
+      role: 'user',
+    })
+
+    state.partStartedAt = Date.now();
+    state.updateSubject.next(openText)
+    this.spoke.emit({
+      completed: false,
+      text$: state.updateSubject,
+      textPrefix: this.microphone.prefix,
+      messageId: state.messageStartedAt,
+      partId: state.partStartedAt,
+      role: 'user',
+    })
+  }
+
+  private completeMessage(state: RecongniztionState, text: string) {
+    this.spoke.emit({
+      completed: true,
+      textPrefix: this.microphone.prefix,
+      text: text,
+      messageId: state.messageStartedAt,
+      partId: state.partStartedAt,
+      role: 'user',
+    })
+
+    this.state = null;
+  }
+
+  private createState(): RecongniztionState {
+    return {
+      messageStartedAt: Date.now(),
+      partStartedAt: Date.now(),
+      updateSubject: new ReplaySubject<string>(),
+    }
   }
 
   ngOnDestroy() {
