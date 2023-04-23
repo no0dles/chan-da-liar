@@ -17,6 +17,7 @@ export class AppComponent {
   moderatorText?: TextareaComponent;
 
   messages: ConversationMessage[] = [];
+  ongoing = false;
 
   state$ = this.chanDaLiar.state$;
 
@@ -43,17 +44,25 @@ export class AppComponent {
     });
   }
 
-  spoke(content: string) {
-    const newMessage: ConversationMessage = {
-      role: Role.User,
-      content
+  speaking(content: string) {
+    console.log('got speaking', content);
+    if (!this.ongoing) {
+      this.messages.push({role: Role.User, content: ''});
     }
-    this.messages.push(newMessage)
+    this.ongoing = true;
+    this.messages[this.messages.length - 1].content = content;
+  }
+
+  interact(unused: string) {
     this.openAI.prompt(this.messages).then(response => {
-      if (response && this.messages[this.messages.length-1] === newMessage) {
+      if (response) {
         this.messages.push(response);
       }
-    })
+    });
+  }
+
+  spoke(content: string) {
+    this.ongoing = false;
   }
 
   fakeResponse(content: string) {

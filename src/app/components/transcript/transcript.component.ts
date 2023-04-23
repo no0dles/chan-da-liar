@@ -24,8 +24,14 @@ export class TranscriptComponent implements OnInit {
   @Input()
   messages: ConversationMessage[] = [];
 
+  @Input()
+  ongoing = false;
+
   @Output()
   messagesChange = new EventEmitter<ConversationMessage[]>();
+
+  @Output()
+  interact = new EventEmitter<string>();
 
   constructor(private speaker: SpeakerService) {
   }
@@ -61,9 +67,18 @@ export class TranscriptComponent implements OnInit {
     this.messagesChange.emit(this.messages)
   }
 
+  sendText(message: ConversationMessage) {
+    this.interact.emit('');
+  }
+
   playMessage(message: string) {
     this.speaker.push('Response', message);
   }
+
+  isLast(message: ConversationMessage) {
+    return message === this.messages[this.messages.length - 1];
+  }
+
   isSystem(message: ConversationMessage) {
     return message.role == Role.System;
   }

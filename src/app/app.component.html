@@ -3,13 +3,16 @@
     <div class="flex flex-shrink-0 min-h-0">
       <app-microphone-lane
         *ngFor="let mic of state.microphones"
-        [microphone]="mic" (spoke)="spoke($event)"
+        [microphone]="mic" (speaking)="speaking($event)" (spoke)="spoke($event)"
         class="ml-3 my-3"></app-microphone-lane>
     </div>
 
     <app-transcript
       [systemMessage]="state.systemMessage"
-      class="flex-grow min-h-0 ml-3 mb-3" [(messages)]="messages" (messagesChange)="updateMessages($event)"></app-transcript>
+      (interact)="interact($event)"
+      [(messages)]="messages" (messagesChange)="updateMessages($event)"
+      [ongoing]="ongoing"
+      class="flex-grow min-h-0 ml-3 mb-3"></app-transcript>
 
     <div class="mb-3 ml-3 space-y-3 flex flex-col">
       <app-textarea #moderatorText [heading]="'Direct response'" (onEnter)="fakeResponse($event)"></app-textarea>

@@ -1,5 +1,4 @@
 import {
-  AfterViewInit,
   Component, EventEmitter,
   Input,
   OnDestroy,
@@ -8,17 +7,13 @@ import {
 } from '@angular/core';
 import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
 import { MicrophoneState } from '../../states/device.service';
-import {
-  AzureCognitiveService,
-  AzureCognitiveState,
-} from '../../states/azure-cognitive.service';
-import { SpeechRecognizer, SpeechSynthesizer } from 'microsoft-cognitiveservices-speech-sdk';
+import { AzureCognitiveService } from '../../states/azure-cognitive.service';
+import { SpeechRecognizer } from 'microsoft-cognitiveservices-speech-sdk';
 import {
   Recognizer,
   SpeechRecognitionEventArgs,
 } from 'microsoft-cognitiveservices-speech-sdk/distrib/lib/src/sdk/Exports';
 import { TranscriptComponent } from '../transcript/transcript.component';
-import { ConversationMessage, OpenAiService } from '../../states/open-ai.service';
 import { ToggleComponent } from '../toggle/toggle.component';
 import { ConfigService } from '../../config.service';
 import { firstValueFrom, Subscription } from 'rxjs';
@@ -39,6 +34,9 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   @Output()
   spoke = new EventEmitter<string>();
 
+  @Output()
+  speaking = new EventEmitter<string>();
+
   @Input()
   microphone!: MicrophoneState;
 
@@ -55,8 +53,6 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   constructor(
     private azureCognitive: AzureCognitiveService,
     private config: ConfigService,
-    private speaker: SpeakerService,
-    private openAI: OpenAiService,
   ) {}
 
   ngOnInit() {
@@ -104,6 +100,18 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
     //   sender.
     // }
 
+    recognizer.recognizing = (
+      sender: Recognizer,
+      event: SpeechRecognitionEventArgs,
+    ) => {
+      console.log('recognizing on', this.microphone.deviceName, ':', event.result.text);
+      if (!event.result.text) {
+        return;
+      }
+
+      this.speaking.emit(event.result.text)
+    };
+
     recognizer.recognized = (
       sender: Recognizer,
       event: SpeechRecognitionEventArgs,
@@ -115,6 +123,7 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
 
       this.spoke.emit(event.result.text)
     };
+
     this.recognizer = recognizer;
   }
 

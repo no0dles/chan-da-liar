@@ -13,15 +13,17 @@
       <div>{{messageContent(message)}}</div>
     </div>
     <div>
-      <button (click)="removeMessage(message)" *ngIf="isUser(message)" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">
+
+      <button (click)="removeMessage(message)" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">
         Remove
       </button>
-      <button (click)="playMessage(message.content)" *ngIf="isAssistant(message)" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">
-        Play
       <button (click)="toggleExpanded()" *ngIf="isSystem(message)" class="bg-indigo-100 m-1 rounded-md px-1 py-1 text-xs">
         {{ expanded ? 'Truncate' : 'Expand'}}
       </button>
       <button (click)="sendText(message)" *ngIf="isUser(message) && isLast(message)" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">
+        Interact
+      </button>
+      <button (click)="playMessage(message.content)" *ngIf="isAssistant(message)" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">
         Play
       </button>
     </div>
