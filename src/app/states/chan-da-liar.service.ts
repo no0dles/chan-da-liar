@@ -8,6 +8,7 @@ import { combineLatest, map, shareReplay } from 'rxjs';
 import { DeviceService, DeviceState, MicrophoneState } from './device.service';
 
 export interface ChanDaLiarState {
+  noneReady: boolean,
   ready: boolean;
   microphones: MicrophoneState[];
   output: MediaDeviceInfo | null;
@@ -41,6 +42,7 @@ export class ChanDaLiarService {
     device: DeviceState,
   ): ChanDaLiarState {
     return {
+      noneReady: !openAi.ready && !azureCognitive.ready && !device.ready,
       ready: openAi.ready && azureCognitive.ready && device.ready,
       output: device.selectedOutput,
       systemMessage: openAi.rolePlayScript,

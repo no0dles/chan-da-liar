@@ -1,5 +1,6 @@
 <button
-  class="bg-teal-500 text-white rounded-md px-3 disabled:bg-gray-400 py-2 w-full"
+  class="text-white rounded-md px-3 disabled:bg-gray-400 py-2 w-full"
+  [ngClass]="type === 'dangerous' ? ['bg-orange-500'] : ['bg-teal-500']"
   [disabled]="disabled">
   <ng-content></ng-content>
 </button>

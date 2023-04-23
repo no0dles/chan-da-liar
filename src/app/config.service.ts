@@ -32,4 +32,11 @@ export class ConfigService {
       this.subjects[key].next(value);
     }
   }
+
+  reset() {
+    localStorage.clear();
+    for (const subject of Object.values(this.subjects)) {
+      subject.next(null);
+    }
+  }
 }
