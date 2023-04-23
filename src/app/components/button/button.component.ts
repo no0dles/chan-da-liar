@@ -8,4 +8,12 @@ import { Component, Input } from '@angular/core';
 export class ButtonComponent {
   @Input()
   disabled = false;
+  @Input()
+  type = 'normal';
+  getClass() {
+    if (this.type === 'dangerous') {
+      return 'bg-orange-600';
+    }
+    return null;
+  }
 }
