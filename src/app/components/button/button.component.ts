@@ -14,6 +14,6 @@ export class ButtonComponent {
     if (this.type === 'dangerous') {
       return 'bg-orange-600';
     }
-    return null;
+    return 'bg-teal-500';
   }
 }
