@@ -19,8 +19,14 @@ export interface OpenAISettings {
   apiKey: string;
 }
 
+export enum Role {
+  Assistant = 'assistant',
+  User = 'user',
+  System = 'system'
+};
+
 export interface ConversationMessage {
-  role: 'assistant' | 'user' | 'system'
+  role: Role
   content: string;
 }
 
@@ -83,7 +89,7 @@ export class OpenAiService {
     }
 
     return {
-      role: 'assistant',
+      role: Role.Assistant,
       content: choice.message.content,
     }
   }

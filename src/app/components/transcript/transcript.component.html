@@ -13,10 +13,11 @@
       <div>{{message.content}}</div>
     </div>
     <div>
-      <button (click)="removeMessage(message)" *ngIf="message.role === 'user'" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">
+      <button (click)="removeMessage(message)" *ngIf="isUser(message)" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">
         Remove
       </button>
-      <button (click)="playMessage(message.content)" *ngIf="message.role === 'assistant'" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">
+      <button (click)="playMessage(message.content)" *ngIf="isAssistant(message)" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">
+        Play
         Play
       </button>
     </div>

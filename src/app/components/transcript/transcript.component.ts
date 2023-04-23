@@ -4,7 +4,7 @@ import {
   Input, OnInit,
   Output,
 } from '@angular/core';
-import { ConversationMessage } from '../../states/open-ai.service';
+import { ConversationMessage, Role } from '../../states/open-ai.service';
 import { faPlay, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { SpeakerService } from '../../states/speaker.service';
 
@@ -36,7 +36,7 @@ export class TranscriptComponent implements OnInit {
   private addSystemMessage() {
     if (this.systemMessage) {
       this.messages.push({
-        role: 'system',
+        role: Role.System,
         content: this.systemMessage,
       })
     }
@@ -63,4 +63,16 @@ export class TranscriptComponent implements OnInit {
   playMessage(message: string) {
     this.speaker.push('Response', message);
   }
+  isSystem(message: ConversationMessage) {
+    return message.role == Role.System;
+  }
+
+  isAssistant(message: ConversationMessage) {
+    return message.role == Role.Assistant;
+  }
+
+  isUser(message: ConversationMessage) {
+    return message.role == Role.User;
+  }
+
 }

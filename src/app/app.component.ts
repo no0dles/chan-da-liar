@@ -3,7 +3,7 @@ import { ModalService } from './modules/modal/modal.service';
 import { ConfigurationSidebarComponent } from './components/configuration-sidebar/configuration-sidebar.component';
 import { firstValueFrom } from 'rxjs';
 import { ChanDaLiarService } from './states/chan-da-liar.service';
-import { ConversationMessage, OpenAiService } from './states/open-ai.service';
+import { ConversationMessage, OpenAiService, Role } from './states/open-ai.service';
 import { SpeakerService } from './states/speaker.service';
 import { TextareaComponent } from './components/textarea/textarea.component';
 
@@ -45,8 +45,8 @@ export class AppComponent {
 
   spoke(content: string) {
     const newMessage: ConversationMessage = {
-      role: 'user',
-      content,
+      role: Role.User,
+      content
     }
     this.messages.push(newMessage)
     this.openAI.prompt(this.messages).then(response => {
@@ -59,14 +59,14 @@ export class AppComponent {
   fakeResponse(content: string) {
     this.messages.push({
       content,
-      role: 'assistant',
+      role: Role.Assistant,
     })
     this.speaker.push('direct', content);
     this.moderatorText?.clear();
   }
 
   updateMessages(messages: ConversationMessage[]) {
-    if (messages.length > 0 && messages[messages.length-1].role === 'assistant') {
+    if (messages.length > 0 && messages[messages.length - 1].role === Role.Assistant) {
       return;
     }
 
