@@ -14,18 +14,10 @@ import {
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 import { Cache } from '../utils/cache';
 import { ChatCompletionRequestMessage } from 'openai/api';
+import { OngoingRecogniztion } from '../components/microphone-lane/microphone-lane.component';
 
 export interface OpenAISettings {
   apiKey: string;
-}
-
-export interface ConversationMessage {
-  role: 'assistant' | 'user' | 'system'
-  content: string;
-}
-
-export interface MessageResponse {
-  choices: string[];
 }
 
 export interface OpenAIState {
@@ -37,6 +29,11 @@ export interface OpenAIState {
   selectedModel: Model | null;
   ready: boolean;
   error: string | null;
+}
+
+export interface PromptMessage {
+  role: 'system' | 'user' | 'assistant'
+  content: string;
 }
 
 @Injectable({
@@ -64,28 +61,52 @@ export class OpenAiService {
   constructor(private config: ConfigService) {}
 
   async prompt(
-    messages: ConversationMessage[],
-  ): Promise<ConversationMessage | null> {
+    messages: PromptMessage[],
+  ): Promise<OngoingRecogniztion | null> {
     const openAiState = await firstValueFrom(this.state$);
-    if (!openAiState.openai || !openAiState.selectedModel) {
+    if (!openAiState.settings || !openAiState.selectedModel) {
       return null;
     }
 
-    const response = await openAiState.openai
-      .createChatCompletion({
-        messages,
-        model: openAiState.selectedModel.id,
-        //stream: true,
+    const response = await fetch(
+      'https://api.openai.com/v1/chat/completions', {
+        method: 'post',
+        headers: new Headers({
+          // https://platform.openai.com/account/usage
+          'Authorization': `Bearer ${openAiState.settings.apiKey}`,
+          'Content-Type': 'application/json'
+        }),
+        body: JSON.stringify({
+          model: openAiState.selectedModel,
+          messages: messages,
+          stream: true,
+        }),
       });
-    const choice = response.data.choices[0];
-    if (!choice || !choice.message) {
+    const reader = response.body?.pipeThrough(new TextDecoderStream()).getReader();
+    if (!reader) {
       return null;
     }
-
-    return {
-      role: 'assistant',
-      content: choice.message.content,
+    let content = '';
+    while (true) {
+      const {value, done} = await reader.read();
+      if (done) break;
+      for (const line of value.split(/\n\n/g)) {
+        console.log(line)
+        if (!line.startsWith('data: ')) continue;
+        const data = line.replace(/^data: /, '');
+        if (data !== '[DONE]') {
+          const d = JSON.parse(data);
+          const delta = d.choices[0].delta.content;
+          if (delta) {
+            // console.info('chatgpt partial:', Date.now() - t0, delta);
+            console.log('delta', delta)
+            content += delta;
+          }
+        }
+      }
     }
+
+    return null;
   }
 
   async getModels(openai: OpenAIApi) {

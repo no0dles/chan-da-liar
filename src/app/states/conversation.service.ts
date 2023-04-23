@@ -1,35 +1,125 @@
-import {Injectable} from '@angular/core';
-import {OngoingRecogniztion, TextRecogniztion} from '../components/microphone-lane/microphone-lane.component';
-import {BehaviorSubject, Observable} from 'rxjs';
+import { Injectable } from '@angular/core';
+import {
+  OngoingRecogniztion,
+  TextRecogniztion,
+} from '../components/microphone-lane/microphone-lane.component';
+import { BehaviorSubject, firstValueFrom, Observable } from 'rxjs';
+import { OpenAiService, OpenAIState } from './open-ai.service';
+import { Recording } from './prerecording.service';
 
-export type ConversationRole = 'assistant' | 'user'
+export type ConversationRole = 'assistant' | 'user' | 'system';
 export type Decision = 'yes' | 'skip' | 'open';
 
-export interface ConversationMessagePart {
-  text: string
-  decision: Decision
-  highlight: boolean
+export interface CompletedConversationMessage {
+  id: number;
+  text: string;
+  decision: Decision;
+  highlight: boolean;
+  queued: boolean;
+  played: boolean;
+  role: ConversationRole;
+  completed: true;
 }
 
-export interface ConversationMessage {
-  parts: ConversationMessagePart[]
-  ongoing: OngoingRecogniztion | null
-  role: ConversationRole
+export interface OngoingConversationMessage {
+  id: number;
+  text$: Observable<string>;
+  role: ConversationRole;
+  textPrefix?: string;
+  completed: false;
 }
+
+export type ConversationMessage =
+  | OngoingConversationMessage
+  | CompletedConversationMessage;
 
 @Injectable({
   providedIn: 'root',
 })
 export class ConversationService {
-  messagesSubject = new BehaviorSubject<ConversationMessage[]>([])
-  messageMap: {[key:number]: ConversationMessage} = {};
-  parts: ConversationMessagePart[] = [];
-  highlightedPart: ConversationMessagePart | null = null;
+  messagesSubject = new BehaviorSubject<ConversationMessage[]>([]);
+  highlightSubject = new BehaviorSubject<CompletedConversationMessage | null>(
+    null,
+  );
+  messageMap: {[key: number]: ConversationMessage} = {};
 
   messages$ = this.messagesSubject.asObservable();
+  highlight$ = this.highlightSubject.asObservable();
+
+  constructor(private openAI: OpenAiService) {
+    this.openAI.state$.subscribe((state) => {
+      this.clear(state);
+    });
+
+    window.addEventListener('keydown', (evt) => {
+      if (evt.code === 'Space') {
+        if (this.highlightSubject.value) {
+          this.highlightSubject.value.decision = 'yes';
+          this.goToNextPart(this.highlightSubject.value);
+          this.messagesSubject.next(this.messagesSubject.value);
+        }
+      } else if (evt.code === 'ArrowRight' || evt.code === 'Tab') {
+        if (
+          this.highlightSubject.value &&
+          this.highlightSubject.value.decision === 'open'
+        ) {
+          this.highlightSubject.value.decision = 'skip';
+          this.goToNextPart(this.highlightSubject.value);
+          this.messagesSubject.next(this.messagesSubject.value);
+        }
+        evt.preventDefault();
+        evt.stopPropagation();
+      } else if (evt.code === 'ArrowLeft') {
+        if (this.highlightSubject.value) {
+          // TODO allow back
+        }
+      }
+    });
+  }
+
+  private goToNextPart(part: CompletedConversationMessage) {
+    part.highlight = false;
+
+    const index = this.messagesSubject.value.indexOf(part);
+    if (index < this.messagesSubject.value.length - 1) {
+      const highlightedPart = this.messagesSubject.value[index + 1];
+      if (highlightedPart.completed) {
+        highlightedPart.highlight = true;
+        this.highlightSubject.next(highlightedPart);
+      } else {
+        this.highlightSubject.next(null);
+      }
+    } else {
+      this.highlightSubject.next(null);
+    }
+  }
+
+  async clear(state?: OpenAIState) {
+    if (!state) {
+      state = await firstValueFrom(this.openAI.state$);
+    }
+
+    const messageId = Date.now();
+    this.messagesSubject.next(
+      state.rolePlayScript
+        ? [
+            {
+              role: 'system',
+              id: messageId,
+              decision: 'yes',
+              completed: true,
+              highlight: false,
+              played: true,
+              queued: true,
+              text: state.rolePlayScript,
+            },
+          ]
+        : [],
+    );
+    this.highlightSubject.next(null);
+  }
 
   test() {
-
     // const newMessage: ConversationMessage = {
     //   role: 'user',
     //   content,
@@ -42,53 +132,84 @@ export class ConversationService {
     // })
   }
 
+  pushPrerecording(recording: Recording) {
+    this.addCompletedMessage(Date.now(), recording.content, 'assistant', 'yes')
+  }
+
   push(text: TextRecogniztion) {
-    const existing = this.messageMap[text.messageId];
+    const existing = this.messageMap[text.id];
     if (existing) {
-      this.updateText(text, existing)
+      this.updateMessage(text, existing);
     } else {
-      this.addText(text)
+      this.addMessage(text);
     }
+  }
+
+  private addCompletedMessage(id: number,
+    text: string, role: ConversationRole, decision: Decision
+  ): CompletedConversationMessage {
+    const newMessage: CompletedConversationMessage = {
+      text,
+      id,
+      decision,
+      highlight: false,
+      played: false,
+      queued: false,
+      role,
+      completed: true,
+    };
+    this.messageMap[newMessage.id] = newMessage;
+    this.messagesSubject.value.push(newMessage);
+    if (!this.highlightSubject.value) {
+      newMessage.highlight = true;
+      this.highlightSubject.next(newMessage);
+    }
+    this.messagesSubject.next(this.messagesSubject.value);
+    return newMessage;
+  }
+
+  private addOngoingMessage(id: number, text$: Observable<string>, role: ConversationRole) {
+    const newMessage: OngoingConversationMessage = {
+      id,
+      text$,
+      completed: false,
+      role,
+    }
+    this.messageMap[newMessage.id] = newMessage;
+    this.messagesSubject.value.push(newMessage);
     this.messagesSubject.next(this.messagesSubject.value);
   }
 
-  private addPart(text: string): ConversationMessagePart {
-    const part: ConversationMessagePart = {text, decision: 'open', highlight: false}
-    this.parts.push(part)
-    if (!this.highlightedPart) {
-      this.highlightedPart = part;
-      part.highlight = true;
+  private addMessage(text: TextRecogniztion) {
+    if (text.completed) {
+      this.addCompletedMessage(text.id, text.text, text.role, 'open');
+    } else {
+      this.addOngoingMessage(text.id, text.text$, text.role)
     }
-    return part;
   }
 
-  private addText(text: TextRecogniztion) {
+  private updateMessage(text: TextRecogniztion, message: ConversationMessage) {
     if (text.completed) {
-      const message: ConversationMessage = {
-        parts: [this.addPart(text.text)],
-        ongoing: null,
-        role: text.role,
+      if (!message.completed) {
+        const completedMessage: CompletedConversationMessage = {
+          text: text.text,
+          id: message.id,
+          completed: true,
+          role: message.role,
+          played: false,
+          highlight: false,
+          decision: 'open',
+          queued: false,
+        }
+        if (!this.highlightSubject.value) {
+          completedMessage.highlight = true;
+          this.highlightSubject.next(completedMessage);
+        }
+        this.messageMap[message.id] = completedMessage;
+        const index = this.messagesSubject.value.indexOf(message);
+        this.messagesSubject.value.splice(index, 1, completedMessage);
+        this.messagesSubject.next(this.messagesSubject.value);
       }
-      this.messageMap[text.messageId] = message;
-      this.messagesSubject.value.push(message)
-    } else {
-      const message: ConversationMessage = {
-        parts: [],
-        ongoing: text,
-        role: text.role,
-      }
-      this.messageMap[text.messageId] = message;
-      this.messagesSubject.value.push(message)
-    }
-  }
-  private updateText(text: TextRecogniztion, message: ConversationMessage) {
-    if (text.completed) {
-      if (message.ongoing && message.ongoing.partId === text.partId) {
-        message.ongoing = null;
-      }
-      message.parts.push(this.addPart(text.text))
-    } else {
-      message.ongoing = text
     }
   }
 }

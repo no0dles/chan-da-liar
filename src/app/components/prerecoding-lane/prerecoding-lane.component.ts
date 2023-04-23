@@ -1,5 +1,5 @@
 import { Component, ViewContainerRef } from '@angular/core';
-import { faEdit, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faPlay, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ModalService } from '../../modules/modal/modal.service';
 import { ConfigurationPrerecordingSidebarComponent } from '../configuration-prerecording-sidebar/configuration-prerecording-sidebar.component';
 import {
@@ -7,6 +7,7 @@ import {
   Recording,
 } from '../../states/prerecording.service';
 import { SpeakerService } from '../../states/speaker.service';
+import { ConversationService } from '../../states/conversation.service';
 
 @Component({
   selector: 'app-prerecoding-lane',
@@ -14,14 +15,14 @@ import { SpeakerService } from '../../states/speaker.service';
   styleUrls: ['./prerecoding-lane.component.scss'],
 })
 export class PrerecodingLaneComponent {
-  plusIcon = faPlus;
-  editIcon = faEdit;
+  playIcon = faPlay;
 
   state$ = this.prerecording.state$;
   constructor(
     private modal: ModalService,
     private prerecording: PrerecordingService,
     private speaker: SpeakerService,
+    private conversation: ConversationService,
     private viewContainerRef: ViewContainerRef,
   ) {}
 
@@ -46,6 +47,6 @@ export class PrerecodingLaneComponent {
   }
 
   play(rec: Recording) {
-    this.speaker.push('Prerecording', rec.content);
+    this.conversation.pushPrerecording(rec);
   }
 }

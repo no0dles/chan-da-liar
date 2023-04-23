@@ -3,11 +3,12 @@ import {ModalService} from './modules/modal/modal.service';
 import {ConfigurationSidebarComponent} from './components/configuration-sidebar/configuration-sidebar.component';
 import {firstValueFrom} from 'rxjs';
 import {ChanDaLiarService} from './states/chan-da-liar.service';
-import {ConversationMessage, OpenAiService} from './states/open-ai.service';
+import {OpenAiService} from './states/open-ai.service';
 import {SpeakerService} from './states/speaker.service';
 import {TextareaComponent} from './components/textarea/textarea.component';
 import {TextRecogniztion} from './components/microphone-lane/microphone-lane.component';
 import {ConversationService} from './states/conversation.service';
+import { faGear } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-root',
@@ -15,10 +16,7 @@ import {ConversationService} from './states/conversation.service';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
-  @ViewChild('moderatorText')
-  moderatorText?: TextareaComponent;
-
-  messages: ConversationMessage[] = [];
+  settingsIcon = faGear;
 
   state$ = this.chanDaLiar.state$;
 
@@ -27,8 +25,7 @@ export class AppComponent {
     private viewContainerRef: ViewContainerRef,
     private openAI: OpenAiService,
     private chanDaLiar: ChanDaLiarService,
-    private conversation: ConversationService,
-    private speaker: SpeakerService,
+    private conversation: ConversationService
   ) {
     firstValueFrom(this.state$).then((state) => {
       if (!state.ready) {
@@ -47,29 +44,6 @@ export class AppComponent {
   }
 
   spoke(content: TextRecogniztion) {
-    console.log(content)
     this.conversation.push(content);
   }
-
-  fakeResponse(content: string) {
-    this.messages.push({
-      content,
-      role: 'assistant',
-    });
-    this.speaker.push('direct', content);
-    this.moderatorText?.clear();
-  }
-
-  updateMessages(messages: ConversationMessage[]) {
-    if (messages.length > 0 && messages[messages.length - 1].role === 'assistant') {
-      return;
-    }
-
-    this.openAI.prompt(messages).then(response => {
-      if (response) {
-        this.messages.push(response);
-      }
-    });
-  }
-
 }

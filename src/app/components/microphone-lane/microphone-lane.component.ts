@@ -1,7 +1,7 @@
 import {Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild} from '@angular/core';
 import {MicrophoneState} from '../../states/device.service';
 import {AzureCognitiveService} from '../../states/azure-cognitive.service';
-import {OutputFormat, SpeechRecognizer} from 'microsoft-cognitiveservices-speech-sdk';
+import {SpeechRecognizer} from 'microsoft-cognitiveservices-speech-sdk';
 import {
   Recognizer,
   SpeechRecognitionEventArgs,
@@ -12,8 +12,7 @@ import {OpenAiChatPreviewComponent} from '../chat-gpt-preview/open-ai-chat-previ
 import {ConversationRole} from '../../states/conversation.service';
 
 export interface OngoingRecogniztion {
-  messageId: number;
-  partId: number
+  id: number;
   text$: Observable<string>
   completed: false
   textPrefix?: string
@@ -21,8 +20,7 @@ export interface OngoingRecogniztion {
 }
 
 export interface CompleteRecogniztion {
-  messageId: number;
-  partId: number
+  id: number;
   text: string
   completed: true;
   textPrefix?: string
@@ -32,8 +30,7 @@ export interface CompleteRecogniztion {
 export type TextRecogniztion = CompleteRecogniztion | OngoingRecogniztion;
 
 export interface RecongniztionState {
-  messageStartedAt: number
-  partStartedAt: number;
+  startedAt: number
   updateSubject: ReplaySubject<string>
 }
 
@@ -112,8 +109,7 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
           completed: false,
           text$: this.state.updateSubject.asObservable(),
           textPrefix: this.microphone.prefix,
-          messageId: this.state.messageStartedAt,
-          partId: this.state.partStartedAt,
+          id: this.state.startedAt,
           role: 'user',
         })
       }
@@ -140,7 +136,7 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
 
   private updateMessage(state: RecongniztionState, text: string) {
     console.log(text)
-    const cs = Date.now() - state.partStartedAt > 1000 ? '?!.,-' : '?!.';
+    const cs = Date.now() - state.startedAt > 1000 ? '?!.,-' : '?!.';
     for (const c of cs) {
       const i = text.lastIndexOf(c);
       if (i !== -1) {
@@ -155,19 +151,17 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
       completed: true,
       text,
       textPrefix: this.microphone.prefix,
-      messageId: state.messageStartedAt,
-      partId: state.partStartedAt,
+      id: state.startedAt,
       role: 'user',
     })
 
-    state.partStartedAt = Date.now();
+    state.startedAt = Date.now();
     state.updateSubject.next(openText)
     this.spoke.emit({
       completed: false,
       text$: state.updateSubject,
       textPrefix: this.microphone.prefix,
-      messageId: state.messageStartedAt,
-      partId: state.partStartedAt,
+      id: state.startedAt,
       role: 'user',
     })
   }
@@ -177,8 +171,7 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
       completed: true,
       textPrefix: this.microphone.prefix,
       text: text,
-      messageId: state.messageStartedAt,
-      partId: state.partStartedAt,
+      id: state.startedAt,
       role: 'user',
     })
 
@@ -187,8 +180,7 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
 
   private createState(): RecongniztionState {
     return {
-      messageStartedAt: Date.now(),
-      partStartedAt: Date.now(),
+      startedAt: Date.now(),
       updateSubject: new ReplaySubject<string>(),
     }
   }

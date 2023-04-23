@@ -7,19 +7,25 @@
   </button>
 </div>
 
-<div class="flex flex-col items-start flex-grow min-h-0 px-3 space-y-3 overflow-y-scroll">
-  <div *ngFor="let message of messages$ | async" class="message" [ngClass]="message.role">
-    <div class="part" *ngFor="let part of message.parts" [ngClass]="{'highlight': part.highlight}">
-      {{part.text}}
+<div class="flex flex-col items-start flex-grow min-h-0 overflow-y-scroll" #container>
+  <div class="flex flex-col" #messagelist>
+    <div *ngFor="let message of messages$ | async" class="message" [ngClass]="message.role" [attr.data-part-id]="message.id">
+      <div class="part" *ngIf="message.completed"
+           [ngClass]="message.highlight ? ['highlight', message.role, 'decision-' + message.decision] : [message.role, 'decision-' + message.decision]">
+        {{message.text}}
+
+        <div class="keys" *ngIf="message.highlight">
+          <div class="key">
+            <fa-icon [icon]="checkIcon" class="mr-1"></fa-icon>
+            SPACE
+          </div>
+          <div class="key">
+            <fa-icon [icon]="clearIcon" class="mr-1"></fa-icon>
+            TAB
+          </div>
+        </div>
+      </div>
+      <div *ngIf="!message.completed" class="part ongoing">{{message.text$ | async}}...</div>
     </div>
-    <div *ngIf="message.ongoing">{{message.ongoing.text$ | async}}</div>
-<!--    <div>-->
-<!--      <button (click)="removeMessage(message)" *ngIf="message.role === 'user'" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">-->
-<!--        Remove-->
-<!--      </button>-->
-<!--      <button (click)="playMessage(message.content)" *ngIf="message.role === 'assistant'" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">-->
-<!--        Play-->
-<!--      </button>-->
-<!--    </div>-->
   </div>
 </div>
