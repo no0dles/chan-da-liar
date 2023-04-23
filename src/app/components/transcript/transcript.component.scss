@@ -3,49 +3,45 @@
 }
 
 .message {
-  @apply flex;
+  @apply flex px-2 py-1 my-2 mx-3 rounded-md relative self-start;
 
-  .part {
-    @apply px-2 py-1 my-2 mx-3 rounded-md relative;
+  &.system {
+    @apply text-xs bg-teal-100 border border-teal-700;
+  }
 
-    .keys {
-      @apply absolute -bottom-3 left-1 flex space-x-2;
+  &.assistant {
+    @apply bg-teal-100 border border-teal-700 self-end ml-8;
+  }
 
-      .key {
-        @apply bg-black rounded text-white flex px-2 text-xs;
-      }
+  &.user {
+    @apply bg-gray-200 text-gray-800 border border-gray-700 mr-8;
+  }
+
+  .keys {
+    @apply absolute -bottom-3 left-1 flex space-x-2;
+
+    .key {
+      @apply bg-black rounded text-white flex px-2 text-xs;
     }
+  }
 
-    &.system {
-      @apply text-xs bg-teal-100 border border-teal-700;
-    }
+  &.decision-open {
+    @apply border border-teal-700 bg-gray-200 text-gray-800;
+  }
 
-    &.assistant {
-      @apply bg-teal-100 border border-teal-700;
-    }
+  &.decision-skip {
+    @apply border-dashed line-through bg-opacity-50 bg-gray-100;
+  }
 
-    &.user {
-      @apply bg-gray-200 text-gray-800 border border-gray-700;
-    }
+  &.decision-yes {
+    @apply border border-teal-700 bg-teal-100 text-teal-600;
+  }
 
-    &.decision-open {
-      @apply border border-teal-700 bg-gray-200 text-gray-800;
-    }
+  &.highlight {
+    @apply border-2 mb-4;
+  }
 
-    &.decision-skip {
-      @apply border-dashed line-through bg-opacity-50 bg-gray-100;
-    }
-
-    &.decision-yes {
-      @apply border border-teal-700 bg-teal-100 text-teal-600;
-    }
-
-    &.highlight {
-      @apply border-2 mb-4;
-    }
-
-    &.ongoing {
-      @apply bg-gray-200 text-gray-800;
-    }
+  &.ongoing {
+    @apply bg-gray-200 text-gray-800;
   }
 }

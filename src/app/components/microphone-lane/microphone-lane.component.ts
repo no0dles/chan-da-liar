@@ -136,13 +136,13 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
 
   private updateMessage(state: RecongniztionState, text: string) {
     console.log(text)
-    const cs = Date.now() - state.startedAt > 1000 ? '?!.,-' : '?!.';
-    for (const c of cs) {
-      const i = text.lastIndexOf(c);
-      if (i !== -1) {
-        this.completePart(state, text.substring(0, i + 1), text.substring(i + 1))
-      }
-    }
+    // const cs = Date.now() - state.startedAt > 1000 ? '?!.,-' : '?!.';
+    // for (const c of cs) {
+    //   const i = text.lastIndexOf(c);
+    //   if (i !== -1) {
+    //     this.completePart(state, text.substring(0, i + 1), text.substring(i + 1))
+    //   }
+    // }
     state.updateSubject.next(text)
   }
 

@@ -3,7 +3,7 @@
   <div
     class="flex items-center space-x-3"
     *ngFor="let rec of state.recordings; let index = index">
-    <app-button (click)="play(rec)" class="flex-grow min-w-0">
+    <app-button (click)="play(rec, $event)" class="flex-grow min-w-0">
       <div class="flex items-center space-x-3">
         <fa-icon [icon]="playIcon"></fa-icon>
         <div class="text-left text-sm">

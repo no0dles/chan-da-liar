@@ -46,7 +46,9 @@ export class PrerecodingLaneComponent {
     });
   }
 
-  play(rec: Recording) {
+  play(rec: Recording, event: Event) {
     this.conversation.pushPrerecording(rec);
+    const elm = event.target as HTMLElement;
+    elm.blur();
   }
 }

@@ -133,7 +133,14 @@ export class ConversationService {
   }
 
   pushPrerecording(recording: Recording) {
-    this.addCompletedMessage(Date.now(), recording.content, 'assistant', 'yes')
+    const newMessage = this.createCompletedMessage(Date.now(), recording.content, 'assistant', 'yes')
+    const lastDecisionIndex = this.messagesSubject.value.findIndex(m => !m.completed || m.decision === 'open');
+    if(lastDecisionIndex >= 0) {
+      this.messagesSubject.value.splice(lastDecisionIndex, 0, newMessage)
+    } else {
+      this.messagesSubject.value.push(newMessage)
+    }
+    this.messagesSubject.next(this.messagesSubject.value);
   }
 
   push(text: TextRecogniztion) {
@@ -145,7 +152,7 @@ export class ConversationService {
     }
   }
 
-  private addCompletedMessage(id: number,
+  private createCompletedMessage(id: number,
     text: string, role: ConversationRole, decision: Decision
   ): CompletedConversationMessage {
     const newMessage: CompletedConversationMessage = {
@@ -159,12 +166,10 @@ export class ConversationService {
       completed: true,
     };
     this.messageMap[newMessage.id] = newMessage;
-    this.messagesSubject.value.push(newMessage);
-    if (!this.highlightSubject.value) {
+    if (!this.highlightSubject.value && decision==='open') {
       newMessage.highlight = true;
       this.highlightSubject.next(newMessage);
     }
-    this.messagesSubject.next(this.messagesSubject.value);
     return newMessage;
   }
 
@@ -182,7 +187,9 @@ export class ConversationService {
 
   private addMessage(text: TextRecogniztion) {
     if (text.completed) {
-      this.addCompletedMessage(text.id, text.text, text.role, 'open');
+      const newMessage = this.createCompletedMessage(text.id, text.text, text.role, 'open');
+      this.messagesSubject.value.push(newMessage);
+      this.messagesSubject.next(this.messagesSubject.value);
     } else {
       this.addOngoingMessage(text.id, text.text$, text.role)
     }
@@ -191,21 +198,7 @@ export class ConversationService {
   private updateMessage(text: TextRecogniztion, message: ConversationMessage) {
     if (text.completed) {
       if (!message.completed) {
-        const completedMessage: CompletedConversationMessage = {
-          text: text.text,
-          id: message.id,
-          completed: true,
-          role: message.role,
-          played: false,
-          highlight: false,
-          decision: 'open',
-          queued: false,
-        }
-        if (!this.highlightSubject.value) {
-          completedMessage.highlight = true;
-          this.highlightSubject.next(completedMessage);
-        }
-        this.messageMap[message.id] = completedMessage;
+        const completedMessage = this.createCompletedMessage(message.id, text.text, text.role, 'open')
         const index = this.messagesSubject.value.indexOf(message);
         this.messagesSubject.value.splice(index, 1, completedMessage);
         this.messagesSubject.next(this.messagesSubject.value);
