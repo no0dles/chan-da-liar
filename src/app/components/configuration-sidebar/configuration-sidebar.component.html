@@ -9,5 +9,5 @@
   </div>
 
   <app-button *ngIf="!state.none_ready" (click)="reset()" [type]="'dangerous'">Reset</app-button>
-  <app-button [disabled]="!state.ready" (click)="dismiss()">Start</app-button>
+  <app-button [disabled]="!state.ready" (click)="dismiss()">Done</app-button>
 </ng-container>
