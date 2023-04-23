@@ -16,6 +16,7 @@ import { SpeakerService } from '../../states/speaker.service';
 export class TranscriptComponent implements OnInit {
   clearIcon = faTimes;
   playIcon = faPlay;
+  expanded = false;
 
   @Input()
   systemMessage?: string | null;
@@ -75,4 +76,18 @@ export class TranscriptComponent implements OnInit {
     return message.role == Role.User;
   }
 
+  messageContent(message: ConversationMessage) {
+    if (message.role != Role.System) {
+      return message.content;
+    }
+    if (this.expanded || message.content.length < 120) {
+      return message.content;
+    } else {
+      return message.content.substring(0, 120) + '...';
+    }
+  }
+
+  toggleExpanded() {
+    this.expanded = !this.expanded;
+  }
 }

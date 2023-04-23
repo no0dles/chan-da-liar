@@ -10,7 +10,7 @@
 <div class="flex flex-col items-start flex-grow min-h-0 px-3 space-y-3 overflow-y-scroll">
   <div *ngFor="let message of messages" class="flex flex-col" [ngClass]="{'self-end': message.role === 'assistant'}">
     <div class="message" [ngClass]="message.role">
-      <div>{{message.content}}</div>
+      <div>{{messageContent(message)}}</div>
     </div>
     <div>
       <button (click)="removeMessage(message)" *ngIf="isUser(message)" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">
@@ -18,6 +18,10 @@
       </button>
       <button (click)="playMessage(message.content)" *ngIf="isAssistant(message)" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">
         Play
+      <button (click)="toggleExpanded()" *ngIf="isSystem(message)" class="bg-indigo-100 m-1 rounded-md px-1 py-1 text-xs">
+        {{ expanded ? 'Truncate' : 'Expand'}}
+      </button>
+      <button (click)="sendText(message)" *ngIf="isUser(message) && isLast(message)" class="bg-teal-100 m-1 rounded-md px-1 py-1 text-xs">
         Play
       </button>
     </div>
