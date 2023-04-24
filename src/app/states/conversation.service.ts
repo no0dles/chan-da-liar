@@ -1,17 +1,14 @@
 import { Injectable } from '@angular/core';
-import {
-  OngoingRecogniztion,
-  TextRecogniztion,
-} from '../components/microphone-lane/microphone-lane.component';
-import { BehaviorSubject, firstValueFrom, Observable } from 'rxjs';
-import { OpenAiService, OpenAIState } from './open-ai.service';
+import { BehaviorSubject, firstValueFrom, Observable, Subscription } from 'rxjs';
+import { OpenAiService, OpenAIState, PromptMessage } from './open-ai.service';
 import { Recording } from './prerecording.service';
+import { OngoingRecognition } from './ongoing-recognizer';
 
 export type ConversationRole = 'assistant' | 'user' | 'system';
 export type Decision = 'yes' | 'skip' | 'open';
 
 export interface CompletedConversationMessage {
-  id: number;
+  id: number
   text: string;
   decision: Decision;
   highlight: boolean;
@@ -22,11 +19,17 @@ export interface CompletedConversationMessage {
 }
 
 export interface OngoingConversationMessage {
-  id: number;
+  id: number
   text$: Observable<string>;
   role: ConversationRole;
   textPrefix?: string;
   completed: false;
+}
+
+export interface OngoingConversationRecognition {
+  recognition: OngoingRecognition;
+  insertAt: number;
+  subscription: Subscription;
 }
 
 export type ConversationMessage =
@@ -41,7 +44,7 @@ export class ConversationService {
   highlightSubject = new BehaviorSubject<CompletedConversationMessage | null>(
     null,
   );
-  messageMap: {[key: number]: ConversationMessage} = {};
+  ongoingConversations: OngoingConversationRecognition[] = [];
 
   messages$ = this.messagesSubject.asObservable();
   highlight$ = this.highlightSubject.asObservable();
@@ -81,6 +84,9 @@ export class ConversationService {
     part.highlight = false;
 
     const index = this.messagesSubject.value.indexOf(part);
+    if (part.role === 'user' && part.decision === 'yes') {
+      this.resolve(index);
+    }
     if (index < this.messagesSubject.value.length - 1) {
       const highlightedPart = this.messagesSubject.value[index + 1];
       if (highlightedPart.completed) {
@@ -104,8 +110,8 @@ export class ConversationService {
       state.rolePlayScript
         ? [
             {
+              id: Date.now(),
               role: 'system',
-              id: messageId,
               decision: 'yes',
               completed: true,
               highlight: false,
@@ -116,26 +122,35 @@ export class ConversationService {
           ]
         : [],
     );
+    this.ongoingConversations = [];
     this.highlightSubject.next(null);
   }
 
-  test() {
-    // const newMessage: ConversationMessage = {
-    //   role: 'user',
-    //   content,
-    // }
-    // this.messages.push(newMessage)
-    // this.openAI.prompt(this.messages).then(response => {
-    //   if (response && this.messages[this.messages.length-1] === newMessage) {
-    //     this.messages.push(response);
-    //   }
-    // })
+  resolve(untilIndex: number) {
+    const promptMessages: PromptMessage[] = [];
+    for (let i = 0; i < untilIndex; i++) {
+      const message = this.messagesSubject.value[i];
+      if (!message.completed) {
+        continue;
+      }
+      if (message.decision !== 'yes') {
+        continue;
+      }
+      promptMessages.push({
+        content: message.text,
+        role: message.role,
+      });
+    }
+
+    this.openAI.prompt(promptMessages).then(recogniztion => {
+      this.push(recogniztion, untilIndex+1);
+    })
   }
 
   pushPrerecording(recording: Recording) {
-    const newMessage = this.createCompletedMessage(Date.now(), recording.content, 'assistant', 'yes')
+    const newMessage = this.createCompletedMessage(recording.content, 'assistant', 'yes')
     const lastDecisionIndex = this.messagesSubject.value.findIndex(m => !m.completed || m.decision === 'open');
-    if(lastDecisionIndex >= 0) {
+    if (lastDecisionIndex >= 0) {
       this.messagesSubject.value.splice(lastDecisionIndex, 0, newMessage)
     } else {
       this.messagesSubject.value.push(newMessage)
@@ -143,21 +158,53 @@ export class ConversationService {
     this.messagesSubject.next(this.messagesSubject.value);
   }
 
-  push(text: TextRecogniztion) {
-    const existing = this.messageMap[text.id];
-    if (existing) {
-      this.updateMessage(text, existing);
-    } else {
-      this.addMessage(text);
+  push(recognition: OngoingRecognition, insertAt?: number) {
+    const ongoingMessage: OngoingConversationMessage = {
+      id: Date.now(),
+      text$: recognition.text$,
+      completed: false,
+      role: recognition.role,
     }
+
+    let currentIndex = insertAt ?? this.messagesSubject.value.length;
+
+    const ongoingConversation: OngoingConversationRecognition = {
+      insertAt: currentIndex,
+      recognition,
+      subscription: recognition.completed.subscribe(completed => {
+        const message = this.createCompletedMessage(completed, recognition.role, 'open')
+        this.messagesSubject.value.splice(currentIndex-1, 1, message, ongoingMessage)
+        this.messagesSubject.next(this.messagesSubject.value);
+        currentIndex++
+      })
+    };
+
+    this.ongoingConversations.push(ongoingConversation);
+    this.messagesSubject.value.splice(currentIndex, 0, ongoingMessage)
+    this.messagesSubject.next(this.messagesSubject.value);
+    currentIndex++
+
+    recognition.end.then(() => {
+      ongoingConversation.subscription?.unsubscribe();
+      const index = this.ongoingConversations.indexOf(ongoingConversation)
+      if (index >= 0) {
+        this.ongoingConversations.splice(index, 1);
+      }
+
+      const ongoingIndex = this.messagesSubject.value.indexOf(ongoingMessage);
+      if (ongoingIndex >= 0) {
+        this.messagesSubject.value.splice(ongoingIndex, 1);
+        this.messagesSubject.next(this.messagesSubject.value);
+      }
+    })
   }
 
-  private createCompletedMessage(id: number,
+  private createCompletedMessage(
     text: string, role: ConversationRole, decision: Decision
   ): CompletedConversationMessage {
     const newMessage: CompletedConversationMessage = {
+      id: Date.now(),
       text,
-      id,
       decision,
       highlight: false,
       played: false,
@@ -165,44 +212,10 @@ export class ConversationService {
       role,
       completed: true,
     };
-    this.messageMap[newMessage.id] = newMessage;
     if (!this.highlightSubject.value && decision==='open') {
       newMessage.highlight = true;
       this.highlightSubject.next(newMessage);
     }
     return newMessage;
-  }
-
-  private addOngoingMessage(id: number, text$: Observable<string>, role: ConversationRole) {
-    const newMessage: OngoingConversationMessage = {
-      id,
-      text$,
-      completed: false,
-      role,
-    }
-    this.messageMap[newMessage.id] = newMessage;
-    this.messagesSubject.value.push(newMessage);
-    this.messagesSubject.next(this.messagesSubject.value);
-  }
-
-  private addMessage(text: TextRecogniztion) {
-    if (text.completed) {
-      const newMessage = this.createCompletedMessage(text.id, text.text, text.role, 'open');
-      this.messagesSubject.value.push(newMessage);
-      this.messagesSubject.next(this.messagesSubject.value);
-    } else {
-      this.addOngoingMessage(text.id, text.text$, text.role)
-    }
-  }
-
-  private updateMessage(text: TextRecogniztion, message: ConversationMessage) {
-    if (text.completed) {
-      if (!message.completed) {
-        const completedMessage = this.createCompletedMessage(message.id, text.text, text.role, 'open')
-        const index = this.messagesSubject.value.indexOf(message);
-        this.messagesSubject.value.splice(index, 1, completedMessage);
-        this.messagesSubject.next(this.messagesSubject.value);
-      }
-    }
   }
 }

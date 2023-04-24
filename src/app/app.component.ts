@@ -1,14 +1,12 @@
-import {Component, ViewChild, ViewContainerRef} from '@angular/core';
+import {Component, ViewContainerRef} from '@angular/core';
 import {ModalService} from './modules/modal/modal.service';
 import {ConfigurationSidebarComponent} from './components/configuration-sidebar/configuration-sidebar.component';
 import {firstValueFrom} from 'rxjs';
 import {ChanDaLiarService} from './states/chan-da-liar.service';
 import {OpenAiService} from './states/open-ai.service';
-import {SpeakerService} from './states/speaker.service';
-import {TextareaComponent} from './components/textarea/textarea.component';
-import {TextRecogniztion} from './components/microphone-lane/microphone-lane.component';
 import {ConversationService} from './states/conversation.service';
 import { faGear } from '@fortawesome/free-solid-svg-icons';
+import { OngoingRecognition } from './states/ongoing-recognizer';
 
 @Component({
   selector: 'app-root',
@@ -43,7 +41,7 @@ export class AppComponent {
     });
   }
 
-  spoke(content: TextRecogniztion) {
+  spoke(content: OngoingRecognition) {
     this.conversation.push(content);
   }
 }

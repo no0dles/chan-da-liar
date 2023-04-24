@@ -7,32 +7,9 @@ import {
   SpeechRecognitionEventArgs,
 } from 'microsoft-cognitiveservices-speech-sdk/distrib/lib/src/sdk/Exports';
 import {ToggleComponent} from '../toggle/toggle.component';
-import {firstValueFrom, Observable, ReplaySubject, Subscription} from 'rxjs';
+import {firstValueFrom, Subscription} from 'rxjs';
 import {OpenAiChatPreviewComponent} from '../chat-gpt-preview/open-ai-chat-preview.component';
-import {ConversationRole} from '../../states/conversation.service';
-
-export interface OngoingRecogniztion {
-  id: number;
-  text$: Observable<string>
-  completed: false
-  textPrefix?: string
-  role: ConversationRole;
-}
-
-export interface CompleteRecogniztion {
-  id: number;
-  text: string
-  completed: true;
-  textPrefix?: string
-  role: ConversationRole;
-}
-
-export type TextRecogniztion = CompleteRecogniztion | OngoingRecogniztion;
-
-export interface RecongniztionState {
-  startedAt: number
-  updateSubject: ReplaySubject<string>
-}
+import { createOngoingRecognizer, OngoingRecognizer, OngoingRecognition } from '../../states/ongoing-recognizer';
 
 @Component({
   selector: 'app-microphone-lane',
@@ -40,11 +17,12 @@ export interface RecongniztionState {
   styleUrls: ['./microphone-lane.component.scss'],
 })
 export class MicrophoneLaneComponent implements OnInit, OnDestroy {
-  private recognizer?: SpeechRecognizer;
+  private speechRecognizer?: SpeechRecognizer;
+  private ongoingRecognizer: OngoingRecognizer | null = null;
   private subscription?: Subscription;
 
   @Output()
-  spoke = new EventEmitter<TextRecogniztion>();
+  spoke = new EventEmitter<OngoingRecognition>();
 
   @Input()
   microphone!: MicrophoneState;
@@ -57,7 +35,6 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
 
   enabledMic = false;
 
-  private state: RecongniztionState | null = null;
 
   constructor(
     private azureCognitive: AzureCognitiveService,
@@ -70,9 +47,9 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   toggleMicrophone(enabled: boolean) {
     if (enabled) {
       this.startListening();
-    } else if (this.recognizer) {
-      this.recognizer.stopContinuousRecognitionAsync();
-      this.recognizer.close();
+    } else if (this.speechRecognizer) {
+      this.speechRecognizer.stopContinuousRecognitionAsync();
+      this.speechRecognizer.close();
     }
   }
 
@@ -99,20 +76,8 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
         return;
       }
 
-      if (this.state) {
-        this.updateMessage(this.state, text)
-      } else {
-        this.state = this.createState()
-        this.state.updateSubject.next(text)
-
-        this.spoke.emit({
-          completed: false,
-          text$: this.state.updateSubject.asObservable(),
-          textPrefix: this.microphone.prefix,
-          id: this.state.startedAt,
-          role: 'user',
-        })
-      }
+      const ongoingRecognizer = this.ensureRecognizer();
+      ongoingRecognizer.update(event.result.text);
     };
 
     recognizer.recognized = (
@@ -124,69 +89,28 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
         return;
       }
 
-      if (this.state) {
-        this.completeMessage(this.state, event.result.text)
-      } else {
-        this.state = this.createState();
-        this.completeMessage(this.state, event.result.text)
-      }
+      const ongoingRecognizer = this.ensureRecognizer();
+      ongoingRecognizer.update(event.result.text);
+      ongoingRecognizer.complete()
+
+      this.ongoingRecognizer = null;
     };
-    this.recognizer = recognizer;
+    this.speechRecognizer = recognizer;
   }
 
-  private updateMessage(state: RecongniztionState, text: string) {
-    console.log(text)
-    // const cs = Date.now() - state.startedAt > 1000 ? '?!.,-' : '?!.';
-    // for (const c of cs) {
-    //   const i = text.lastIndexOf(c);
-    //   if (i !== -1) {
-    //     this.completePart(state, text.substring(0, i + 1), text.substring(i + 1))
-    //   }
-    // }
-    state.updateSubject.next(text)
-  }
-
-  private completePart(state: RecongniztionState, text: string, openText: string) {
-    this.spoke.emit({
-      completed: true,
-      text,
-      textPrefix: this.microphone.prefix,
-      id: state.startedAt,
-      role: 'user',
-    })
-
-    state.startedAt = Date.now();
-    state.updateSubject.next(openText)
-    this.spoke.emit({
-      completed: false,
-      text$: state.updateSubject,
-      textPrefix: this.microphone.prefix,
-      id: state.startedAt,
-      role: 'user',
-    })
-  }
-
-  private completeMessage(state: RecongniztionState, text: string) {
-    this.spoke.emit({
-      completed: true,
-      textPrefix: this.microphone.prefix,
-      text: text,
-      id: state.startedAt,
-      role: 'user',
-    })
-
-    this.state = null;
-  }
-
-  private createState(): RecongniztionState {
-    return {
-      startedAt: Date.now(),
-      updateSubject: new ReplaySubject<string>(),
+  private ensureRecognizer(): OngoingRecognizer {
+    if (!this.ongoingRecognizer) {
+      this.ongoingRecognizer = createOngoingRecognizer({
+        textPrefix: this.microphone.prefix,
+        role: 'user', // TODO configure it
+      });
+      this.spoke.emit(this.ongoingRecognizer.recogniztion())
     }
+    return this.ongoingRecognizer;
   }
 
   ngOnDestroy() {
-    this.recognizer?.close();
+    this.speechRecognizer?.close();
     this.subscription?.unsubscribe();
   }
 }
