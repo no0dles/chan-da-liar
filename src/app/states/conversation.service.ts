@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, firstValueFrom, Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, map, Observable, shareReplay, Subscription } from 'rxjs';
 import { OpenAiService, OpenAIState, PromptMessage } from './open-ai.service';
 import { Recording } from './prerecording.service';
 import { OngoingRecognition } from './ongoing-recognizer';
+import { SpeakerService } from './speaker.service';
 
 export type ConversationRole = 'assistant' | 'user' | 'system';
 export type Decision = 'yes' | 'skip' | 'open';
@@ -10,6 +11,8 @@ export type Decision = 'yes' | 'skip' | 'open';
 export interface CompletedConversationMessage {
   id: number
   text: string;
+  displayedText: string;
+  expandable: boolean
   decision: Decision;
   highlight: boolean;
   queued: boolean;
@@ -36,10 +39,13 @@ export type ConversationMessage =
   | OngoingConversationMessage
   | CompletedConversationMessage;
 
+
 @Injectable({
   providedIn: 'root',
 })
 export class ConversationService {
+  messageMaxLength = 120;
+
   messagesSubject = new BehaviorSubject<ConversationMessage[]>([]);
   highlightSubject = new BehaviorSubject<CompletedConversationMessage | null>(
     null,
@@ -47,9 +53,10 @@ export class ConversationService {
   ongoingConversations: OngoingConversationRecognition[] = [];
 
   messages$ = this.messagesSubject.asObservable();
+
   highlight$ = this.highlightSubject.asObservable();
 
-  constructor(private openAI: OpenAiService) {
+  constructor(private openAI: OpenAiService, private speaker: SpeakerService) {
     this.openAI.state$.subscribe((state) => {
       this.clear(state);
     });
@@ -86,6 +93,8 @@ export class ConversationService {
     const index = this.messagesSubject.value.indexOf(part);
     if (part.role === 'user' && part.decision === 'yes') {
       this.resolve(index);
+    } else if (part.role === 'assistant' && part.decision === 'yes') {
+      this.queue(part);
     }
     if (index < this.messagesSubject.value.length - 1) {
       const highlightedPart = this.messagesSubject.value[index + 1];
@@ -105,12 +114,13 @@ export class ConversationService {
       state = await firstValueFrom(this.openAI.state$);
     }
 
-    const messageId = Date.now();
     this.messagesSubject.next(
       state.rolePlayScript
         ? [
             {
               id: Date.now(),
+              displayedText: this.getDisplayText('system', state.rolePlayScript),
+              expandable: this.isExpandable('system', state.rolePlayScript),
               role: 'system',
               decision: 'yes',
               completed: true,
@@ -128,7 +138,7 @@ export class ConversationService {
 
   resolve(untilIndex: number) {
     const promptMessages: PromptMessage[] = [];
-    for (let i = 0; i < untilIndex; i++) {
+    for (let i = 0; i <= untilIndex; i++) {
       const message = this.messagesSubject.value[i];
       if (!message.completed) {
         continue;
@@ -149,6 +159,7 @@ export class ConversationService {
 
   pushPrerecording(recording: Recording) {
     const newMessage = this.createCompletedMessage(recording.content, 'assistant', 'yes')
+    this.queue(newMessage)
     const lastDecisionIndex = this.messagesSubject.value.findIndex(m => !m.completed || m.decision === 'open');
     if (lastDecisionIndex >= 0) {
       this.messagesSubject.value.splice(lastDecisionIndex, 0, newMessage)
@@ -156,6 +167,16 @@ export class ConversationService {
       this.messagesSubject.value.push(newMessage)
     }
     this.messagesSubject.next(this.messagesSubject.value);
+  }
+
+  queue(message: CompletedConversationMessage) {
+    message.queued = true;
+    this.messagesSubject.next(this.messagesSubject.value);
+
+    this.speaker.push(message.role, message.text).then(() => {
+      message.played = true;
+      this.messagesSubject.next(this.messagesSubject.value);
+    })
   }
 
   push(recognition: OngoingRecognition, insertAt?: number) {
@@ -199,11 +220,21 @@ export class ConversationService {
     })
   }
 
+  private isExpandable(role: ConversationRole, text: string) {
+    return role === 'system' && text.length > this.messageMaxLength;
+  }
+
+  private getDisplayText(role: ConversationRole, text: string) {
+    return this.isExpandable(role, text) ? text.substring(0, this.messageMaxLength) + '...' : text;
+  }
+
   private createCompletedMessage(
     text: string, role: ConversationRole, decision: Decision
   ): CompletedConversationMessage {
     const newMessage: CompletedConversationMessage = {
       id: Date.now(),
+      displayedText: this.getDisplayText(role, text),
+      expandable: this.isExpandable(role, text),
       text,
       decision,
       highlight: false,

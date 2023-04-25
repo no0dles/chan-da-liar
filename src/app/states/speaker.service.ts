@@ -9,6 +9,7 @@ export interface OutputQueueItem {
   playing: boolean;
   duration?: number;
   visums?: SpeakVisum[];
+  resolve: () => void;
 }
 @Injectable({
   providedIn: 'root',
@@ -56,6 +57,7 @@ export class SpeakerService {
                 this.queueSubject.value.splice(index, 1);
                 this.queueSubject.next(this.queueSubject.value);
               }
+              item.resolve();
             }, result.duration);
           });
       }
@@ -63,12 +65,15 @@ export class SpeakerService {
   }
 
   push(source: string, content: string) {
-    this.queueSubject.value.push({
-      playing: false,
-      content,
-      source,
-    });
-    this.queueSubject.next(this.queueSubject.value);
+    return new Promise<void>(resolve => {
+      this.queueSubject.value.push({
+        playing: false,
+        content,
+        source,
+        resolve,
+      });
+      this.queueSubject.next(this.queueSubject.value);
+    })
   }
 
   remove(item: OutputQueueItem) {

@@ -1,7 +1,7 @@
 <ng-container *ngIf="state$ | async as state">
   <div class="flex flex-col flex-grow min-w-0 p-3 space-y-3">
     <div class="flex min-w-0 space-x-3">
-      <div class="flex flex-grow min-w-0">
+      <div class="flex flex-grow min-w-0 space-x-3">
         <app-microphone-lane
           *ngFor="let mic of state.microphones"
           [microphone]="mic" (spoke)="spoke($event)"></app-microphone-lane>

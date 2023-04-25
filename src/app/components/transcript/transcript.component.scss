@@ -17,6 +17,10 @@
     @apply bg-gray-200 text-gray-800 border border-gray-700 mr-8;
   }
 
+  .icons {
+    @apply absolute -bottom-3 right-1 flex space-x-2;
+  }
+
   .keys {
     @apply absolute -bottom-3 left-1 flex space-x-2;
 

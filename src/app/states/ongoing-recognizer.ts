@@ -30,7 +30,7 @@ export function createOngoingRecognizer(options: {textPrefix: string | undefined
   return {
     append(text: string) {
       const newText = textSubject.value + text;
-      const cs = Date.now() - startedAt > 1000 ? '?!.-' : '?!.';
+      const cs = Date.now() - startedAt > 1000 ? '?!.' : '?!.';
       for (const c of cs) {
         const i = newText.lastIndexOf(c);
         if (i !== -1) {

@@ -3,6 +3,7 @@
     <app-configuration-item
       [heading]="configuration.heading"
       [description]="configuration.description"
+      [classNames]="configuration.classNames"
       *ngFor="let configuration of configurations"
       [component]="configuration.component"
       [state]="configuration.state"></app-configuration-item>

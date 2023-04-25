@@ -3,9 +3,13 @@ import {
   Component, ElementRef,
   Input, OnDestroy, OnInit, ViewChild,
 } from '@angular/core';
-import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faCheckDouble, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { SpeakerService } from '../../states/speaker.service';
-import { CompletedConversationMessage, ConversationService } from '../../states/conversation.service';
+import {
+  CompletedConversationMessage,
+  ConversationMessage,
+  ConversationService,
+} from '../../states/conversation.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -19,6 +23,7 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
 
   clearIcon = faTimes;
   checkIcon = faCheck;
+  doubleCheckIcon = faCheckDouble;
 
 
   @Input()
@@ -40,6 +45,10 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
 
+  }
+
+  trackMessage(index: number, message: ConversationMessage) {
+    return message.id;
   }
 
   ngAfterViewInit() {

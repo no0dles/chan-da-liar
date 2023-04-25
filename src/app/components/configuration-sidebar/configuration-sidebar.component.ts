@@ -33,6 +33,7 @@ export class ConfigurationSidebarComponent implements ModalInstance<void> {
       description: 'Configure API Keys and Models',
       component: ConfigurationOpenaiSidebarComponent,
       state: this.openAI,
+      classNames: ['fullscreen'],
     },
   ];
 
