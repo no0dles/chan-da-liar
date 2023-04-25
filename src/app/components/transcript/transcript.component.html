@@ -10,9 +10,15 @@
 <div class="flex flex-col items-start flex-grow min-h-0 overflow-y-scroll" #container>
   <div class="flex flex-col w-full" #messagelist>
     <div *ngFor="let message of messages$ | async" class="message" [attr.data-part-id]="message.id"
-         [ngClass]="message.completed && message.highlight ? ['highlight', message.role, 'decision-' + message.decision] : message.completed ? [message.role, 'decision-' + message.decision] : [message.role]">
-      <div *ngIf="message.completed">{{message.text}}</div>
+         [ngClass]="message.completed && message.highlight ? ['highlight', message.role, 'decision-' + message.decision] : message.completed && message.role !== 'system' ? [message.role, 'decision-' + message.decision] : [message.role]">
+      <div *ngIf="message.completed">
+        {{maybeShorten(message)}}
+        <button (click)="toggleExpanded()" *ngIf="message.role === 'system'" class="bg-indigo-100 m-1 rounded-md px-1 py-1 text-xs">
+          {{ expanded ? 'Truncate' : 'Expand'}}
+        </button>
+      </div>
       <div *ngIf="!message.completed" class="part ongoing">{{message.text$ | async}}...</div>
+
 
       <div class="keys" *ngIf="message.completed && message.highlight">
         <div class="key">
@@ -23,7 +29,7 @@
           <fa-icon [icon]="clearIcon" class="mr-1"></fa-icon>
           TAB
         </div>
-      </div>
+        </div>
     </div>
   </div>
 </div>

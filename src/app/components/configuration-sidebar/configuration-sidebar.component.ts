@@ -7,6 +7,7 @@ import { ConfigurationOpenaiSidebarComponent } from '../configuration-openai-sid
 import { ConfigurationAzureCognitiveSidebarComponent } from '../configuration-azure-cognitive-sidebar/configuration-azure-cognitive-sidebar.component';
 import { DeviceService } from '../../states/device.service';
 import { ConfigurationDeviceSidebarComponent } from '../configuration-device-sidebar/configuration-device-sidebar.component';
+import { ConfigService } from 'src/app/config.service';
 
 @Component({
   selector: 'app-configuration-sidebar',
@@ -43,9 +44,14 @@ export class ConfigurationSidebarComponent implements ModalInstance<void> {
     private openAI: OpenAiService,
     private device: DeviceService,
     private azureCognitive: AzureCognitiveService,
+    private config: ConfigService,
   ) {}
 
   dismiss() {
     this.modal.dismiss();
+  }
+
+  reset() {
+    this.config.reset();
   }
 }

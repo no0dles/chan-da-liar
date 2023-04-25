@@ -33,6 +33,7 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
   messages$ = this.conversation.messages$;
+  expanded = false;
 
   constructor(private speaker: SpeakerService, private conversation: ConversationService) {
   }
@@ -77,5 +78,18 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
 
   playMessage(message: string) {
     this.speaker.push('Response', message);
+  }
+
+  maybeShorten(message: CompletedConversationMessage) {
+    if (message.role === 'system' && !this.expanded) {
+      if (message.text.length > 120) {
+        return message.text.substring(0, 120) + '...';
+      }
+    }
+    return message.text;
+  }
+
+  toggleExpanded() {
+    this.expanded = !this.expanded;
   }
 }

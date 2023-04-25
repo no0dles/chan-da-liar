@@ -13,6 +13,7 @@ import {
 export class ConfigurationDeviceSidebarComponent {
   modal!: ModalHandle<void>;
   state$ = this.device.state$;
+  errorMessage = '';
 
   constructor(private device: DeviceService) {}
 
@@ -20,8 +21,10 @@ export class ConfigurationDeviceSidebarComponent {
     try {
       await navigator.mediaDevices.getUserMedia({audio: true})
       this.device.setPermission();
+      this.errorMessage = '';
     } catch (err) {
       console.error(err);
+      this.errorMessage = err as string;
     }
   }
 
