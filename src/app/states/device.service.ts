@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { ConfigService } from '../config.service';
 import { combineLatest, mergeMap, shareReplay } from 'rxjs';
 import {Cache} from '../utils/cache';
+import {ConversationRole} from './conversation.service';
 
 export interface DeviceState {
   hasPermission: boolean
@@ -19,6 +20,7 @@ export interface MicrophoneState {
   deviceName: string;
   enabled: boolean;
   prefix?: string
+  role: ConversationRole
 }
 
 
@@ -75,6 +77,12 @@ export class DeviceService {
     });
   }
 
+  updateRole(device: MicrophoneState, role: ConversationRole) {
+    this.updateMicrophoneState(device, (mic) => {
+      mic.role = role;
+    });
+  }
+
   updatePrefix(device: MicrophoneState, name: string) {
     this.updateMicrophoneState(device, (mic) => {
       mic.prefix = name;
@@ -94,6 +102,7 @@ export class DeviceService {
         deviceName: device.deviceName,
         deviceId: device.deviceId,
         prefix: device.prefix,
+        role: device.role,
       };
       mics.push(mic);
     }
@@ -137,6 +146,7 @@ export class DeviceService {
           enabled: true,
           deviceName: input.label,
           name: input.label,
+          role: 'user',
         });
       }
     }

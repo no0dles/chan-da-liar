@@ -4,6 +4,7 @@ import {
   DeviceService,
   MicrophoneState,
 } from '../../states/device.service';
+import {ConversationRole} from '../../states/conversation.service';
 
 @Component({
   selector: 'app-configuration-device-sidebar',
@@ -34,6 +35,10 @@ export class ConfigurationDeviceSidebarComponent {
 
   setOutput(deviceId: string) {
     this.device.setOutput(deviceId);
+  }
+
+  updateRole(input: MicrophoneState, role: ConversationRole) {
+    this.device.updateRole(input, role)
   }
 
   toggleInput(input: MicrophoneState, evt: Event) {

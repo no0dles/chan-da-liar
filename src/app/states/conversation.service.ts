@@ -19,6 +19,7 @@ export interface CompletedConversationMessage {
   played: boolean;
   role: ConversationRole;
   completed: true;
+  prefix: string | null
 }
 
 export interface OngoingConversationMessage {
@@ -126,6 +127,7 @@ export class ConversationService {
               completed: true,
               highlight: false,
               played: true,
+              prefix: null,
               queued: true,
               text: state.rolePlayScript,
             },
@@ -147,7 +149,7 @@ export class ConversationService {
         continue;
       }
       promptMessages.push({
-        content: message.text,
+        content: !!message.prefix ? `${message.prefix}${message.text}` : message.text,
         role: message.role,
       });
     }
@@ -158,7 +160,7 @@ export class ConversationService {
   }
 
   pushPrerecording(recording: Recording) {
-    const newMessage = this.createCompletedMessage(recording.content, 'assistant', 'yes')
+    const newMessage = this.createCompletedMessage(recording.content, 'assistant', 'yes', null)
     this.queue(newMessage)
     const lastDecisionIndex = this.messagesSubject.value.findIndex(m => !m.completed || m.decision === 'open');
     if (lastDecisionIndex >= 0) {
@@ -193,7 +195,7 @@ export class ConversationService {
       insertAt: currentIndex,
       recognition,
       subscription: recognition.completed.subscribe(completed => {
-        const message = this.createCompletedMessage(completed, recognition.role, 'open')
+        const message = this.createCompletedMessage(completed, recognition.role, 'open', recognition.textPrefix ?? null)
         this.messagesSubject.value.splice(currentIndex-1, 1, message, ongoingMessage)
         this.messagesSubject.next(this.messagesSubject.value);
         currentIndex++
@@ -229,7 +231,7 @@ export class ConversationService {
   }
 
   private createCompletedMessage(
-    text: string, role: ConversationRole, decision: Decision
+    text: string, role: ConversationRole, decision: Decision, prefix: string | null
   ): CompletedConversationMessage {
     const newMessage: CompletedConversationMessage = {
       id: Date.now(),
@@ -242,6 +244,7 @@ export class ConversationService {
       queued: false,
       role,
       completed: true,
+      prefix,
     };
     if (!this.highlightSubject.value && decision==='open') {
       newMessage.highlight = true;
