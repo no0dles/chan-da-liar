@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, combineLatest, firstValueFrom, of } from 'rxjs';
-import { AzureCognitiveService } from './azure-cognitive.service';
+import { BehaviorSubject, combineLatest } from 'rxjs';
+import {AzureCognitiveService, SpeakVisum} from './azure-cognitive.service';
 import { DeviceService } from './device.service';
 
 export interface OutputQueueItem {
@@ -8,12 +8,14 @@ export interface OutputQueueItem {
   content: string;
   playing: boolean;
   duration?: number;
+  visums?: SpeakVisum[];
+  resolve: () => void;
 }
-
 @Injectable({
   providedIn: 'root',
 })
 export class SpeakerService {
+
   private queueSubject = new BehaviorSubject<OutputQueueItem[]>([]);
   queue$ = this.queueSubject.asObservable();
 
@@ -26,6 +28,7 @@ export class SpeakerService {
       this.device.state$,
       this.queue$,
     ]).subscribe(([state, device, queue]) => {
+      console.log('process speaker')
       if (!state.speechConfig || !device.selectedOutput) {
         return;
       }
@@ -45,8 +48,9 @@ export class SpeakerService {
             device.selectedOutput.deviceId,
             item.content,
           )
-          .then((duration) => {
-            item.duration = duration;
+          .then((result) => {
+            item.duration = result.duration;
+            item.visums = result.visums;
             this.queueSubject.next(this.queueSubject.value);
             setTimeout(() => {
               const index = this.queueSubject.value.indexOf(item);
@@ -54,36 +58,23 @@ export class SpeakerService {
                 this.queueSubject.value.splice(index, 1);
                 this.queueSubject.next(this.queueSubject.value);
               }
-            }, duration);
+              item.resolve();
+            }, result.duration);
           });
       }
     });
   }
 
-  // stream(stream: MediaStream) {
-  //   const context = new AudioContext();
-  //   const source = context.createMediaStreamSource(stream);
-  //   console.log(source)
-  //
-  //   firstValueFrom( this.device.state$).then(state => {
-  //     if(state.selectedOutput?.deviceId) {
-  //       navigator.mediaDevices.getUserMedia({audio: {deviceId: state.selectedOutput?.deviceId}}).then(output => {
-  //
-  //         const outSrc = context.createMediaStreamSource(output)
-  //         console.log(outSrc)
-  //         source.connect(outSrc)
-  //       })
-  //     }
-  //   })
-  // }
-
   push(source: string, content: string) {
-    this.queueSubject.value.push({
-      playing: false,
-      content,
-      source,
-    });
-    this.queueSubject.next(this.queueSubject.value);
+    return new Promise<void>(resolve => {
+      this.queueSubject.value.push({
+        playing: false,
+        content,
+        source,
+        resolve,
+      });
+      this.queueSubject.next(this.queueSubject.value);
+    })
   }
 
   remove(item: OutputQueueItem) {

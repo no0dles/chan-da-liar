@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 import { ConfigService } from '../config.service';
-import { combineLatest, map, mergeMap, shareReplay } from 'rxjs';
+import { combineLatest, mergeMap, shareReplay } from 'rxjs';
 import {Cache} from '../utils/cache';
+import {ConversationRole} from './conversation.service';
 
 export interface DeviceState {
   hasPermission: boolean
@@ -19,10 +19,10 @@ export interface MicrophoneState {
   deviceId: string;
   deviceName: string;
   enabled: boolean;
-  mode: MicrophoneMode;
+  prefix?: string
+  role: ConversationRole
 }
 
-export type MicrophoneMode = 'OpenAI' | 'Regie';
 
 @Injectable({
   providedIn: 'root',
@@ -77,15 +77,15 @@ export class DeviceService {
     });
   }
 
-  updateName(device: MicrophoneState, name: string) {
+  updateRole(device: MicrophoneState, role: ConversationRole) {
     this.updateMicrophoneState(device, (mic) => {
-      mic.name = name;
+      mic.role = role;
     });
   }
 
-  updateMode(device: MicrophoneState, mode: MicrophoneMode) {
+  updatePrefix(device: MicrophoneState, name: string) {
     this.updateMicrophoneState(device, (mic) => {
-      mic.mode = mode;
+      mic.prefix = name;
     });
   }
 
@@ -101,7 +101,8 @@ export class DeviceService {
         name: device.name,
         deviceName: device.deviceName,
         deviceId: device.deviceId,
-        mode: device.mode,
+        prefix: device.prefix,
+        role: device.role,
       };
       mics.push(mic);
     }
@@ -115,6 +116,7 @@ export class DeviceService {
     outputId: string | null,
     microphoneStates: MicrophoneState[] | null,
   ): Promise<DeviceState> {
+    console.log('map device')
     if (!permission) {
       return {
         inputs: [],
@@ -141,14 +143,16 @@ export class DeviceService {
       } else {
         states.push({
           deviceId: input.deviceId,
-          mode: 'OpenAI',
+          prefix: '',
           enabled: true,
           deviceName: input.label,
           name: input.label,
+          role: 'user',
         });
       }
     }
 
+    console.log('device')
     return {
       hasPermission: true,
       inputs,

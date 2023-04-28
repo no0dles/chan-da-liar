@@ -5,27 +5,17 @@ import {
   combineLatest,
   firstValueFrom,
   mergeMap,
-  Observable,
-  of,
-  share,
   shareReplay,
-  take,
 } from 'rxjs';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 import { Cache } from '../utils/cache';
-import { ChatCompletionRequestMessage } from 'openai/api';
+import {
+  createOngoingRecognizer,
+  OngoingRecognition,
+} from './ongoing-recognizer';
 
 export interface OpenAISettings {
   apiKey: string;
-}
-
-export interface ConversationMessage {
-  role: 'assistant' | 'user' | 'system'
-  content: string;
-}
-
-export interface MessageResponse {
-  choices: string[];
 }
 
 export interface OpenAIState {
@@ -37,6 +27,11 @@ export interface OpenAIState {
   selectedModel: Model | null;
   ready: boolean;
   error: string | null;
+}
+
+export interface PromptMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
 }
 
 @Injectable({
@@ -63,29 +58,69 @@ export class OpenAiService {
 
   constructor(private config: ConfigService) {}
 
-  async prompt(
-    messages: ConversationMessage[],
-  ): Promise<ConversationMessage | null> {
-    const openAiState = await firstValueFrom(this.state$);
-    if (!openAiState.openai || !openAiState.selectedModel) {
-      return null;
-    }
-
-    const response = await openAiState.openai
-      .createChatCompletion({
-        messages,
-        model: openAiState.selectedModel.id,
-        //stream: true,
-      });
-    const choice = response.data.choices[0];
-    if (!choice || !choice.message) {
-      return null;
-    }
-
-    return {
+  async prompt(messages: PromptMessage[]): Promise<OngoingRecognition> {
+    const recognizer = createOngoingRecognizer({
       role: 'assistant',
-      content: choice.message.content,
+      textPrefix: undefined,
+    });
+
+    const openAiState = await firstValueFrom(this.state$);
+    if (!openAiState.settings || !openAiState.selectedModel) {
+      console.warn('no model/apiKey');
+      recognizer.complete();
+      return recognizer.recogniztion();
     }
+
+    fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'post',
+      headers: new Headers({
+        // https://platform.openai.com/account/usage
+        Authorization: `Bearer ${openAiState.settings.apiKey}`,
+        'Content-Type': 'application/json',
+      }),
+      body: JSON.stringify({
+        model: openAiState.selectedModel.id,
+        messages: messages,
+        stream: true,
+      }),
+    }).then(async (response) => {
+      if (!response.body) {
+        console.warn('empty body');
+        recognizer.complete();
+        return;
+      }
+
+      const reader = response.body
+        .pipeThrough(new TextDecoderStream())
+        .getReader();
+      if (!reader) {
+        console.warn('empty reader');
+        recognizer.complete();
+        return;
+      }
+
+      let done = false;
+
+      do {
+        const { value, done } = await reader.read();
+        if (done) break;
+        for (const line of value.split(/\n\n/g)) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.replace(/^data: /, '');
+          if (data !== '[DONE]') {
+            const d = JSON.parse(data);
+            const delta = d.choices[0].delta.content;
+            if (delta) {
+              recognizer.append(delta);
+            }
+          }
+        }
+      } while (!done);
+
+      recognizer.complete();
+    });
+
+    return recognizer.recogniztion();
   }
 
   async getModels(openai: OpenAIApi) {
@@ -110,6 +145,7 @@ export class OpenAiService {
     rolePlay: string | null,
     selectedModel: string | null,
   ): Promise<OpenAIState> {
+    console.log('map openai')
     if (!key) {
       return {
         ready: false,
@@ -141,6 +177,8 @@ export class OpenAiService {
       }),
     );
     const model = models.find((m) => m.id === selectedModel) ?? null;
+    console.log('openai');
+
     return {
       ready: model !== null,
       selectedModel: model,

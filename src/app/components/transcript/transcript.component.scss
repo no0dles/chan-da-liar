@@ -3,17 +3,58 @@
 }
 
 .message {
-  @apply px-2 py-1 rounded-md;
+  @apply flex px-2 py-1 my-2 mx-3 rounded-md relative self-start;
 
   &.system {
-    @apply text-xs bg-teal-100 border border-teal-700;
+    @apply text-xs bg-indigo-100 border border-indigo-700;
   }
 
   &.assistant {
-    @apply bg-teal-100 border border-teal-700;
+    @apply bg-teal-100 border border-teal-700 self-end ml-8;
+
+    &.keys {
+      @apply right-1;
+    }
   }
 
   &.user {
-    @apply bg-gray-200 text-gray-800 border border-gray-700;
+    @apply bg-gray-200 text-gray-800 border border-gray-700 mr-8;
+
+    &.keys {
+      @apply left-1;
+    }
+  }
+
+  .icons {
+    @apply absolute -bottom-3 right-1 flex space-x-2;
+  }
+
+  .keys {
+    @apply absolute -bottom-3 flex space-x-2;
+
+    .key {
+      @apply bg-black rounded text-white flex px-2 text-xs;
+    }
+  }
+
+
+  &.decision-open {
+    @apply border border-teal-700 bg-gray-200 text-gray-800;
+  }
+
+  &.decision-skip {
+    @apply border-dashed line-through bg-opacity-50 bg-gray-100;
+  }
+
+  &.decision-yes {
+    @apply border border-teal-700 bg-teal-100 text-teal-600;
+  }
+
+  &.highlight {
+    @apply border-2 mb-4;
+  }
+
+  &.ongoing {
+    @apply bg-gray-200 text-gray-800;
   }
 }

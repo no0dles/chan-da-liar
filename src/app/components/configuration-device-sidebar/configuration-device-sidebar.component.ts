@@ -2,9 +2,9 @@ import { Component } from '@angular/core';
 import { ModalHandle } from '../../modules/modal/modal.service';
 import {
   DeviceService,
-  MicrophoneMode,
   MicrophoneState,
 } from '../../states/device.service';
+import {ConversationRole} from '../../states/conversation.service';
 
 @Component({
   selector: 'app-configuration-device-sidebar',
@@ -14,6 +14,7 @@ import {
 export class ConfigurationDeviceSidebarComponent {
   modal!: ModalHandle<void>;
   state$ = this.device.state$;
+  errorMessage = '';
 
   constructor(private device: DeviceService) {}
 
@@ -21,8 +22,10 @@ export class ConfigurationDeviceSidebarComponent {
     try {
       await navigator.mediaDevices.getUserMedia({audio: true})
       this.device.setPermission();
+      this.errorMessage = '';
     } catch (err) {
       console.error(err);
+      this.errorMessage = err as string;
     }
   }
 
@@ -34,20 +37,16 @@ export class ConfigurationDeviceSidebarComponent {
     this.device.setOutput(deviceId);
   }
 
+  updateRole(input: MicrophoneState, role: ConversationRole) {
+    this.device.updateRole(input, role)
+  }
+
   toggleInput(input: MicrophoneState, evt: Event) {
     const elm = evt.target as HTMLInputElement;
     this.device.toggleInput(input, elm.checked);
   }
 
-  updateName(input: MicrophoneState, name: string) {
-    this.device.updateName(input, name);
-  }
-
-  updateType(input: MicrophoneState, evt: Event) {
-    const elm = evt.target as HTMLInputElement;
-    if (!elm.checked) {
-      return;
-    }
-    this.device.updateMode(input, elm.value as MicrophoneMode);
+  updatePrefix(input: MicrophoneState, name: string) {
+    this.device.updatePrefix(input, name);
   }
 }

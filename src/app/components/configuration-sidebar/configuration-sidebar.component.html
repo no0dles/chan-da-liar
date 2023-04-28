@@ -3,10 +3,12 @@
     <app-configuration-item
       [heading]="configuration.heading"
       [description]="configuration.description"
+      [classNames]="configuration.classNames"
       *ngFor="let configuration of configurations"
       [component]="configuration.component"
       [state]="configuration.state"></app-configuration-item>
   </div>
 
-  <app-button [disabled]="!state.ready" (click)="dismiss()">Start</app-button>
+  <app-button *ngIf="!state.noneReady" (click)="reset()" [type]="'dangerous'">Reset</app-button>
+  <app-button [disabled]="!state.ready" (click)="dismiss()">Done</app-button>
 </ng-container>

@@ -33,6 +33,9 @@ export class ConfigurationItemComponent implements OnInit {
   description!: string;
 
   @Input()
+  classNames?: string[]
+
+  @Input()
   component!: Type<ModalInstance<void>>;
 
   @Input()
@@ -59,6 +62,7 @@ export class ConfigurationItemComponent implements OnInit {
       component: this.component,
       title: this.heading,
       subtitle: this.description,
+      classNames: this.classNames,
     });
   }
 }

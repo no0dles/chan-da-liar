@@ -12,8 +12,11 @@ export class ToggleComponent {
   @Output()
   enabledChanged = new EventEmitter<boolean>();
 
-  toggle() {
+  toggle(event: Event) {
     this.enabled = !this.enabled;
     this.enabledChanged.emit(this.enabled);
+
+    const elm = event.target as HTMLElement
+    elm.blur();
   }
 }

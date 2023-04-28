@@ -7,6 +7,11 @@ import { ConfigurationOpenaiSidebarComponent } from '../configuration-openai-sid
 import { ConfigurationAzureCognitiveSidebarComponent } from '../configuration-azure-cognitive-sidebar/configuration-azure-cognitive-sidebar.component';
 import { DeviceService } from '../../states/device.service';
 import { ConfigurationDeviceSidebarComponent } from '../configuration-device-sidebar/configuration-device-sidebar.component';
+import { ConfigService } from 'src/app/config.service';
+import {
+  ConfigurationPrerecordingListSidebarComponent
+} from '../configuration-prerecording-list-sidebar/configuration-prerecording-list-sidebar.component';
+import { PrerecordingService } from '../../states/prerecording.service';
 
 @Component({
   selector: 'app-configuration-sidebar',
@@ -32,6 +37,13 @@ export class ConfigurationSidebarComponent implements ModalInstance<void> {
       description: 'Configure API Keys and Models',
       component: ConfigurationOpenaiSidebarComponent,
       state: this.openAI,
+      classNames: ['fullscreen'],
+    },
+    {
+      heading: 'Prerecordings',
+      description: 'Configure prerecorded answers',
+      component: ConfigurationPrerecordingListSidebarComponent,
+      state: this.prerecording,
     },
   ];
 
@@ -42,10 +54,16 @@ export class ConfigurationSidebarComponent implements ModalInstance<void> {
     private chanDaLiar: ChanDaLiarService,
     private openAI: OpenAiService,
     private device: DeviceService,
+    private prerecording: PrerecordingService,
     private azureCognitive: AzureCognitiveService,
+    private config: ConfigService,
   ) {}
 
   dismiss() {
     this.modal.dismiss();
+  }
+
+  reset() {
+    this.config.reset();
   }
 }
