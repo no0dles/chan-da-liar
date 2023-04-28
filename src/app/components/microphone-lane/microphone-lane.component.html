@@ -7,7 +7,7 @@
   <app-explaination
     *ngIf="enabledToggle.enabled"
     [heading]="'Enabled'"
-    [description]="microphone.name"></app-explaination>
+    [description]="microphone.name + (microphone.prefix ? ' (prefix=' + microphone.prefix + ')' : '')"></app-explaination>
   <app-explaination
     *ngIf="!enabledToggle.enabled"
     [heading]="'Disabled'"

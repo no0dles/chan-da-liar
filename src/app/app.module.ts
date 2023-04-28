@@ -8,7 +8,6 @@ import { ToggleComponent } from './components/toggle/toggle.component';
 import { ButtonComponent } from './components/button/button.component';
 import { VoiceProcessorComponent } from './components/voice-processor/voice-processor.component';
 import { TranscriptComponent } from './components/transcript/transcript.component';
-import { OpenAiChatPreviewComponent } from './components/chat-gpt-preview/open-ai-chat-preview.component';
 import { ConfigurationSidebarComponent } from './components/configuration-sidebar/configuration-sidebar.component';
 import { ConfigurationPrerecordingSidebarComponent } from './components/configuration-prerecording-sidebar/configuration-prerecording-sidebar.component';
 import { HeaderComponent } from './components/header/header.component';
@@ -25,6 +24,7 @@ import { ConfigurationOpenaiSidebarComponent } from './components/configuration-
 import { ConfigurationAzureCognitiveSidebarComponent } from './components/configuration-azure-cognitive-sidebar/configuration-azure-cognitive-sidebar.component';
 import { ConfigurationDeviceSidebarComponent } from './components/configuration-device-sidebar/configuration-device-sidebar.component';
 import { ConfigurationItemComponent } from './components/configuration-item/configuration-item.component';
+import { ConfigurationPrerecordingListSidebarComponent } from './components/configuration-prerecording-list-sidebar/configuration-prerecording-list-sidebar.component';
 
 @NgModule({
   declarations: [
@@ -36,7 +36,6 @@ import { ConfigurationItemComponent } from './components/configuration-item/conf
     ButtonComponent,
     VoiceProcessorComponent,
     TranscriptComponent,
-    OpenAiChatPreviewComponent,
     ConfigurationSidebarComponent,
     ConfigurationPrerecordingSidebarComponent,
     HeaderComponent,
@@ -50,6 +49,7 @@ import { ConfigurationItemComponent } from './components/configuration-item/conf
     ConfigurationAzureCognitiveSidebarComponent,
     ConfigurationDeviceSidebarComponent,
     ConfigurationItemComponent,
+    ConfigurationPrerecordingListSidebarComponent,
   ],
   imports: [
     BrowserModule,

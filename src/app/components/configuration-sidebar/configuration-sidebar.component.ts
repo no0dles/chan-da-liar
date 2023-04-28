@@ -8,6 +8,10 @@ import { ConfigurationAzureCognitiveSidebarComponent } from '../configuration-az
 import { DeviceService } from '../../states/device.service';
 import { ConfigurationDeviceSidebarComponent } from '../configuration-device-sidebar/configuration-device-sidebar.component';
 import { ConfigService } from 'src/app/config.service';
+import {
+  ConfigurationPrerecordingListSidebarComponent
+} from '../configuration-prerecording-list-sidebar/configuration-prerecording-list-sidebar.component';
+import { PrerecordingService } from '../../states/prerecording.service';
 
 @Component({
   selector: 'app-configuration-sidebar',
@@ -35,6 +39,12 @@ export class ConfigurationSidebarComponent implements ModalInstance<void> {
       state: this.openAI,
       classNames: ['fullscreen'],
     },
+    {
+      heading: 'Prerecordings',
+      description: 'Configure prerecorded answers',
+      component: ConfigurationPrerecordingListSidebarComponent,
+      state: this.prerecording,
+    },
   ];
 
   modal!: ModalHandle<void>;
@@ -44,6 +54,7 @@ export class ConfigurationSidebarComponent implements ModalInstance<void> {
     private chanDaLiar: ChanDaLiarService,
     private openAI: OpenAiService,
     private device: DeviceService,
+    private prerecording: PrerecordingService,
     private azureCognitive: AzureCognitiveService,
     private config: ConfigService,
   ) {}

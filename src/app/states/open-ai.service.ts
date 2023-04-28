@@ -145,6 +145,7 @@ export class OpenAiService {
     rolePlay: string | null,
     selectedModel: string | null,
   ): Promise<OpenAIState> {
+    console.log('map openai')
     if (!key) {
       return {
         ready: false,

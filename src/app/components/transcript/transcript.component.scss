@@ -11,10 +11,18 @@
 
   &.assistant {
     @apply bg-teal-100 border border-teal-700 self-end ml-8;
+
+    &.keys {
+      @apply right-1;
+    }
   }
 
   &.user {
     @apply bg-gray-200 text-gray-800 border border-gray-700 mr-8;
+
+    &.keys {
+      @apply left-1;
+    }
   }
 
   .icons {
@@ -22,12 +30,13 @@
   }
 
   .keys {
-    @apply absolute -bottom-3 left-1 flex space-x-2;
+    @apply absolute -bottom-3 flex space-x-2;
 
     .key {
       @apply bg-black rounded text-white flex px-2 text-xs;
     }
   }
+
 
   &.decision-open {
     @apply border border-teal-700 bg-gray-200 text-gray-800;

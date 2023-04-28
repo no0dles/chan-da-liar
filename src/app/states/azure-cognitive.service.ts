@@ -103,6 +103,7 @@ export class AzureCognitiveService {
     locale: string | null,
     voice: string | null,
   ): Promise<AzureCognitiveState> {
+    console.log('map azure')
     if (!apiKey || !region) {
       return {
         settings: null,
@@ -158,8 +159,6 @@ export class AzureCognitiveService {
     if (selectedLocale) {
       speechConfig.speechRecognitionLanguage = selectedLocale;
     }
-
-    console.log('speech')
 
     return {
       selectedVoice,

@@ -116,6 +116,7 @@ export class DeviceService {
     outputId: string | null,
     microphoneStates: MicrophoneState[] | null,
   ): Promise<DeviceState> {
+    console.log('map device')
     if (!permission) {
       return {
         inputs: [],

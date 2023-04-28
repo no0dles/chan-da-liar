@@ -41,6 +41,7 @@ export class ChanDaLiarService {
     azureCognitive: AzureCognitiveState,
     device: DeviceState,
   ): ChanDaLiarState {
+    console.log('map chan')
     return {
       noneReady: !openAi.ready && !azureCognitive.ready && !device.ready,
       ready: openAi.ready && azureCognitive.ready && device.ready,

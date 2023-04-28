@@ -196,16 +196,17 @@ export class ConversationService {
       recognition,
       subscription: recognition.completed.subscribe(completed => {
         const message = this.createCompletedMessage(completed, recognition.role, 'open', recognition.textPrefix ?? null)
-        this.messagesSubject.value.splice(currentIndex-1, 1, message, ongoingMessage)
+        //this.messagesSubject.value.splice(currentIndex-1, 1, message, ongoingMessage)
+        this.messagesSubject.value.push(message);
         this.messagesSubject.next(this.messagesSubject.value);
         currentIndex++
       })
     };
 
     this.ongoingConversations.push(ongoingConversation);
-    this.messagesSubject.value.splice(currentIndex, 0, ongoingMessage)
+    //this.messagesSubject.value.splice(currentIndex, 0, ongoingMessage)
     this.messagesSubject.next(this.messagesSubject.value);
-    currentIndex++
+    //currentIndex++
 
     recognition.end.then(() => {
       ongoingConversation.subscription?.unsubscribe();
@@ -246,7 +247,7 @@ export class ConversationService {
       completed: true,
       prefix,
     };
-    if (!this.highlightSubject.value && decision==='open') {
+    if (!this.highlightSubject.value && decision === 'open') {
       newMessage.highlight = true;
       this.highlightSubject.next(newMessage);
     }

@@ -8,7 +8,6 @@ import {
 } from 'microsoft-cognitiveservices-speech-sdk/distrib/lib/src/sdk/Exports';
 import {ToggleComponent} from '../toggle/toggle.component';
 import {firstValueFrom, Subscription} from 'rxjs';
-import {OpenAiChatPreviewComponent} from '../chat-gpt-preview/open-ai-chat-preview.component';
 import { createOngoingRecognizer, OngoingRecognizer, OngoingRecognition } from '../../states/ongoing-recognizer';
 
 @Component({
@@ -29,10 +28,6 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
 
   @ViewChild('enabledToggle')
   enabledToggle?: ToggleComponent;
-
-  @ViewChild(OpenAiChatPreviewComponent)
-  openAiChatPreview?: OpenAiChatPreviewComponent;
-
   enabledMic = false;
 
 

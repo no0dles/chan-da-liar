@@ -28,6 +28,7 @@ export class SpeakerService {
       this.device.state$,
       this.queue$,
     ]).subscribe(([state, device, queue]) => {
+      console.log('process speaker')
       if (!state.speechConfig || !device.selectedOutput) {
         return;
       }
