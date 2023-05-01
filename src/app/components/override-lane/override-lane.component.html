@@ -1,0 +1,15 @@
+<span class="text-gray-400 text-xs mb-1">Override</span>
+
+<app-input #botInput
+  [heading]="'Override bot'"
+  [placeholder]="'Press B to focus...'"
+  [value]="bot"
+  (valueChanged)="botChanged($event)"
+  (keyDown)="botKeyDown($event)"></app-input>
+
+<app-input #userInput
+  [heading]="'Override user'"
+  [placeholder]="''"
+  [value]="user"
+  (valueChanged)="userChanged($event)"
+  (keyDown)="userKeyDown($event)"></app-input>

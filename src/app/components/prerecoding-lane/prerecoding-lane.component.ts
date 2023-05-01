@@ -47,7 +47,7 @@ export class PrerecodingLaneComponent {
   }
 
   play(rec: Recording, event: Event) {
-    this.conversation.pushPrerecording(rec);
+    this.conversation.pushAssistant(rec);
     const elm = event.target as HTMLElement;
     elm.blur();
   }

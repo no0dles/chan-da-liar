@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppComponent } from './app.component';
 import { PrerecodingLaneComponent } from './components/prerecoding-lane/prerecoding-lane.component';
+import { OverrideLaneComponent } from './components/override-lane/override-lane.component';
 import { OutputQueueComponent } from './components/output-queue/output-queue.component';
 import { MicrophoneLaneComponent } from './components/microphone-lane/microphone-lane.component';
 import { ToggleComponent } from './components/toggle/toggle.component';
@@ -30,6 +31,7 @@ import { ConfigurationPrerecordingListSidebarComponent } from './components/conf
   declarations: [
     AppComponent,
     PrerecodingLaneComponent,
+    OverrideLaneComponent,
     OutputQueueComponent,
     MicrophoneLaneComponent,
     ToggleComponent,
