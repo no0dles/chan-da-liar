@@ -1,11 +1,16 @@
 import { Component, ElementRef, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 
+type InputType = 'text' | 'password';
+
 @Component({
   selector: 'app-input',
   templateUrl: './input.component.html',
   styleUrls: ['./input.component.scss'],
 })
 export class InputComponent {
+  @Input()
+  inputType: InputType = 'text';
+
   @Input()
   heading!: string;
 

@@ -3,6 +3,7 @@
 }}</label>
 <input #input
   class="w-full bg-gray-200 rounded-md pt-6 text-teal-600 px-3 pb-2"
+  [type]="inputType"
   [ngModel]="value"
   (ngModelChange)="valueChanged.emit($event)"
   [placeholder]="placeholder" />

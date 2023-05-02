@@ -12,6 +12,8 @@ import {
   ConfigurationPrerecordingListSidebarComponent
 } from '../configuration-prerecording-list-sidebar/configuration-prerecording-list-sidebar.component';
 import { PrerecordingService } from '../../states/prerecording.service';
+import { ConfigurationFirebaseComponent } from '../configuration-firebase-sidebar/configuration-firebase-sidebar.component';
+import { FirebaseService } from 'src/app/states/firebase.service';
 
 @Component({
   selector: 'app-configuration-sidebar',
@@ -20,6 +22,12 @@ import { PrerecordingService } from '../../states/prerecording.service';
 })
 export class ConfigurationSidebarComponent implements ModalInstance<void> {
   configurations = [
+    {
+      heading: 'Firebase',
+      description: 'Database settings to persist settings',
+      component: ConfigurationFirebaseComponent,
+      state: this.firebase,
+    },
     {
       heading: 'Devices',
       description: 'Configure Microphones and a Output Speaker',
@@ -56,6 +64,7 @@ export class ConfigurationSidebarComponent implements ModalInstance<void> {
     private device: DeviceService,
     private prerecording: PrerecordingService,
     private azureCognitive: AzureCognitiveService,
+    private firebase: FirebaseService,
     private config: ConfigService,
   ) {}
 

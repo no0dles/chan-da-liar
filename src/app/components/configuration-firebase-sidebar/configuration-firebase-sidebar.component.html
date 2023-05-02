@@ -1,0 +1,37 @@
+<ng-container *ngIf="state$ | async as state">
+  <div class="flex-grow min-h-0 space-y-4 flex flex-col">
+    <app-input
+      [heading]="'API Key'"
+      [placeholder]="'AIzaS........'"
+      [value]="state.settings.apiKey"
+      (valueChanged)="setApiKey($event)"></app-input>
+    <div>
+      <app-input
+        [heading]="'App ID'"
+        [placeholder]="'1:949........'"
+        [value]="state.settings.appId"
+        (valueChanged)="setAppId($event)"></app-input>
+      <a
+        target="_blank"
+        class="underline text-xs text-gray-500"
+        href="https://console.firebase.google.com/"
+        >https://console.firebase.google.com/</a
+      >
+    </div>
+    <app-input
+      [heading]="'Email'"
+      [placeholder]="'........@...'"
+      [value]="state.settings.email"
+      (valueChanged)="setEmail($event)"></app-input>
+    <app-input
+      [heading]="'Password'"
+      [inputType]="'password'"
+      [placeholder]="'........'"
+      [value]="state.settings.password"
+      (valueChanged)="setPassword($event)"></app-input>
+  </div>
+
+  <app-button [disabled]="!state.ready" (click)="modal.dismiss()"
+    >Save</app-button
+  >
+</ng-container>

@@ -6,6 +6,7 @@ import {
 } from './azure-cognitive.service';
 import { combineLatest, map, shareReplay } from 'rxjs';
 import { DeviceService, DeviceState, MicrophoneState } from './device.service';
+import { FirebaseService, FirebaseState } from './firebase.service';
 
 export interface ChanDaLiarState {
   noneReady: boolean,
@@ -23,9 +24,10 @@ export class ChanDaLiarService {
     this.openAi.state$,
     this.azureCognitive.state$,
     this.device.state$,
+    this.firebase.state$,
   ]).pipe(
-    map(([openAi, azureCognitive, device]) =>
-      this.mapState(openAi, azureCognitive, device),
+    map(([openAi, azureCognitive, device, firebase]) =>
+      this.mapState(openAi, azureCognitive, device, firebase),
     ),
     shareReplay(),
   );
@@ -34,16 +36,18 @@ export class ChanDaLiarService {
     private openAi: OpenAiService,
     private device: DeviceService,
     private azureCognitive: AzureCognitiveService,
+    private firebase: FirebaseService,
   ) {}
 
   mapState(
     openAi: OpenAIState,
     azureCognitive: AzureCognitiveState,
     device: DeviceState,
+    firebase: FirebaseState
   ): ChanDaLiarState {
     console.log('map chan')
     return {
-      noneReady: !openAi.ready && !azureCognitive.ready && !device.ready,
+      noneReady: !openAi.ready && !azureCognitive.ready && !device.ready && !firebase.ready,
       ready: openAi.ready && azureCognitive.ready && device.ready,
       output: device.selectedOutput,
       systemMessage: openAi.rolePlayScript,
