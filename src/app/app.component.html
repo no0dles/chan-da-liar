@@ -6,6 +6,7 @@
           *ngFor="let mic of state.microphones"
           [microphone]="mic" (spoke)="spoke($event)"></app-microphone-lane>
       </div>
+      <app-status></app-status>
       <app-button class="flex-shrink-0" (click)="openConfigurations(true)">
         <div class="flex items-center space-x-3">
           <fa-icon [icon]="settingsIcon"></fa-icon>

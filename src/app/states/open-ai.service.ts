@@ -3,7 +3,9 @@ import { Configuration, Model, OpenAIApi } from 'openai';
 import { ConfigService } from '../config.service';
 import {
   combineLatest,
+  first,
   firstValueFrom,
+  lastValueFrom,
   mergeMap,
   shareReplay,
 } from 'rxjs';
@@ -41,9 +43,12 @@ export class OpenAiService {
   private configApiKey = 'openai-api';
   private configRolePlayKey = 'openai-roleplay';
   private configModelKey = 'openai-model';
+  private totalCostKey = 'openai-total-cost';
 
   private modalCache = new Cache<Model[]>();
   private apiCache = new Cache<OpenAIApi>();
+
+  totalCost = this.config.watch<number>(this.totalCostKey, 0);
 
   state$ = combineLatest([
     this.config.watch<string>(this.configApiKey),
@@ -118,6 +123,11 @@ export class OpenAiService {
       } while (!done);
 
       recognizer.complete();
+
+      const completion = await firstValueFrom(recognizer.recogniztion().text$);
+      const oldCost = this.config.get<number>(this.totalCostKey) ?? 0;
+      const cost = await this.getCost(JSON.stringify(messages), completion);
+      this.config.save(this.totalCostKey, oldCost + cost);
     });
 
     return recognizer.recogniztion();
@@ -138,6 +148,17 @@ export class OpenAiService {
 
   setRolePlay(script: string) {
     this.config.save(this.configRolePlayKey, script);
+  }
+
+  async getCost(prompt: string, completion: string): Promise<number> {
+    const promptWords = prompt.split(/\s+/g).length;
+    const completionWords = completion.split(/\s+/g).length;
+    // https://openai.com/pricing
+    const model = (await firstValueFrom(this.state$)).selectedModel?.id ?? '';
+    if (model.startsWith('gpt-4')) {
+      return 0.03 * promptWords / 1000 + 0.06 * completionWords / 1000;
+    }
+    return 0.002 * promptWords / 1000 + 0.002 * completionWords / 1000;
   }
 
   async mapState(

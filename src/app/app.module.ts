@@ -5,6 +5,7 @@ import { PrerecodingLaneComponent } from './components/prerecoding-lane/prerecod
 import { OverrideLaneComponent } from './components/override-lane/override-lane.component';
 import { OutputQueueComponent } from './components/output-queue/output-queue.component';
 import { MicrophoneLaneComponent } from './components/microphone-lane/microphone-lane.component';
+import { AppStatusComponent } from './components/app-status/app-status.component';
 import { ToggleComponent } from './components/toggle/toggle.component';
 import { ButtonComponent } from './components/button/button.component';
 import { VoiceProcessorComponent } from './components/voice-processor/voice-processor.component';
@@ -34,6 +35,7 @@ import { ConfigurationPrerecordingListSidebarComponent } from './components/conf
     OverrideLaneComponent,
     OutputQueueComponent,
     MicrophoneLaneComponent,
+    AppStatusComponent,
     ToggleComponent,
     ButtonComponent,
     VoiceProcessorComponent,
