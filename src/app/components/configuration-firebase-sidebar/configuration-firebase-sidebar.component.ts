@@ -7,6 +7,7 @@ import {
 } from '../../states/azure-cognitive.service';
 import { SpeakerService } from '../../states/speaker.service';
 import { FirebaseService } from 'src/app/states/firebase.service';
+import { map } from 'rxjs';
 
 @Component({
   selector: 'app-configuration-firebase-sidebar.component',
@@ -17,6 +18,8 @@ export class ConfigurationFirebaseComponent {
 
   modal!: ModalHandle<void>;
   state$ = this.firebase.state$;
+  error = this.firebase.error;
+  loginState = this.firebase.loginState;
 
   constructor(
     private config: ConfigService,
@@ -44,4 +47,12 @@ export class ConfigurationFirebaseComponent {
     this.firebase.setPassword(password);
   }
 
+  doLogin() {
+    this.firebase.doLogin();
+  }
+
+  doLogoutAndResetPassword() {
+    this.setPassword('');
+    this.firebase.doLogout();
+  }
 }
