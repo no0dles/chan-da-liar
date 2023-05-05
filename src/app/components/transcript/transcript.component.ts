@@ -1,16 +1,24 @@
 import {
   AfterViewInit,
-  Component, ElementRef,
-  Input, OnDestroy, OnInit, ViewChild,
+  Component,
+  ElementRef,
+  Input,
+  OnDestroy,
+  OnInit,
+  ViewChild,
 } from '@angular/core';
-import { faCheck, faCheckDouble, faTimes } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCheck,
+  faCheckDouble,
+  faTimes,
+} from '@fortawesome/free-solid-svg-icons';
 import { SpeakerService } from '../../states/speaker.service';
 import {
   CompletedConversationMessage,
   ConversationMessage,
   ConversationService,
 } from '../../states/conversation.service';
-import { Subscription } from 'rxjs';
+import { combineLatest, interval, Subscription, timer } from 'rxjs';
 
 @Component({
   selector: 'app-transcript',
@@ -25,7 +33,6 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
   checkIcon = faCheck;
   doubleCheckIcon = faCheckDouble;
 
-
   @Input()
   systemMessage?: string | null;
 
@@ -35,16 +42,20 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('messagelist')
   messageList?: ElementRef<HTMLDivElement>;
 
-
-
   messages$ = this.conversation.messages$;
   expanded = false;
 
-  constructor(private speaker: SpeakerService, private conversation: ConversationService) {
-  }
+  constructor(
+    private speaker: SpeakerService,
+    private conversation: ConversationService,
+  ) {}
 
   ngOnInit() {
-
+    interval(1000).subscribe(() => {
+      this.conversation.pushUser({
+        content: 'test',
+      });
+    });
   }
 
   trackMessage(index: number, message: ConversationMessage) {
@@ -52,29 +63,21 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.conversation.highlight$.subscribe(highlight => {
+    combineLatest([this.conversation.highlight$, interval(500)]).subscribe(([highlight]) => {
       this.currentHighlight = highlight;
 
       if (!this.container?.nativeElement || !highlight) {
         return;
       }
 
-      const part = this.container.nativeElement.querySelector(`[data-part-id="${highlight.id}"]`);
-      if (part) {
-        part.scrollIntoView({behavior: 'smooth', block: 'center'});
-      } else {
-        this.container.nativeElement.scrollTo({top: this.container.nativeElement.scrollHeight, behavior: 'smooth'})
-      }
-    })
 
-    if (this.messageList?.nativeElement) {
-      const observer = new ResizeObserver(() => {
-        if (!this.currentHighlight && this.container?.nativeElement) {
-          this.container.nativeElement.scrollTo({top: this.container.nativeElement.scrollHeight, behavior: 'smooth'})
-        }
-      });
-      observer.observe(this.messageList?.nativeElement)
-    }
+      const part = this.container.nativeElement.querySelector(
+        `[data-part-id="${highlight.id}"]`,
+      );
+      if (part) {
+        part.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
   }
 
   ngOnDestroy() {

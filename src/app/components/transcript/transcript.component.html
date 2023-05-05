@@ -1,25 +1,40 @@
 <div class="flex justify-between px-3 py-1">
   <span class="text-gray-400 text-xs">Transscript</span>
-  <button
-    class="text-xs text-black text-right w-12"
-    (click)="clear()">
+  <button class="text-xs text-black text-right w-12" (click)="clear()">
     Clear
   </button>
 </div>
 
-<div class="flex flex-col items-start flex-grow min-h-0 overflow-y-scroll" #container>
+<div
+  class="flex flex-col items-start flex-grow min-h-0 overflow-y-scroll"
+  #container>
   <div class="flex flex-col w-full" #messagelist>
-    <div *ngFor="let message of messages$ | async; trackBy: trackMessage" class="message" [attr.data-part-id]="message.id"
-         [ngClass]="message.completed && message.highlight ? ['highlight', message.role, 'decision-' + message.decision] : message.completed && message.role !== 'system' ? [message.role, 'decision-' + message.decision] : [message.role]">
-      <div *ngIf="message.completed && message.prefix">{{message.prefix}}</div>
+    <div
+      *ngFor="let message of messages$ | async; trackBy: trackMessage"
+      class="message"
+      [attr.data-part-id]="message.id"
+      [ngClass]="
+        message.completed && message.highlight
+          ? ['highlight', message.role, 'decision-' + message.decision]
+          : message.completed && message.role !== 'system'
+          ? [message.role, 'decision-' + message.decision]
+          : [message.role]
+      ">
+      <div *ngIf="message.completed && message.prefix">
+        {{ message.prefix }}
+      </div>
       <div *ngIf="message.completed">
-        {{expanded ? message.text : message.displayedText}}
-        <button (click)="toggleExpanded()" *ngIf="message.expandable" class="bg-indigo-100 m-1 rounded-md px-1 py-1 text-xs">
-          {{ expanded ? 'Truncate' : 'Expand'}}
+        {{ expanded ? message.text : message.displayedText }}
+        <button
+          (click)="toggleExpanded()"
+          *ngIf="message.expandable"
+          class="bg-indigo-100 m-1 rounded-md px-1 py-1 text-xs">
+          {{ expanded ? 'Truncate' : 'Expand' }}
         </button>
       </div>
-      <div *ngIf="!message.completed" class="part ongoing">{{message.text$ | async}}...</div>
-
+      <div *ngIf="!message.completed" class="part ongoing">
+        {{ message.text$ | async }}...
+      </div>
 
       <div class="keys" *ngIf="message.completed && message.highlight">
         <div class="key">
@@ -31,7 +46,9 @@
           TAB
         </div>
       </div>
-      <div *ngIf="message.completed && (message.queued || message.played)" class="icons">
+      <div
+        *ngIf="message.completed && (message.queued || message.played)"
+        class="icons">
         <fa-icon [icon]="checkIcon" *ngIf="!message.played"></fa-icon>
         <fa-icon [icon]="doubleCheckIcon" *ngIf="message.played"></fa-icon>
       </div>
