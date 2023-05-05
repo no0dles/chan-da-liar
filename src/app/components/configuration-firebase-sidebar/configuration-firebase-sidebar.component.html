@@ -1,0 +1,51 @@
+<ng-container *ngIf="state$ | async as state">
+  <div class="flex-grow min-h-0 space-y-4 flex flex-col">
+    <app-input
+      [heading]="'API Key'"
+      [placeholder]="'AIzaS........'"
+      [value]="state.settings.apiKey"
+      (valueChanged)="setApiKey($event)"></app-input>
+    <div>
+      <app-input
+        [heading]="'App ID'"
+        [placeholder]="'1:949........'"
+        [value]="state.settings.appId"
+        (valueChanged)="setAppId($event)"></app-input>
+      <a
+        target="_blank"
+        class="underline text-xs text-gray-500"
+        href="https://console.firebase.google.com/"
+        >https://console.firebase.google.com/</a
+      >
+    </div>
+    <app-input
+      [heading]="'Email'"
+      [placeholder]="'........@...'"
+      [value]="state.settings.email"
+      (valueChanged)="setEmail($event)"></app-input>
+    <app-input
+      [heading]="'Password'"
+      [inputType]="'password'"
+      [placeholder]="'........'"
+      [value]="state.settings.password"
+      (valueChanged)="setPassword($event)"></app-input>
+
+      <div *ngIf="error | async" class="bg-orange-100 border rounded-md border-orange-700 text-orange-700 px-3 py-2">
+        {{error | async}}
+      </div>
+  
+      <div *ngIf="(loginState | async) === 'success'" class="bg-green-100 border rounded-md border-green-700 text-green-700 px-3 py-2">
+        Successfully logged in.
+      </div>
+  
+    </div>
+
+  <div class="flex gap-4">
+    <app-button [disabled]="!state.canLogin || (loginState | async) === 'success'"
+      (click)="doLogin()" class="grow"
+      >Login</app-button>
+    <app-button [disabled]="(loginState | async) !== 'success'"
+      (click)="doLogoutAndResetPassword()" class="grow" [type]="'dangerous'"
+      >Logout and reset password</app-button>
+  </div>
+</ng-container>

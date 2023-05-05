@@ -22,7 +22,7 @@
 
       <app-subheader [heading]="'Microphones'"></app-subheader>
 
-      <div *ngFor="let microphone of state.microphones; trackBy: identify">
+      <div *ngFor="let microphone of state.microphones; trackBy: identify" class="flex-grow">
         <label
           class="bg-gray-200 rounded-md py-2 px-3 flex space-x-3 items-center">
           <input

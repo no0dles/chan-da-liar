@@ -2,8 +2,10 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppComponent } from './app.component';
 import { PrerecodingLaneComponent } from './components/prerecoding-lane/prerecoding-lane.component';
+import { OverrideLaneComponent } from './components/override-lane/override-lane.component';
 import { OutputQueueComponent } from './components/output-queue/output-queue.component';
 import { MicrophoneLaneComponent } from './components/microphone-lane/microphone-lane.component';
+import { AppStatusComponent } from './components/app-status/app-status.component';
 import { ToggleComponent } from './components/toggle/toggle.component';
 import { ButtonComponent } from './components/button/button.component';
 import { VoiceProcessorComponent } from './components/voice-processor/voice-processor.component';
@@ -22,6 +24,7 @@ import { SubheaderComponent } from './components/subheader/subheader.component';
 import { FormsModule } from '@angular/forms';
 import { ConfigurationOpenaiSidebarComponent } from './components/configuration-openai-sidebar/configuration-openai-sidebar.component';
 import { ConfigurationAzureCognitiveSidebarComponent } from './components/configuration-azure-cognitive-sidebar/configuration-azure-cognitive-sidebar.component';
+import { ConfigurationFirebaseComponent } from './components/configuration-firebase-sidebar/configuration-firebase-sidebar.component';
 import { ConfigurationDeviceSidebarComponent } from './components/configuration-device-sidebar/configuration-device-sidebar.component';
 import { ConfigurationItemComponent } from './components/configuration-item/configuration-item.component';
 import { ConfigurationPrerecordingListSidebarComponent } from './components/configuration-prerecording-list-sidebar/configuration-prerecording-list-sidebar.component';
@@ -30,8 +33,10 @@ import { ConfigurationPrerecordingListSidebarComponent } from './components/conf
   declarations: [
     AppComponent,
     PrerecodingLaneComponent,
+    OverrideLaneComponent,
     OutputQueueComponent,
     MicrophoneLaneComponent,
+    AppStatusComponent,
     ToggleComponent,
     ButtonComponent,
     VoiceProcessorComponent,
@@ -47,6 +52,7 @@ import { ConfigurationPrerecordingListSidebarComponent } from './components/conf
     SubheaderComponent,
     ConfigurationOpenaiSidebarComponent,
     ConfigurationAzureCognitiveSidebarComponent,
+    ConfigurationFirebaseComponent,
     ConfigurationDeviceSidebarComponent,
     ConfigurationItemComponent,
     ConfigurationPrerecordingListSidebarComponent,

@@ -159,15 +159,21 @@ export class ConversationService {
     })
   }
 
-  pushPrerecording(recording: Recording) {
-    const newMessage = this.createCompletedMessage(recording.content, 'assistant', 'yes', null)
-    this.queue(newMessage)
+  pushAssistant(recording: Recording) {
+    const newMessage = this.createCompletedMessage(recording.content, 'assistant', 'yes', null);
+    this.queue(newMessage);
     const lastDecisionIndex = this.messagesSubject.value.findIndex(m => !m.completed || m.decision === 'open');
     if (lastDecisionIndex >= 0) {
       this.messagesSubject.value.splice(lastDecisionIndex, 0, newMessage)
     } else {
       this.messagesSubject.value.push(newMessage)
     }
+    this.messagesSubject.next(this.messagesSubject.value);
+  }
+
+  pushUser(recording: Recording) {
+    const newMessage = this.createCompletedMessage(recording.content, 'user', 'open', null);
+    this.messagesSubject.value.push(newMessage);
     this.messagesSubject.next(this.messagesSubject.value);
   }
 

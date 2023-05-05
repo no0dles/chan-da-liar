@@ -19,9 +19,9 @@ export class ConfigService {
     return null;
   }
 
-  watch<T>(key: string): Observable<T | null> {
+  watch<T>(key: string, init: T | null = null): Observable<T | null> {
     if (!this.subjects[key]) {
-      this.subjects[key] = new BehaviorSubject<T | null>(this.get(key));
+      this.subjects[key] = new BehaviorSubject<T | null>(this.get(key) ?? init);
     }
     return this.subjects[key];
   }

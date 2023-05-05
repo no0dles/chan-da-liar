@@ -6,6 +6,7 @@
           *ngFor="let mic of state.microphones"
           [microphone]="mic" (spoke)="spoke($event)"></app-microphone-lane>
       </div>
+      <app-status></app-status>
       <app-button class="flex-shrink-0" (click)="openConfigurations(true)">
         <div class="flex items-center space-x-3">
           <fa-icon [icon]="settingsIcon"></fa-icon>
@@ -20,6 +21,7 @@
       [systemMessage]="state.systemMessage"
       class="flex-grow min-h-0"></app-transcript>
 
+    <app-override-lane class="shrink"></app-override-lane>
     <app-prerecoding-lane class="h-1/4 flex-shrink-0"></app-prerecoding-lane>
-  </div>
+    </div>
 </ng-container>

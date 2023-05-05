@@ -14,6 +14,10 @@
       >
     </div>
 
+    <div *ngIf="state.error" class="bg-orange-100 border rounded-md border-orange-700 text-orange-700 px-3 py-2">
+      {{state.error}}
+    </div>
+
     <label
       class="flex flex-col bg-gray-200 rounded-md text-sm text-gray-500 pt-1 px-3 select-none">
       OpenAI Model
@@ -30,12 +34,9 @@
     <app-textarea (valueChange)="setRolePlay($event)" [value]="state.rolePlayScript ?? ''"
       [heading]="'Chan Da Liar Prescript'"
       class="flex-grow min-h-0"></app-textarea>
-  </div>
-
-  <div *ngIf="state.error" class="bg-orange-100 border rounded-md border-orange-700 text-orange-700 px-3 py-2">
-    {{state.error}}
-  </div>
-
-  <app-button [disabled]="!state.ready" (click)="modal.dismiss()"
+      
+    <app-button [disabled]="!state.ready" (click)="modal.dismiss()"
     >Save</app-button>
+
+    </div>
 </ng-container>
