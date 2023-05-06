@@ -7,7 +7,11 @@ import {
    getFirestore,
    getDoc,
    updateDoc,
-   Firestore
+   Firestore,
+   collection,
+   addDoc,
+   doc,
+   setDoc
 } from 'firebase/firestore/lite';
 import { User, browserLocalPersistence, getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
 
@@ -31,7 +35,8 @@ export interface FirebaseState {
   // user: User | null;
 }
 
-type LoginState = 'load' | 'init' | 'login' | 'success' | 'failure' | 'out';
+export type LoginState = 'load' | 'init' | 'login' | 'success' | 'failure' | 'out';
+export type CostSource = 'openai';
 
 @Injectable({
   providedIn: 'root',
@@ -41,6 +46,9 @@ export class FirebaseService {
   private configAppIdKey = 'firebase-app-id';
   private configProjectIdKey = 'firebase-project-id';
   private emailKey = 'firebase-email';
+
+  private costCollection = 'cost';
+  private totalsPath = 'info/totals';
 
   loginState = new BehaviorSubject<LoginState>('load');
   error = new BehaviorSubject<string>('');
@@ -89,6 +97,36 @@ export class FirebaseService {
     this.loginState.next('out');
   }
 
+  private async initSchema() {
+    // Is there a better pattern for this?
+    const totalsRef = await doc(this.firestore!, this.totalsPath);
+    const totalsSnapshot = await getDoc(totalsRef);
+    if (!totalsSnapshot.exists()) {
+      setDoc(totalsRef, {created: Date.now(), cost: 0});
+    }
+  }
+
+  async addCost(cost: number, source: CostSource) {
+    if (this.loginState.value != 'success') {
+      return;
+    }
+    const costCol = collection(this.firestore!, this.costCollection);
+    const t = Date.now();
+    await addDoc(costCol, {t, cost, source});
+    // Can this be done in an atomic transaction?
+    const totalsRef = await doc(this.firestore!, this.totalsPath);
+    const totals = (await getDoc(totalsRef)).data() ?? {};
+    await updateDoc(totalsRef, {...totals, t, cost: (totals['cost'] || 0) + cost});
+  }
+
+  async getTotalCost() : Promise<number | null> {
+    if (this.loginState.value != 'success') {
+      return null;
+    }
+    const totals = (await getDoc(await doc(this.firestore!, this.totalsPath))).data() ?? {};
+    return totals['cost'] as number;
+  }
+
   private initializeFirebase(apiKey: string, appId: string, projectId: string) {
     // Note: this will never fail, even if provided values are invalid.
     const firebaseConfig = {
@@ -107,6 +145,7 @@ export class FirebaseService {
     getAuth().onAuthStateChanged((user: User|null) => {
       console.log('onAuthStateChanged', user);
       if (user) {
+        this.initSchema();
         this.loginState.next('success');
         this.setEmail(user.email ?? '');
       }

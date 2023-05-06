@@ -15,6 +15,7 @@ import {
   createOngoingRecognizer,
   OngoingRecognition,
 } from './ongoing-recognizer';
+import { FirebaseService, LoginState } from './firebase.service';
 
 export interface OpenAISettings {
   apiKey: string;
@@ -61,7 +62,19 @@ export class OpenAiService {
     shareReplay(),
   );
 
-  constructor(private config: ConfigService) {}
+  constructor(private config: ConfigService, private firebase: FirebaseService) {
+    this.firebase.loginState.subscribe(async (loginState: LoginState) => {
+      if (loginState === 'success') {
+        const firebaseTotalCost = await this.firebase.getTotalCost();
+        const totalCost = this.config.get<number>(this.totalCostKey) ?? 0;
+        if (firebaseTotalCost) {
+          this.config.save(
+            this.totalCostKey,
+            Math.max(totalCost, firebaseTotalCost));
+        }
+      }
+    })
+  }
 
   async prompt(messages: PromptMessage[]): Promise<OngoingRecognition> {
     const recognizer = createOngoingRecognizer({
@@ -127,6 +140,7 @@ export class OpenAiService {
       const completion = await firstValueFrom(recognizer.recogniztion().text$);
       const oldCost = this.config.get<number>(this.totalCostKey) ?? 0;
       const cost = await this.getCost(JSON.stringify(messages), completion);
+      this.firebase.addCost(cost, 'openai');
       this.config.save(this.totalCostKey, oldCost + cost);
     });
 
