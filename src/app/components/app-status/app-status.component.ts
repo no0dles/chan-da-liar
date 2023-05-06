@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { OpenAiService } from 'src/app/states/open-ai.service';
+import { FirebaseService } from 'src/app/states/firebase.service';
 
 @Component({
   selector: 'app-status',
@@ -8,8 +9,10 @@ import { OpenAiService } from 'src/app/states/open-ai.service';
 })
 export class AppStatusComponent {
   cost: string = '?';
+  loginState = this.firebase.loginState;
+  firebaseState = this.firebase.state$;
 
-  constructor(private openAI: OpenAiService) {
+  constructor(private openAI: OpenAiService, private firebase: FirebaseService) {
     this.openAI.totalCost.subscribe((cost) => {
       if (cost !== null) this.cost = cost.toFixed(2);
     });
