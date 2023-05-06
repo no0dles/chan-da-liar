@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { combineLatest, map, shareReplay } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, shareReplay } from 'rxjs';
 import { ConfigService } from '../config.service';
 
 export interface Recording {
@@ -23,6 +23,7 @@ export class PrerecordingService {
     map(([recordings]) => this.mapState(recordings)),
     shareReplay(),
   );
+  editable = new BehaviorSubject<string>('');
 
   constructor(private config: ConfigService) {}
 
@@ -44,5 +45,27 @@ export class PrerecordingService {
     const recordings = this.config.get<Recording[]>(this.recordingsKey) || [];
     recordings[index] = { content };
     this.config.save(this.recordingsKey, recordings);
+  }
+
+  delete(index: number) {
+    const recordings = this.config.get<Recording[]>(this.recordingsKey) || [];
+    recordings.splice(index, 1);
+    this.config.save(this.recordingsKey, recordings);
+  }
+
+  get(index: number): Recording {
+    const recordings = this.config.get<Recording[]>(this.recordingsKey) || [];
+    /**
+     * there must be a better way?
+     * 
+     * I tried both
+     * `await firstValueFrom(this.state$)`
+     * and
+     * `await lastValueFrom(this.state$.pipe(take(1)))`
+     * but they returned stale values (i.e. when registering a new value via
+     * transcript "save" icon, that new value was not yet available in the
+     * recordings returned from above code).
+     */
+    return recordings[index];
   }
 }

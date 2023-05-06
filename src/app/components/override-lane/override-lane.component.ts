@@ -1,6 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { ConversationService } from '../../states/conversation.service';
 import { InputComponent } from '../input/input.component';
+import { PrerecordingService } from 'src/app/states/prerecording.service';
 
 @Component({
   selector: 'app-override-lane',
@@ -19,6 +20,7 @@ export class OverrideLaneComponent {
 
   constructor(
     private conversation: ConversationService,
+    private prerecordings: PrerecordingService,
   ) {
     window.addEventListener('keydown', (event: KeyboardEvent) => {
       if (event.code === 'KeyB') {
@@ -27,6 +29,11 @@ export class OverrideLaneComponent {
           event.stopPropagation();
           event.preventDefault();
         }
+      }
+    });
+    prerecordings.editable.subscribe((content: string) => {
+      if (content && this.botInput) {
+        this.botInput.value = content;
       }
     });
   }

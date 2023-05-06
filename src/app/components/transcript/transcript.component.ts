@@ -10,6 +10,8 @@ import {
 import {
   faCheck,
   faCheckDouble,
+  faFloppyDisk,
+  faVolumeHigh,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { SpeakerService } from '../../states/speaker.service';
@@ -18,7 +20,8 @@ import {
   ConversationMessage,
   ConversationService,
 } from '../../states/conversation.service';
-import { combineLatest, interval, Subscription, timer } from 'rxjs';
+import { combineLatest, firstValueFrom, interval, Subscription, timer } from 'rxjs';
+import { PrerecordingService } from 'src/app/states/prerecording.service';
 
 @Component({
   selector: 'app-transcript',
@@ -29,6 +32,8 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
   private subscription?: Subscription;
   private currentHighlight: CompletedConversationMessage | null = null;
 
+  saveIcon = faFloppyDisk;
+  speakIcon = faVolumeHigh;
   clearIcon = faTimes;
   checkIcon = faCheck;
   doubleCheckIcon = faCheckDouble;
@@ -48,14 +53,10 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private speaker: SpeakerService,
     private conversation: ConversationService,
+    private prerecordings: PrerecordingService,
   ) {}
 
   ngOnInit() {
-    interval(1000).subscribe(() => {
-      this.conversation.pushUser({
-        content: 'test',
-      });
-    });
   }
 
   trackMessage(index: number, message: ConversationMessage) {
@@ -103,5 +104,21 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
 
   toggleExpanded() {
     this.expanded = !this.expanded;
+  }
+
+  private async getMessage(id: number): Promise<ConversationMessage> {
+    return (await firstValueFrom(this.messages$)).filter(m => m.id == id)[0];
+  }
+
+  async savePrerecording(e: MouseEvent) {
+    const id = ((e.target as HTMLElement).closest('[data-part-id]') as HTMLElement).dataset['partId'] as number|undefined;
+    const message = await this.getMessage(id!) as CompletedConversationMessage;
+    this.prerecordings.save(message.text);
+  }
+
+  async speakMessage(e: MouseEvent) {
+    const id = ((e.target as HTMLElement).closest('[data-part-id]') as HTMLElement).dataset['partId'] as number|undefined;
+    const message = await this.getMessage(id!) as CompletedConversationMessage;
+    this.speaker.push(message.role, message.text);
   }
 }
