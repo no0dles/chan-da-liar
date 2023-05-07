@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, combineLatest, map, shareReplay } from 'rxjs';
 import { ConfigService } from '../config.service';
 
+// TODO Use firebase for prerecordings.
+
 export interface Recording {
   content: string;
 }

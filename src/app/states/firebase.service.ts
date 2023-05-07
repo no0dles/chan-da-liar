@@ -18,7 +18,7 @@ import { User, browserLocalPersistence, getAuth, signInWithEmailAndPassword, sig
 const DEFAULT_API_KEY = 'AIzaSyCbsk8PYE8siL58giIaDG1BjXLmtNWPjSY';
 const DEFAULT_APP_ID = '1:949850774703:web:67bc87b614929fed3a085a';
 const DEFAULT_PROJECT_ID = 'chandalair-8bf5b';
-const DEFAULT_EMAIL = 'moshi.na.vioo@gmail.com'
+const DEFAULT_EMAIL = '';
 
 export interface FirebaseSettings {
   apiKey: string;
@@ -35,6 +35,12 @@ export interface FirebaseState {
   // user: User | null;
 }
 
+export interface Config {
+  azureApiKey: string;
+  azureRegion: string;
+  openaiApiKey: string;
+}
+
 export type LoginState = 'load' | 'init' | 'login' | 'success' | 'failure' | 'out';
 export type CostSource = 'openai';
 
@@ -49,11 +55,13 @@ export class FirebaseService {
 
   private costCollection = 'cost';
   private totalsPath = 'info/totals';
+  private configPath = 'info/config';
   private conversationCollection = 'conversation';
 
   loginState = new BehaviorSubject<LoginState>('load');
   error = new BehaviorSubject<string>('');
   password = new BehaviorSubject<string>('');
+  private uuid: string|null = null;
 
   app: FirebaseApp|null = null;
   firestore: Firestore|null = null;
@@ -98,9 +106,13 @@ export class FirebaseService {
     this.loginState.next('out');
   }
 
+  private getPath(path: string) {
+    return `users/${this.uuid}/${path}`;
+  }
+
   private async initSchema() {
     // Is there a better pattern for this?
-    const totalsRef = await doc(this.firestore!, this.totalsPath);
+    const totalsRef = await doc(this.firestore!, this.getPath(this.totalsPath));
     const totalsSnapshot = await getDoc(totalsRef);
     if (!totalsSnapshot.exists()) {
       setDoc(totalsRef, {created: Date.now(), cost: 0});
@@ -111,11 +123,11 @@ export class FirebaseService {
     if (this.loginState.value != 'success') {
       return;
     }
-    const costCol = collection(this.firestore!, this.costCollection);
+    const costCol = collection(this.firestore!, this.getPath(this.costCollection));
     const t = Date.now();
     await addDoc(costCol, {t, cost, source});
     // Can this be done in an atomic transaction?
-    const totalsRef = await doc(this.firestore!, this.totalsPath);
+    const totalsRef = await doc(this.firestore!, this.getPath(this.totalsPath));
     const totals = (await getDoc(totalsRef)).data() ?? {};
     await updateDoc(totalsRef, {...totals, t, cost: (totals['cost'] || 0) + cost});
   }
@@ -124,15 +136,36 @@ export class FirebaseService {
     if (this.loginState.value != 'success') {
       return null;
     }
-    const totals = (await getDoc(await doc(this.firestore!, this.totalsPath))).data() ?? {};
+    const totals = (await getDoc(await doc(this.firestore!, this.getPath(this.totalsPath)))).data() ?? {};
     return totals['cost'] as number;
+  }
+
+  async getConfig() : Promise<Config|null> {
+    if (this.loginState.value != 'success') {
+      return null;
+    }
+    try {
+      console.log('getting config', this.getPath(this.configPath));
+      const config = (await getDoc(await doc(this.firestore!, this.getPath(this.configPath)))).data() ?? {};
+      console.log('got config', config);
+      if (!config['azureApiKey'] || !config['azureRegion'] || !config['openaiApiKey']) {
+        // TODO better error handling (currently it's overwritten).
+        console.error('Got invalid config', this.uuid, config);
+        this.error.next('Invalid config');
+        return null;
+      }
+      return config as Config;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
   }
 
   async setConversation(id: string, conversation: any) {
     if (this.loginState.value != 'success') {
       return;
     }
-    const docRef = await doc(this.firestore!, `${this.conversationCollection}/${id}`);
+    const docRef = await doc(this.firestore!, this.getPath(`${this.conversationCollection}/${id}`));
     await setDoc(docRef, {conversation});
   }
 
@@ -154,6 +187,7 @@ export class FirebaseService {
     getAuth().onAuthStateChanged((user: User|null) => {
       console.log('onAuthStateChanged', user);
       if (user) {
+        this.uuid = user.uid;
         this.initSchema();
         this.loginState.next('success');
         this.setEmail(user.email ?? '');

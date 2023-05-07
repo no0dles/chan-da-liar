@@ -1,22 +1,24 @@
 <ng-container *ngIf="state$ | async as state">
   <div class="flex-grow min-h-0 space-y-4 flex flex-col">
-    <app-input
-      [heading]="'Subscription Key'"
-      [placeholder]="'7918e........'"
-      [value]="state.settings?.apiKey"
-      (valueChanged)="setKey($event)"></app-input>
-    <div>
+    <div *ngIf="!state.managed" class="flex-grow min-h-0 space-y-4 flex flex-col">
       <app-input
-        [heading]="'Region'"
-        [placeholder]="'westeurope'"
-        [value]="state.settings?.region"
-        (valueChanged)="setRegion($event)"></app-input>
-      <a
-        target="_blank"
-        class="underline text-xs text-gray-500"
-        href="https://learn.microsoft.com/en-gb/azure/cognitive-services/cognitive-services-apis-create-account"
-        >https://learn.microsoft.com</a
-      >
+        [heading]="'Subscription Key'"
+        [placeholder]="'7918e........'"
+        [value]="state.settings?.apiKey"
+        (valueChanged)="setKey($event)"></app-input>
+      <div>
+        <app-input
+          [heading]="'Region'"
+          [placeholder]="'westeurope'"
+          [value]="state.settings?.region"
+          (valueChanged)="setRegion($event)"></app-input>
+        <a
+          target="_blank"
+          class="underline text-xs text-gray-500"
+          href="https://learn.microsoft.com/en-gb/azure/cognitive-services/cognitive-services-apis-create-account"
+          >https://learn.microsoft.com</a
+        >
+      </div>
     </div>
 
     <label

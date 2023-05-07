@@ -20,7 +20,8 @@ export interface CompletedConversationMessage {
   played: boolean;
   role: ConversationRole;
   completed: true;
-  prefix: string | null
+  prefix: string | null;
+  model?: string;
 }
 
 export interface OngoingConversationMessage {
@@ -58,6 +59,7 @@ export class ConversationService {
   messages$ = this.messagesSubject.asObservable();
 
   highlight$ = this.highlightSubject.asObservable();
+  selectedModel = '?';
 
   constructor(
     private openAI: OpenAiService,
@@ -145,6 +147,7 @@ export class ConversationService {
               prefix: null,
               queued: true,
               text: state.rolePlayScript,
+              model: state.selectedModel?.id,
             },
           ]
         : [],
