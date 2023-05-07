@@ -1,15 +1,18 @@
-<span class="text-gray-400 text-xs mb-1">Override</span>
-
-<app-input #botInput
-  [heading]="'Override bot'"
-  [placeholder]="'Press B to focus...'"
-  [value]="bot"
-  (valueChanged)="botChanged($event)"
-  (keyDown)="botKeyDown($event)"></app-input>
-
-<app-input #userInput
-  [heading]="'Override user'"
-  [placeholder]="''"
-  [value]="user"
-  (valueChanged)="userChanged($event)"
-  (keyDown)="userKeyDown($event)"></app-input>
+<div class="flex items-center space-x-3">
+  <app-input #input
+    class="grow"
+    [captureTab]="true"
+    [heading]="'Override ' + destination"
+    [placeholder]="'Press O to focus, <tab> to switch...'"
+    [value]="value"
+    (valueChanged)="valueChanged($event)"
+    (keyDown)="keyDown($event)"></app-input>
+  <div class="flex-col items-center">  <!-- ??? toggle is not centered-->
+    <div>Developer</div>
+    <app-toggle
+      tabindex="-1"
+      [enabled]="!!(developer | async)"
+      (enabledChanged)="setDeveloper($event)">
+    </app-toggle>
+  </div>
+</div>

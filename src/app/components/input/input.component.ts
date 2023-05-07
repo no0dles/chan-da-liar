@@ -20,6 +20,9 @@ export class InputComponent {
   @Input()
   value?: string | null = '';
 
+  @Input()
+  captureTab?: boolean | null = false;
+
   @ViewChild('input', {static: false})
   input?: ElementRef;
 
@@ -41,6 +44,10 @@ export class InputComponent {
   handleKeyDown(event: KeyboardEvent) {
     if (event.code === 'Escape') {
       this.input?.nativeElement.blur();
+    }
+    if (event.code === 'Tab' && this.captureTab) {
+      event.stopPropagation();
+      event.preventDefault();
     }
     this.keyDown.emit(event.code);
   }

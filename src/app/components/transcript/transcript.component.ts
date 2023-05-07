@@ -22,6 +22,7 @@ import {
 } from '../../states/conversation.service';
 import { combineLatest, firstValueFrom, interval, Subscription, timer } from 'rxjs';
 import { PrerecordingService } from 'src/app/states/prerecording.service';
+import { AppService } from 'src/app/states/app.service';
 
 @Component({
   selector: 'app-transcript',
@@ -49,12 +50,18 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
 
   messages$ = this.conversation.messages$;
   expanded = false;
+  developer = false;
 
   constructor(
     private speaker: SpeakerService,
     private conversation: ConversationService,
     private prerecordings: PrerecordingService,
-  ) {}
+    app: AppService,
+  ) {
+    app.state$.subscribe(state => {
+      this.developer = state.developer;
+    });
+  }
 
   ngOnInit() {
   }

@@ -7,7 +7,8 @@ import {
   Recording,
 } from '../../states/prerecording.service';
 import { ConversationService } from '../../states/conversation.service';
-import { firstValueFrom, lastValueFrom, take } from 'rxjs';
+import { firstValueFrom, lastValueFrom, map, take } from 'rxjs';
+import { AppService } from 'src/app/states/app.service';
 
 @Component({
   selector: 'app-prerecoding-lane',
@@ -20,11 +21,13 @@ export class PrerecodingLaneComponent {
   modifyIcon = faPen;
 
   state$ = this.prerecording.state$;
+  developer$ = this.app.state$.pipe(map(state => state.developer!));
   constructor(
     private modal: ModalService,
     private prerecording: PrerecordingService,
     private conversation: ConversationService,
     private viewContainerRef: ViewContainerRef,
+    private app: AppService,
   ) {}
 
   openCreate() {

@@ -47,7 +47,7 @@
         </div>
       </div>
       <div
-        class="icons-top" *ngIf="message.completed">
+        class="icons-top" *ngIf="developer && message.completed">
         <fa-icon [icon]="saveIcon" class="cursor-pointer" (click)="savePrerecording($event)"></fa-icon>
         <fa-icon [icon]="speakIcon" class="cursor-pointer" (click)="speakMessage($event)"></fa-icon>
       </div>

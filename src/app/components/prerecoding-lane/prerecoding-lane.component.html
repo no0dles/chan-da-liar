@@ -14,7 +14,7 @@
       </app-button>
       <div class="absolute -bottom-2 right-1 text-teal-800 space-x-2 text-xs">
         <fa-icon [icon]="modifyIcon" class="cursor-pointer" (click)="modify(index)"></fa-icon>
-        <fa-icon [icon]="deleteIcon" class="cursor-pointer" (click)="delete(index)"></fa-icon>
+        <fa-icon [icon]="deleteIcon" class="cursor-pointer" (click)="delete(index)" *ngIf="developer$ | async"></fa-icon>
       </div>
     </div>
   </div>
