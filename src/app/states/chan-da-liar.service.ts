@@ -45,7 +45,6 @@ export class ChanDaLiarService {
     device: DeviceState,
     firebase: FirebaseState
   ): ChanDaLiarState {
-    console.log('map chan')
     return {
       noneReady: !openAi.ready && !azureCognitive.ready && !device.ready && !firebase.ready,
       ready: openAi.ready && azureCognitive.ready && device.ready,

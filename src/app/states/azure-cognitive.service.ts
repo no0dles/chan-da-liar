@@ -10,13 +10,10 @@ import {
   VoiceInfo,
   SpeakerAudioDestination,
 } from 'microsoft-cognitiveservices-speech-sdk';
-import {catchError, combineLatest, mergeMap, shareReplay} from 'rxjs';
+import { catchError, combineLatest, mergeMap, shareReplay } from 'rxjs';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 import { Cache } from '../utils/cache';
-import {
-  Recognizer,
-  SpeechRecognitionEventArgs,
-} from 'microsoft-cognitiveservices-speech-sdk/distrib/lib/src/sdk/Exports';
+import { LightService } from './light.service';
 
 export interface AzureCognitiveSettings {
   apiKey: string;
@@ -32,28 +29,18 @@ export interface AzureCognitiveState {
   selectedLocale: string | null;
   selectedVoice: VoiceInfo | null;
   ready: boolean;
-  error: string | null
+  error: string | null;
 }
 
 export interface SpeakResult {
-  duration: number
+  duration: number;
   visums: SpeakVisum[];
 }
 
 export interface SpeakVisum {
-  value: number
+  value: number;
   offset: number;
 }
-
-// const options = {
-//   host: '172.16.23.15'
-// }
-
-//const artnet = require('artnet')(options);
-// set channel 1 to 255 and disconnect afterwards.
-//         artnet.set(1, 255, function (err, res) {
-//           artnet.close();
-//         });
 
 @Injectable({
   providedIn: 'root',
@@ -63,6 +50,8 @@ export class AzureCognitiveService {
   private configRegionKey = 'azure-cognitive-region';
   private configLocaleKey = 'azure-cognitive-locale';
   private configVoiceKey = 'azure-cognitive-voice';
+
+  private speakSuffixDuration = 750;
 
   private voiceCache = new Cache<VoiceInfo[]>();
   private speechCache = new Cache<SpeechConfig>();
@@ -79,7 +68,8 @@ export class AzureCognitiveService {
     shareReplay(),
   );
 
-  constructor(private config: ConfigService) {}
+  constructor(private config: ConfigService,
+              private light: LightService) {}
 
   setApiKey(key: string) {
     this.config.save(this.configApiKey, key);
@@ -103,7 +93,6 @@ export class AzureCognitiveService {
     locale: string | null,
     voice: string | null,
   ): Promise<AzureCognitiveState> {
-    console.log('map azure')
     if (!apiKey || !region) {
       return {
         settings: null,
@@ -120,10 +109,10 @@ export class AzureCognitiveService {
 
     const cacheKey = `${apiKey}-${region}`;
     const api: AzureCognitiveSettings = { apiKey, region };
-    let error = ''
+    let error = '';
     const voices = await this.voiceCache.getOrCreate(cacheKey, () =>
-      this.getVoices(api).catch(err => {
-        error = 'Failed to load voices'
+      this.getVoices(api).catch((err) => {
+        error = 'Failed to load voices';
         console.error(err);
         return [];
       }),
@@ -182,7 +171,7 @@ export class AzureCognitiveService {
     const synth = new SpeechSynthesizer(speech, synthAudio);
     const result = await synth.getVoicesAsync();
     if (result.errorDetails) {
-      throw new Error(result.errorDetails)
+      throw new Error(result.errorDetails);
     }
     return result.voices ?? [];
   }
@@ -195,13 +184,14 @@ export class AzureCognitiveService {
     const player = new SpeakerAudioDestination(deviceId);
     const synthAudio = AudioConfig.fromSpeakerOutput(player);
     const synth = new SpeechSynthesizer(speechConfig, synthAudio);
+    // TODO synth.buildSsml()
     return new Promise<SpeakResult>((resolve) => {
       const visums: SpeakVisum[] = [];
       synth.visemeReceived = (sender, e) => {
-        visums.push({value: e.visemeId, offset: e.audioOffset / 10000 })
-      }
+        visums.push({ value: e.visemeId, offset: e.audioOffset / 10000 });
+      };
       synth.speakTextAsync(text, (e) => {
-        resolve({duration: e.audioDuration / 10000, visums }); // ticks to ms
+        resolve({ duration: e.audioDuration / 10000 - this.speakSuffixDuration, visums }); // ticks to ms
       });
     });
   }

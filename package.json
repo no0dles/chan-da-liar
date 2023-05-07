@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "server": "node light-controller-server.js",
     "build": "ng build -c production",
     "format": "prettier -w src"
   },
@@ -26,9 +27,11 @@
     "@fortawesome/free-brands-svg-icons": "^6.2.1",
     "@fortawesome/free-regular-svg-icons": "^6.2.1",
     "@fortawesome/free-solid-svg-icons": "^6.2.1",
+    "artnet": "^1.4.0",
     "firebase": "^9.21.0",
     "microsoft-cognitiveservices-speech-sdk": "^1.27.0",
     "openai": "^3.2.1",
+    "pyextjs": "^0.1.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.12.0"
@@ -37,7 +40,12 @@
     "@angular-devkit/build-angular": "^15.2.5",
     "@angular/cli": "~15.2.5",
     "@angular/compiler-cli": "^15.2.0",
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.17",
     "autoprefixer": "^10.4.14",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
     "postcss": "^8.4.21",
     "prettier": "^2.8.7",
     "tailwindcss": "^3.3.1",

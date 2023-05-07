@@ -1,0 +1,7 @@
+<ng-container *ngIf="state$ | async as state">
+  <app-input
+    [heading]="'Light Controller Server IP'"
+    [placeholder]="'http://localhost:8080'"
+    [value]="state.artnetServerIp"
+    (valueChanged)="setServerIp($event)"></app-input>
+</ng-container>
