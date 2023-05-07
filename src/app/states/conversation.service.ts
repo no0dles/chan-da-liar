@@ -63,6 +63,9 @@ export class ConversationService {
     });
 
     window.addEventListener('keydown', (evt) => {
+      if (evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) {
+        return;
+      }
       if (evt.code === 'Space') {
         if (this.highlightSubject.value) {
           this.highlightSubject.value.decision = 'yes';
