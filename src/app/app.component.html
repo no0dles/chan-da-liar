@@ -21,7 +21,9 @@
       [systemMessage]="state.systemMessage"
       class="flex-grow min-h-0"></app-transcript>
 
-    <app-override-lane class="shrink"></app-override-lane>
-    <app-prerecoding-lane class="h-1/4 flex-shrink-0"></app-prerecoding-lane>
+    <div class="h-1/4 shrink-0 flex items-stretch space-x-3">
+      <app-prerecoding-lane class="w-1/2"></app-prerecoding-lane>
+      <app-override-lane class="w-1/2"></app-override-lane>
+    </div>
     </div>
 </ng-container>
