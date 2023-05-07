@@ -77,7 +77,7 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    combineLatest([this.conversation.highlight$, interval(500)]).subscribe(([highlight]) => {
+    combineLatest([this.conversation.highlight$, interval(100)]).subscribe(([highlight]) => {
       this.currentHighlight = highlight;
 
       if (!this.container?.nativeElement || !highlight) {
@@ -100,19 +100,6 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
 
   clear() {
     this.conversation.clear();
-  }
-
-  playMessage(message: string) {
-    this.speaker.push('Response', message);
-  }
-
-  maybeShorten(message: CompletedConversationMessage) {
-    if (message.role === 'system' && !this.expanded) {
-      if (message.text.length > 120) {
-        return message.text.substring(0, 120) + '...';
-      }
-    }
-    return message.text;
   }
 
   toggleExpanded() {

@@ -30,7 +30,6 @@ export class PrerecordingService {
   constructor(private config: ConfigService) {}
 
   private mapState(recs: Recording[] | null): PrerecordingState {
-    console.log('map recording')
     return {
       recordings: recs || [],
       ready: true,

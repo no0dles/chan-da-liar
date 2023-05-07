@@ -28,6 +28,7 @@ import { ConfigurationFirebaseComponent } from './components/configuration-fireb
 import { ConfigurationDeviceSidebarComponent } from './components/configuration-device-sidebar/configuration-device-sidebar.component';
 import { ConfigurationItemComponent } from './components/configuration-item/configuration-item.component';
 import { ConfigurationPrerecordingListSidebarComponent } from './components/configuration-prerecording-list-sidebar/configuration-prerecording-list-sidebar.component';
+import { ConfigurationLightSidebarComponent } from './components/configuration-light-sidebar/configuration-light-sidebar.component';
 
 @NgModule({
   declarations: [
@@ -56,6 +57,7 @@ import { ConfigurationPrerecordingListSidebarComponent } from './components/conf
     ConfigurationDeviceSidebarComponent,
     ConfigurationItemComponent,
     ConfigurationPrerecordingListSidebarComponent,
+    ConfigurationLightSidebarComponent,
   ],
   imports: [
     BrowserModule,

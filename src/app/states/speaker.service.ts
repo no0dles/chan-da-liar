@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import {AzureCognitiveService, SpeakVisum} from './azure-cognitive.service';
 import { DeviceService } from './device.service';
+import { LightService } from './light.service';
 
 export interface OutputQueueItem {
   source: string;
@@ -22,13 +23,14 @@ export class SpeakerService {
   constructor(
     private device: DeviceService,
     private azureCognitive: AzureCognitiveService,
+    private light: LightService
   ) {
     combineLatest([
       this.azureCognitive.state$,
       this.device.state$,
       this.queue$,
-    ]).subscribe(([state, device, queue]) => {
-      console.log('process speaker')
+      this.light.state$,
+    ]).subscribe(([state, device, queue, light]) => {
       if (!state.speechConfig || !device.selectedOutput) {
         return;
       }
@@ -51,6 +53,20 @@ export class SpeakerService {
           .then((result) => {
             item.duration = result.duration;
             item.visums = result.visums;
+
+            fetch(light.artnetServerIp, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                visums: result.visums,
+                duration: result.duration,
+                start: new Date(),
+                end: new Date(new Date().getTime() + result.duration),
+              }),
+            });
+
             this.queueSubject.next(this.queueSubject.value);
             setTimeout(() => {
               const index = this.queueSubject.value.indexOf(item);

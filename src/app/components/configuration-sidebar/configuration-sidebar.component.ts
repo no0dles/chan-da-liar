@@ -14,6 +14,10 @@ import {
 import { PrerecordingService } from '../../states/prerecording.service';
 import { ConfigurationFirebaseComponent } from '../configuration-firebase-sidebar/configuration-firebase-sidebar.component';
 import { FirebaseService } from 'src/app/states/firebase.service';
+import {
+  ConfigurationLightSidebarComponent
+} from '../configuration-light-sidebar/configuration-light-sidebar.component';
+import { LightService } from '../../states/light.service';
 
 @Component({
   selector: 'app-configuration-sidebar',
@@ -48,6 +52,12 @@ export class ConfigurationSidebarComponent implements ModalInstance<void> {
       classNames: ['fullscreen'],
     },
     {
+      heading: 'Lights',
+      description: 'Configure light controller',
+      component: ConfigurationLightSidebarComponent,
+      state: this.light,
+    },
+    {
       heading: 'Prerecordings',
       description: 'Configure prerecorded answers',
       component: ConfigurationPrerecordingListSidebarComponent,
@@ -62,6 +72,7 @@ export class ConfigurationSidebarComponent implements ModalInstance<void> {
     private chanDaLiar: ChanDaLiarService,
     private openAI: OpenAiService,
     private device: DeviceService,
+    private light: LightService,
     private prerecording: PrerecordingService,
     private azureCognitive: AzureCognitiveService,
     private firebase: FirebaseService,

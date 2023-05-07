@@ -188,7 +188,6 @@ export class OpenAiService {
     selectedModel: string | null,
     managedSettings: OpenAISettings | null,
   ): Promise<OpenAIState> {
-    console.log('map openai')
     if (!key) {
       return {
         ready: false,
@@ -224,7 +223,6 @@ export class OpenAiService {
       }),
     );
     const model = models.find((m) => m.id === selectedModel) ?? null;
-    console.log('openai');
 
     return {
       ready: model !== null,
