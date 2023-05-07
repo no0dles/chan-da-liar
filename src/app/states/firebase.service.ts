@@ -49,6 +49,7 @@ export class FirebaseService {
 
   private costCollection = 'cost';
   private totalsPath = 'info/totals';
+  private conversationCollection = 'conversation';
 
   loginState = new BehaviorSubject<LoginState>('load');
   error = new BehaviorSubject<string>('');
@@ -125,6 +126,14 @@ export class FirebaseService {
     }
     const totals = (await getDoc(await doc(this.firestore!, this.totalsPath))).data() ?? {};
     return totals['cost'] as number;
+  }
+
+  async setConversation(id: string, conversation: any) {
+    if (this.loginState.value != 'success') {
+      return;
+    }
+    const docRef = await doc(this.firestore!, `${this.conversationCollection}/${id}`);
+    await setDoc(docRef, {conversation});
   }
 
   private initializeFirebase(apiKey: string, appId: string, projectId: string) {

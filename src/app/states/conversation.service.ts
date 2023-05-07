@@ -4,6 +4,7 @@ import { OpenAiService, OpenAIState, PromptMessage } from './open-ai.service';
 import { Recording } from './prerecording.service';
 import { OngoingRecognition } from './ongoing-recognizer';
 import { SpeakerService } from './speaker.service';
+import { FirebaseService } from './firebase.service';
 
 export type ConversationRole = 'assistant' | 'user' | 'system';
 export type Decision = 'yes' | 'skip' | 'open';
@@ -51,15 +52,26 @@ export class ConversationService {
   highlightSubject = new BehaviorSubject<CompletedConversationMessage | null>(
     null,
   );
+  conversationId = Date.now().toString();
   ongoingConversations: OngoingConversationRecognition[] = [];
 
   messages$ = this.messagesSubject.asObservable();
 
   highlight$ = this.highlightSubject.asObservable();
 
-  constructor(private openAI: OpenAiService, private speaker: SpeakerService) {
+  constructor(
+    private openAI: OpenAiService,
+    private speaker: SpeakerService,
+    firebase: FirebaseService,
+  ) {
     this.openAI.state$.subscribe((state) => {
       this.clear(state);
+    });
+
+    this.messages$.subscribe((messages) => {
+      if (messages.length > 1) {
+        firebase.setConversation(this.conversationId, messages);
+      }
     });
 
     window.addEventListener('keydown', (evt) => {
