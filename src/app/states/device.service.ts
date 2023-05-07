@@ -138,7 +138,10 @@ export class DeviceService {
         (s) => s.deviceId === input.deviceId,
       );
       if (microphoneState) {
-        states.push(microphoneState);
+        states.push({
+          ...microphoneState,
+          role: microphoneState.role ?? 'user',
+        });
       } else {
         states.push({
           deviceId: input.deviceId,
