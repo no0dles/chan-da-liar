@@ -116,6 +116,10 @@ export class AzureCognitiveService {
     voice: string | null,
     managedSettings: AzureCognitiveSettings | null,
   ): Promise<AzureCognitiveState> {
+    if (managedSettings) {
+      apiKey = managedSettings.apiKey;
+      region = managedSettings.region;
+    }
     if (!apiKey || !region) {
       return {
         settings: null,
@@ -131,10 +135,6 @@ export class AzureCognitiveService {
       };
     }
 
-    if (managedSettings) {
-      apiKey = managedSettings.apiKey;
-      region = managedSettings.region;
-    }
     const cacheKey = `${apiKey}-${region}`;
     const api: AzureCognitiveSettings = { apiKey, region };
     let error = '';
