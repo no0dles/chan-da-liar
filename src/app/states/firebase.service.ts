@@ -220,9 +220,6 @@ export class FirebaseService {
 
     const settings: FirebaseSettings = {apiKey, appId, projectId, email, password};
 
-    console.log('loginState', loginState);
-    console.log(apiKey, appId, projectId, email, password);
-
     if (loginState === 'load') {
       if (apiKey && appId && projectId) {
         console.log('-> init');
