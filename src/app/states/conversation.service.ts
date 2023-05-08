@@ -86,7 +86,7 @@ export class ConversationService {
           this.goToNextPart(this.highlightSubject.value);
           this.messagesSubject.next(this.messagesSubject.value);
         }
-      } else if (evt.code === 'ArrowRight' || evt.code === 'Tab') {
+      } else if (evt.code === 'ArrowRight' || evt.code === 'Backspace') {
         if (
           this.highlightSubject.value &&
           this.highlightSubject.value.decision === 'open'
