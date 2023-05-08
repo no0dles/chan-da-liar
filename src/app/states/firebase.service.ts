@@ -145,9 +145,7 @@ export class FirebaseService {
       return null;
     }
     try {
-      console.log('getting config', this.getPath(this.configPath));
       const config = (await getDoc(await doc(this.firestore!, this.getPath(this.configPath)))).data() ?? {};
-      console.log('got config', config);
       if (!config['azureApiKey'] || !config['azureRegion'] || !config['openaiApiKey']) {
         // TODO better error handling (currently it's overwritten).
         console.error('Got invalid config', this.uuid, config);
