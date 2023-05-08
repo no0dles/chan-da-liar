@@ -65,6 +65,8 @@ export class SpeakerService {
                 start: new Date(),
                 end: new Date(new Date().getTime() + result.duration),
               }),
+            }).catch(e => {
+              console.log('Could not send to light:', e.message);
             });
 
             this.queueSubject.next(this.queueSubject.value);
