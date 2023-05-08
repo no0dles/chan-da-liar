@@ -72,7 +72,7 @@ export class ConversationService {
 
     this.messages$.subscribe((messages) => {
       if (messages.length > 1) {
-        firebase.setConversation(this.conversationId, messages);
+        firebase.setConversation(this.conversationId, messages.filter(message => message.completed));
       }
     });
 
