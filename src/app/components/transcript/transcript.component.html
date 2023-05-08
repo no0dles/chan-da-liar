@@ -48,8 +48,8 @@
       </div>
       <div
         class="icons-top" *ngIf="developer && message.completed">
-        <fa-icon [icon]="saveIcon" class="cursor-pointer" (click)="savePrerecording($event)"></fa-icon>
-        <fa-icon [icon]="speakIcon" class="cursor-pointer" (click)="speakMessage($event)"></fa-icon>
+        <fa-icon [icon]="saveIcon" class="cursor-pointer" (click)="savePrerecording(message)"></fa-icon>
+        <fa-icon [icon]="speakIcon" class="cursor-pointer" (click)="speakMessage(message)"></fa-icon>
       </div>
       <div
         *ngIf="message.completed && (message.queued || message.played)"

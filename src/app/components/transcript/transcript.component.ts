@@ -106,19 +106,11 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
     this.expanded = !this.expanded;
   }
 
-  private async getMessage(id: number): Promise<ConversationMessage> {
-    return (await firstValueFrom(this.messages$)).filter(m => m.id == id)[0];
-  }
-
-  async savePrerecording(e: MouseEvent) {
-    const id = ((e.target as HTMLElement).closest('[data-part-id]') as HTMLElement).dataset['partId'] as number|undefined;
-    const message = await this.getMessage(id!) as CompletedConversationMessage;
+  async savePrerecording(message: CompletedConversationMessage) {
     this.prerecordings.save(message.text);
   }
 
-  async speakMessage(e: MouseEvent) {
-    const id = ((e.target as HTMLElement).closest('[data-part-id]') as HTMLElement).dataset['partId'] as number|undefined;
-    const message = await this.getMessage(id!) as CompletedConversationMessage;
+  async speakMessage(message: CompletedConversationMessage) {
     this.speaker.push(message.role, message.text);
   }
 }
