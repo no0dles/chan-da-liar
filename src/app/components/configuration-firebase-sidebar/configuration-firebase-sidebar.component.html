@@ -19,6 +19,7 @@
       [inputType]="'password'"
       [placeholder]="'........'"
       [value]="state.settings.password"
+      (enterPressed)="doLogin()"
       (valueChanged)="setPassword($event)"></app-input>
 
     <div class="cursor-pointer underline text-gray-600" (click)="showAdvanced = !showAdvanced">
