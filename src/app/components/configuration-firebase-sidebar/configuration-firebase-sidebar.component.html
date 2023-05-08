@@ -47,14 +47,12 @@
       </div>
     </div>
 
-    </div>
-
-  <div class="flex gap-4">
-    <app-button [disabled]="!state.canLogin || (loginState | async) === 'success'"
-      (click)="doLogin()" class="grow"
-      >Login</app-button>
-    <app-button [disabled]="(loginState | async) !== 'success'"
-      (click)="doLogout()" class="grow"
-      >Logout</app-button>
   </div>
+
+  <app-button *ngIf="state.canLogin && (loginState | async) !== 'success'"
+    (click)="doLogin()" class="grow"
+    >Login</app-button>
+  <app-button *ngIf="(loginState | async) === 'success'"
+    (click)="doLogout()" class="grow"
+    >Logout</app-button>
 </ng-container>
