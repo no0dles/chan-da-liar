@@ -52,6 +52,7 @@ export class OpenAiService {
   totalCost = this.config.watch<number>(this.totalCostKey, 0);
 
   private managedSettings = new BehaviorSubject<OpenAISettings|null>(null);
+  private currentState: OpenAIState|null = null;
   state$ = combineLatest([
     this.config.watch<string>(this.configApiKey),
     this.config.watch<string>(this.configRolePlayKey),
@@ -89,8 +90,7 @@ export class OpenAiService {
       textPrefix: undefined,
     });
 
-    const openAiState = await firstValueFrom(this.state$);
-    if (!openAiState.settings || !openAiState.selectedModel) {
+    if (!this.currentState?.settings || !this.currentState?.selectedModel) {
       console.warn('no model/apiKey');
       recognizer.complete();
       return recognizer.recogniztion();
@@ -100,11 +100,11 @@ export class OpenAiService {
       method: 'post',
       headers: new Headers({
         // https://platform.openai.com/account/usage
-        Authorization: `Bearer ${openAiState.settings.apiKey}`,
+        Authorization: `Bearer ${this.currentState.settings.apiKey}`,
         'Content-Type': 'application/json',
       }),
       body: JSON.stringify({
-        model: openAiState.selectedModel.id,
+        model: this.currentState.selectedModel.id,
         messages: messages,
         stream: true,
       }),
@@ -224,7 +224,8 @@ export class OpenAiService {
     );
     const model = models.find((m) => m.id === selectedModel) ?? null;
 
-    return {
+
+    this.currentState = {
       ready: model !== null,
       selectedModel: model,
       settings: { apiKey: key },
@@ -234,5 +235,6 @@ export class OpenAiService {
       error,
       models,
     };
+    return this.currentState;
   }
 }
