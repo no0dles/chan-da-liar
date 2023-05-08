@@ -188,6 +188,9 @@ export class OpenAiService {
     selectedModel: string | null,
     managedSettings: OpenAISettings | null,
   ): Promise<OpenAIState> {
+    if (managedSettings) {
+      key = managedSettings.apiKey!;
+    }
     if (!key) {
       return {
         ready: false,
@@ -201,9 +204,6 @@ export class OpenAiService {
       };
     }
 
-    if (managedSettings) {
-      key = managedSettings.apiKey!;
-    }
     const openai = await this.apiCache.getOrCreate(key, () => {
       const configuration = new Configuration({
         apiKey: key!,
