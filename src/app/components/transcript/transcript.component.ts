@@ -10,6 +10,8 @@ import {
 import {
   faCheck,
   faCheckDouble,
+  faFloppyDisk,
+  faVolumeHigh,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { SpeakerService } from '../../states/speaker.service';
@@ -18,7 +20,10 @@ import {
   ConversationMessage,
   ConversationService,
 } from '../../states/conversation.service';
-import { combineLatest, interval, Subscription, timer } from 'rxjs';
+import { combineLatest, firstValueFrom, interval, Subscription, timer } from 'rxjs';
+import { PrerecordingService } from 'src/app/states/prerecording.service';
+import { AppService } from 'src/app/states/app.service';
+import { OpenAiService } from 'src/app/states/open-ai.service';
 
 @Component({
   selector: 'app-transcript',
@@ -29,6 +34,8 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
   private subscription?: Subscription;
   private currentHighlight: CompletedConversationMessage | null = null;
 
+  saveIcon = faFloppyDisk;
+  speakIcon = faVolumeHigh;
   clearIcon = faTimes;
   checkIcon = faCheck;
   doubleCheckIcon = faCheckDouble;
@@ -44,11 +51,23 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
 
   messages$ = this.conversation.messages$;
   expanded = false;
+  developer = false;
+  selectedModel = '?';
 
   constructor(
     private speaker: SpeakerService,
     private conversation: ConversationService,
-  ) {}
+    private prerecordings: PrerecordingService,
+    openai: OpenAiService,
+    app: AppService,
+  ) {
+    app.state$.subscribe(state => {
+      this.developer = state.developer;
+    });
+    openai.state$.subscribe(state => {
+      this.selectedModel = state.selectedModel?.id ?? '?';
+    });
+  }
 
   ngOnInit() {
   }
@@ -85,5 +104,13 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
 
   toggleExpanded() {
     this.expanded = !this.expanded;
+  }
+
+  async savePrerecording(message: CompletedConversationMessage) {
+    this.prerecordings.save(message.text);
+  }
+
+  async speakMessage(message: CompletedConversationMessage) {
+    this.speaker.push(message.role, message.text);
   }
 }

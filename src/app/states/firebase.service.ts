@@ -1,36 +1,48 @@
 import { Injectable } from '@angular/core';
 import { ConfigService } from '../config.service';
-import { BehaviorSubject, Observable, combineLatest, firstValueFrom, mergeMap, shareReplay} from 'rxjs';
+import { BehaviorSubject, combineLatest, fromEvent, mergeMap, shareReplay} from 'rxjs';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
-import { FirebaseError, FirebaseOptions, initializeApp } from "firebase/app";
+import { FirebaseApp, FirebaseError, FirebaseOptions, deleteApp, initializeApp } from "firebase/app";
 import {
    getFirestore,
    getDoc,
    updateDoc,
-   Firestore
+   Firestore,
+   collection,
+   addDoc,
+   doc,
+   setDoc
 } from 'firebase/firestore/lite';
-import { getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { User, browserLocalPersistence, getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
 
 const DEFAULT_API_KEY = 'AIzaSyCbsk8PYE8siL58giIaDG1BjXLmtNWPjSY';
 const DEFAULT_APP_ID = '1:949850774703:web:67bc87b614929fed3a085a';
 const DEFAULT_PROJECT_ID = 'chandalair-8bf5b';
-const DEFAULT_EMAIL = 'moshi.na.vioo@gmail.com'
+const DEFAULT_EMAIL = '';
 
 export interface FirebaseSettings {
-  apiKey: string | null;
-  appId: string | null;
-  projectId: string | null;
-  email: string | null;
-  password: string | null;
+  apiKey: string;
+  appId: string;
+  projectId: string;
+  email: string;
+  password: string;
 }
 
 export interface FirebaseState {
   ready: boolean;
   canLogin: boolean;
   settings: FirebaseSettings;
+  // user: User | null;
 }
 
-type LoginState = 'out' | 'ongoing' | 'success' | 'failure';
+export interface Config {
+  azureApiKey: string;
+  azureRegion: string;
+  openaiApiKey: string;
+}
+
+export type LoginState = 'load' | 'init' | 'login' | 'success' | 'failure' | 'out';
+export type CostSource = 'openai';
 
 @Injectable({
   providedIn: 'root',
@@ -40,25 +52,30 @@ export class FirebaseService {
   private configAppIdKey = 'firebase-app-id';
   private configProjectIdKey = 'firebase-project-id';
   private emailKey = 'firebase-email';
-  private passwordKey = 'firebase-password';
 
-  private onLoad = true;
+  private costCollection = 'cost';
+  private totalsPath = 'info/totals';
+  private configPath = 'info/config';
+  private conversationCollection = 'conversation';
 
-  loginState = new BehaviorSubject<LoginState>('out');
+  loginState = new BehaviorSubject<LoginState>('load');
   error = new BehaviorSubject<string>('');
+  password = new BehaviorSubject<string>('');
+  private uuid: string|null = null;
 
-  firestore: Firestore | null = null;
+  app: FirebaseApp|null = null;
+  firestore: Firestore|null = null;
 
   state$ = combineLatest([
     this.config.watch<string>(this.configApiKey, DEFAULT_API_KEY),
     this.config.watch<string>(this.configAppIdKey, DEFAULT_APP_ID),
     this.config.watch<string>(this.configProjectIdKey, DEFAULT_PROJECT_ID),
     this.config.watch<string>(this.emailKey, DEFAULT_EMAIL),
-    this.config.watch<string>(this.passwordKey),
-    this.loginState
+    this.password,
+    this.loginState,
   ]).pipe(
     mergeMap(([apiKey, appId, projectId, email, password, loginState]) =>
-      fromPromise(this.mapState(apiKey, appId, projectId, email, password, loginState)),
+      fromPromise(this.mapState(apiKey ?? '', appId ?? '', projectId ?? '', email ?? '', password ?? '', loginState)),
     ),
     shareReplay(),
   );
@@ -68,32 +85,90 @@ export class FirebaseService {
   setApiKey(apiKey: string) {
     this.config.save(this.configApiKey, apiKey);
   }
-
   setAppId(appId: string) {
     this.config.save(this.configAppIdKey, appId);
   }
-
   setProjectId(projectId: string) {
     this.config.save(this.configProjectIdKey, projectId);
   }
-
   setEmail(email: string) {
     this.config.save(this.emailKey, email);
   }
-
   setPassword(password: string) {
-    this.config.save(this.passwordKey, password);
+    this.password.next(password);
   }
 
   doLogin() {
-    this.loginState.next('ongoing');
+    this.loginState.next('login');
+  }
+  async doLogout() {
+    await signOut(getAuth());
+    this.loginState.next('out');
   }
 
-  private async doFirestoreLogin(settings: FirebaseSettings) {
-    this.error.next('');
+  private getPath(path: string) {
+    return `users/${this.uuid}/${path}`;
+  }
 
-    const {apiKey, projectId, appId, email, password} = settings;
+  private async initSchema() {
+    // Is there a better pattern for this?
+    const totalsRef = await doc(this.firestore!, this.getPath(this.totalsPath));
+    const totalsSnapshot = await getDoc(totalsRef);
+    if (!totalsSnapshot.exists()) {
+      setDoc(totalsRef, {created: Date.now(), cost: 0});
+    }
+  }
 
+  async addCost(cost: number, source: CostSource) {
+    if (this.loginState.value != 'success') {
+      return;
+    }
+    const costCol = collection(this.firestore!, this.getPath(this.costCollection));
+    const t = Date.now();
+    await addDoc(costCol, {t, cost, source});
+    // Can this be done in an atomic transaction?
+    const totalsRef = await doc(this.firestore!, this.getPath(this.totalsPath));
+    const totals = (await getDoc(totalsRef)).data() ?? {};
+    await updateDoc(totalsRef, {...totals, t, cost: (totals['cost'] || 0) + cost});
+  }
+
+  async getTotalCost() : Promise<number | null> {
+    if (this.loginState.value != 'success') {
+      return null;
+    }
+    const totals = (await getDoc(await doc(this.firestore!, this.getPath(this.totalsPath)))).data() ?? {};
+    return totals['cost'] as number;
+  }
+
+  async getConfig() : Promise<Config|null> {
+    if (this.loginState.value != 'success') {
+      return null;
+    }
+    try {
+      const config = (await getDoc(await doc(this.firestore!, this.getPath(this.configPath)))).data() ?? {};
+      if (!config['azureApiKey'] || !config['azureRegion'] || !config['openaiApiKey']) {
+        // TODO better error handling (currently it's overwritten).
+        console.error('Got invalid config', this.uuid, config);
+        this.error.next('Invalid config');
+        return null;
+      }
+      return config as Config;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  }
+
+  async setConversation(id: string, conversation: any) {
+    if (this.loginState.value != 'success') {
+      return;
+    }
+    const docRef = await doc(this.firestore!, this.getPath(`${this.conversationCollection}/${id}`));
+    await setDoc(docRef, {conversation});
+  }
+
+  private initializeFirebase(apiKey: string, appId: string, projectId: string) {
+    // Note: this will never fail, even if provided values are invalid.
     const firebaseConfig = {
       apiKey,
       authDomain: `${projectId}.firebaseapp.com`,
@@ -102,44 +177,65 @@ export class FirebaseService {
       messagingSenderId: appId!.split(':')[1],
       appId,
     };
+    if (this.app) {
+      deleteApp(this.app);
+    }
+    this.app = initializeApp(firebaseConfig as FirebaseOptions);
+    this.firestore = getFirestore(this.app);
+    getAuth().onAuthStateChanged((user: User|null) => {
+      console.log('onAuthStateChanged', user);
+      if (user) {
+        this.uuid = user.uid;
+        this.initSchema();
+        this.loginState.next('success');
+        this.setEmail(user.email ?? '');
+      }
+    });
+  }
+
+  private async firestoreLogin(settings: FirebaseSettings) {
+    const {apiKey, appId, projectId, email, password} = settings;
+    // Need to re-initialize firebae because some parameter could have changed.
+    this.initializeFirebase(apiKey, appId, projectId);
+    this.error.next('');
     try {
-      const app = initializeApp(firebaseConfig as FirebaseOptions);
-      this.firestore = getFirestore(app);
-      const creds = await signInWithEmailAndPassword(getAuth(), email ?? '', password ?? '');
-      console.log('creds', creds);
-      this.loginState.next('success');
+      const auth = getAuth()
+      await auth.setPersistence(browserLocalPersistence);
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
       console.log('firebase login failure', err);
-      this.error.next((err as FirebaseError).message);
+      this.error.next('Could not login: ' + (err as FirebaseError).message);
       this.loginState.next('failure');
     }
   }
 
-  async doLogout() {
-    signOut(getAuth());
-    this.loginState.next('out');
-  }
-
   async mapState(
-    apiKey: string | null,
-    appId: string | null,
-    projectId: string | null,
-    email: string | null,
-    password: string | null,
+    apiKey: string,
+    appId: string,
+    projectId: string,
+    email: string,
+    password: string,
     loginState: LoginState,
   ): Promise<FirebaseState> {
 
     const settings: FirebaseSettings = {apiKey, appId, projectId, email, password};
-    const canLogin = apiKey && appId && projectId && email && password;
 
-    if (canLogin && this.onLoad && loginState === 'out') {
-      this.loginState.next('ongoing');
-    }
-    if (loginState === 'ongoing') {
-      this.doFirestoreLogin(settings);
+    if (loginState === 'load') {
+      if (apiKey && appId && projectId) {
+        console.log('-> init');
+        this.initializeFirebase(apiKey, appId, projectId);
+        this.loginState.next('init');
+      }
     }
 
-    this.onLoad = false;
+    if (loginState === 'login') {
+      this.firestoreLogin(settings);
+    }
+
+    if (loginState === 'success') {
+      this.error.next('');
+    }
+
     return {
       ready: loginState === 'success',
       canLogin: true,

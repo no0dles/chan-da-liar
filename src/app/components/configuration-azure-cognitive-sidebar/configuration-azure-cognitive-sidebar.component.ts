@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
 import { ModalHandle } from '../../modules/modal/modal.service';
-import { ConfigService } from '../../config.service';
 import {
   AzureCognitiveService,
   AzureCognitiveState,
 } from '../../states/azure-cognitive.service';
 import { SpeakerService } from '../../states/speaker.service';
+import { FirebaseService } from 'src/app/states/firebase.service';
 
 @Component({
   selector: 'app-configuration-azure-cognitive-sidebar',
@@ -20,7 +20,6 @@ export class ConfigurationAzureCognitiveSidebarComponent {
   state$ = this.azureCognitive.state$;
 
   constructor(
-    private config: ConfigService,
     private speaker: SpeakerService,
     private azureCognitive: AzureCognitiveService,
   ) {}

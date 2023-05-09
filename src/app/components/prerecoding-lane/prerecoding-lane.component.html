@@ -3,13 +3,19 @@
   <div
     class="flex items-center space-x-3"
     *ngFor="let rec of state.recordings; let index = index">
-    <app-button (click)="play(rec, $event)" class="flex-grow min-w-0">
-      <div class="flex items-center space-x-3">
-        <fa-icon [icon]="playIcon"></fa-icon>
-        <div class="text-left text-sm">
-          {{rec.content}}
+    <div class="relative">
+      <app-button (click)="play(rec, $event)" class="flex-grow min-w-0">
+        <div class="flex items-center space-x-3">
+          <fa-icon [icon]="playIcon"></fa-icon>
+          <div class="text-left text-sm">
+            {{rec.content}}
+          </div>
         </div>
+      </app-button>
+      <div class="absolute -bottom-2 right-1 text-teal-800 space-x-2 text-xs">
+        <fa-icon [icon]="modifyIcon" class="cursor-pointer" (click)="modify(index)"></fa-icon>
+        <fa-icon [icon]="deleteIcon" class="cursor-pointer" (click)="delete(index)" *ngIf="developer$ | async"></fa-icon>
       </div>
-    </app-button>
+    </div>
   </div>
 </div>

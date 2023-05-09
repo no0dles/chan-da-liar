@@ -25,7 +25,11 @@
     }
   }
 
-  .icons {
+  .icons-top {
+    @apply absolute -top-3 left-1 flex space-x-2;
+  }
+
+  .icons-bottom {
     @apply absolute -bottom-3 right-1 flex space-x-2;
   }
 

@@ -4,6 +4,7 @@ import { OpenAiService, OpenAIState, PromptMessage } from './open-ai.service';
 import { Recording } from './prerecording.service';
 import { OngoingRecognition } from './ongoing-recognizer';
 import { SpeakerService } from './speaker.service';
+import { FirebaseService } from './firebase.service';
 
 export type ConversationRole = 'assistant' | 'user' | 'system';
 export type Decision = 'yes' | 'skip' | 'open';
@@ -19,7 +20,8 @@ export interface CompletedConversationMessage {
   played: boolean;
   role: ConversationRole;
   completed: true;
-  prefix: string | null
+  prefix: string | null;
+  model?: string;
 }
 
 export interface OngoingConversationMessage {
@@ -51,25 +53,42 @@ export class ConversationService {
   highlightSubject = new BehaviorSubject<CompletedConversationMessage | null>(
     null,
   );
+  conversationId = Date.now().toString();
   ongoingConversations: OngoingConversationRecognition[] = [];
 
   messages$ = this.messagesSubject.asObservable();
 
   highlight$ = this.highlightSubject.asObservable();
+  selectedModel = '?';
 
-  constructor(private openAI: OpenAiService, private speaker: SpeakerService) {
+  constructor(
+    private openAI: OpenAiService,
+    private speaker: SpeakerService,
+    firebase: FirebaseService,
+  ) {
     this.openAI.state$.subscribe((state) => {
       this.clear(state);
     });
 
+    this.messages$.subscribe((messages) => {
+      if (messages.length > 1) {
+        firebase.setConversation(this.conversationId, messages.filter(message => message.completed));
+      } else {
+        this.conversationId = Date.now().toString();
+      }
+    });
+
     window.addEventListener('keydown', (evt) => {
+      if (evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) {
+        return;
+      }
       if (evt.code === 'Space') {
         if (this.highlightSubject.value) {
           this.highlightSubject.value.decision = 'yes';
           this.goToNextPart(this.highlightSubject.value);
           this.messagesSubject.next(this.messagesSubject.value);
         }
-      } else if (evt.code === 'ArrowRight' || evt.code === 'Tab') {
+      } else if (evt.code === 'ArrowRight' || evt.code === 'Backspace') {
         if (
           this.highlightSubject.value &&
           this.highlightSubject.value.decision === 'open'
@@ -130,6 +149,7 @@ export class ConversationService {
               prefix: null,
               queued: true,
               text: state.rolePlayScript,
+              model: state.selectedModel?.id,
             },
           ]
         : [],

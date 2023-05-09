@@ -10,10 +10,15 @@ import {
   VoiceInfo,
   SpeakerAudioDestination,
 } from 'microsoft-cognitiveservices-speech-sdk';
-import { catchError, combineLatest, mergeMap, shareReplay } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, mergeMap, shareReplay} from 'rxjs';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 import { Cache } from '../utils/cache';
+import {
+  Recognizer,
+  SpeechRecognitionEventArgs,
+} from 'microsoft-cognitiveservices-speech-sdk/distrib/lib/src/sdk/Exports';
 import { LightService } from './light.service';
+import { FirebaseService } from './firebase.service';
 
 export interface AzureCognitiveSettings {
   apiKey: string;
@@ -23,6 +28,7 @@ export interface AzureCognitiveSettings {
 export interface AzureCognitiveState {
   speechConfig: SpeechConfig | null;
   settings: AzureCognitiveSettings | null;
+  managed: boolean;
   voices: VoiceInfo[];
   localeVoices: VoiceInfo[];
   locales: string[];
@@ -56,20 +62,36 @@ export class AzureCognitiveService {
   private voiceCache = new Cache<VoiceInfo[]>();
   private speechCache = new Cache<SpeechConfig>();
 
+  private managedSettings = new BehaviorSubject<AzureCognitiveSettings|null>(null);
   state$ = combineLatest([
     this.config.watch<string>(this.configApiKey),
     this.config.watch<string>(this.configRegionKey),
     this.config.watch<string>(this.configLocaleKey),
     this.config.watch<string>(this.configVoiceKey),
+    this.managedSettings,
   ]).pipe(
-    mergeMap(([apiKey, region, locale, voice]) =>
-      fromPromise(this.mapState(apiKey, region, locale, voice)),
+    mergeMap(([apiKey, region, locale, voice, managedSettings]) =>
+      fromPromise(this.mapState(apiKey, region, locale, voice, managedSettings)),
     ),
     shareReplay(),
   );
 
-  constructor(private config: ConfigService,
-              private light: LightService) {}
+  constructor(private config: ConfigService, firebase: FirebaseService,
+              private light: LightService) {
+    firebase.loginState.subscribe(async (loginState) => {
+      if (loginState === 'success') {
+        const config = await firebase.getConfig();
+        if (config) {
+          this.managedSettings.next({
+            apiKey: config.azureApiKey,
+            region: config.azureRegion,
+          });
+        }
+      } else {
+        this.managedSettings.next(null);
+      }
+    })
+  }
 
   setApiKey(key: string) {
     this.config.save(this.configApiKey, key);
@@ -92,10 +114,16 @@ export class AzureCognitiveService {
     region: string | null,
     locale: string | null,
     voice: string | null,
+    managedSettings: AzureCognitiveSettings | null,
   ): Promise<AzureCognitiveState> {
+    if (managedSettings) {
+      apiKey = managedSettings.apiKey;
+      region = managedSettings.region;
+    }
     if (!apiKey || !region) {
       return {
         settings: null,
+        managed: false,
         speechConfig: null,
         locales: [],
         voices: [],
@@ -157,6 +185,7 @@ export class AzureCognitiveService {
       localeVoices,
       ready: !!selectedVoice && !!selectedLocale,
       settings: api,
+      managed: !!managedSettings,
       speechConfig,
       error,
     };

@@ -2,10 +2,9 @@ import { Injectable } from '@angular/core';
 import { Configuration, Model, OpenAIApi } from 'openai';
 import { ConfigService } from '../config.service';
 import {
+  BehaviorSubject,
   combineLatest,
-  first,
   firstValueFrom,
-  lastValueFrom,
   mergeMap,
   shareReplay,
 } from 'rxjs';
@@ -15,6 +14,7 @@ import {
   createOngoingRecognizer,
   OngoingRecognition,
 } from './ongoing-recognizer';
+import { FirebaseService, LoginState } from './firebase.service';
 
 export interface OpenAISettings {
   apiKey: string;
@@ -22,6 +22,7 @@ export interface OpenAISettings {
 
 export interface OpenAIState {
   settings: OpenAISettings | null;
+  managed: boolean | null;
 
   rolePlayScript: string | null;
   openai: OpenAIApi | null;
@@ -50,18 +51,38 @@ export class OpenAiService {
 
   totalCost = this.config.watch<number>(this.totalCostKey, 0);
 
+  private managedSettings = new BehaviorSubject<OpenAISettings|null>(null);
+  private currentState: OpenAIState|null = null;
   state$ = combineLatest([
     this.config.watch<string>(this.configApiKey),
     this.config.watch<string>(this.configRolePlayKey),
     this.config.watch<string>(this.configModelKey),
+    this.managedSettings,
   ]).pipe(
-    mergeMap(([api, rolePlay, model]) =>
-      fromPromise(this.mapState(api, rolePlay, model)),
+    mergeMap(([api, rolePlay, model, managedSettings]) =>
+      fromPromise(this.mapState(api, rolePlay, model, managedSettings)),
     ),
     shareReplay(),
   );
 
-  constructor(private config: ConfigService) {}
+  constructor(private config: ConfigService, private firebase: FirebaseService) {
+    this.firebase.loginState.subscribe(async (loginState: LoginState) => {
+      if (loginState === 'success') {
+        const totalCost = await this.firebase.getTotalCost();
+        if (totalCost) {
+          this.config.save(this.totalCostKey, totalCost);
+        }
+        const config = await firebase.getConfig();
+        if (config) {
+          this.managedSettings.next({
+            apiKey: config.openaiApiKey,
+          });
+        }
+      } else {
+        this.managedSettings.next(null);
+      }
+    })
+  }
 
   async prompt(messages: PromptMessage[]): Promise<OngoingRecognition> {
     const recognizer = createOngoingRecognizer({
@@ -69,8 +90,7 @@ export class OpenAiService {
       textPrefix: undefined,
     });
 
-    const openAiState = await firstValueFrom(this.state$);
-    if (!openAiState.settings || !openAiState.selectedModel) {
+    if (!this.currentState?.settings || !this.currentState?.selectedModel) {
       console.warn('no model/apiKey');
       recognizer.complete();
       return recognizer.recogniztion();
@@ -80,11 +100,11 @@ export class OpenAiService {
       method: 'post',
       headers: new Headers({
         // https://platform.openai.com/account/usage
-        Authorization: `Bearer ${openAiState.settings.apiKey}`,
+        Authorization: `Bearer ${this.currentState.settings.apiKey}`,
         'Content-Type': 'application/json',
       }),
       body: JSON.stringify({
-        model: openAiState.selectedModel.id,
+        model: this.currentState.selectedModel.id,
         messages: messages,
         stream: true,
       }),
@@ -127,6 +147,7 @@ export class OpenAiService {
       const completion = await firstValueFrom(recognizer.recogniztion().text$);
       const oldCost = this.config.get<number>(this.totalCostKey) ?? 0;
       const cost = await this.getCost(JSON.stringify(messages), completion);
+      this.firebase.addCost(cost, 'openai');
       this.config.save(this.totalCostKey, oldCost + cost);
     });
 
@@ -165,7 +186,11 @@ export class OpenAiService {
     key: string | null,
     rolePlay: string | null,
     selectedModel: string | null,
+    managedSettings: OpenAISettings | null,
   ): Promise<OpenAIState> {
+    if (managedSettings) {
+      key = managedSettings.apiKey!;
+    }
     if (!key) {
       return {
         ready: false,
@@ -173,6 +198,7 @@ export class OpenAiService {
         selectedModel: null,
         rolePlayScript: null,
         settings: null,
+        managed: false,
         openai: null,
         error: null,
       };
@@ -180,7 +206,7 @@ export class OpenAiService {
 
     const openai = await this.apiCache.getOrCreate(key, () => {
       const configuration = new Configuration({
-        apiKey: key,
+        apiKey: key!,
       });
       return new OpenAIApi(configuration);
     });
@@ -198,14 +224,17 @@ export class OpenAiService {
     );
     const model = models.find((m) => m.id === selectedModel) ?? null;
 
-    return {
+
+    this.currentState = {
       ready: model !== null,
       selectedModel: model,
       settings: { apiKey: key },
+      managed: !!managedSettings,
       rolePlayScript: rolePlay,
       openai,
       error,
       models,
     };
+    return this.currentState;
   }
 }

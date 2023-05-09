@@ -20,6 +20,7 @@ export class ConfigurationFirebaseComponent {
   state$ = this.firebase.state$;
   error = this.firebase.error;
   loginState = this.firebase.loginState;
+  showAdvanced = false;
 
   constructor(
     private config: ConfigService,
@@ -51,8 +52,7 @@ export class ConfigurationFirebaseComponent {
     this.firebase.doLogin();
   }
 
-  doLogoutAndResetPassword() {
-    this.setPassword('');
+  doLogout() {
     this.firebase.doLogout();
   }
 }

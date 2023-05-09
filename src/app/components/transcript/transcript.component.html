@@ -1,5 +1,5 @@
 <div class="flex justify-between px-3 py-1">
-  <span class="text-gray-400 text-xs">Transscript</span>
+  <span class="text-gray-400 text-xs">Transcript ({{ selectedModel }})</span>
   <button class="text-xs text-black text-right w-12" (click)="clear()">
     Clear
   </button>
@@ -43,12 +43,17 @@
         </div>
         <div class="key">
           <fa-icon [icon]="clearIcon" class="mr-1"></fa-icon>
-          TAB
+          BACKSPACE
         </div>
       </div>
       <div
+        class="icons-top" *ngIf="developer && message.completed">
+        <fa-icon [icon]="saveIcon" class="cursor-pointer" (click)="savePrerecording(message)"></fa-icon>
+        <fa-icon [icon]="speakIcon" class="cursor-pointer" (click)="speakMessage(message)"></fa-icon>
+      </div>
+      <div
         *ngIf="message.completed && (message.queued || message.played)"
-        class="icons">
+        class="icons-bottom">
         <fa-icon [icon]="checkIcon" *ngIf="!message.played"></fa-icon>
         <fa-icon [icon]="doubleCheckIcon" *ngIf="message.played"></fa-icon>
       </div>

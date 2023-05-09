@@ -10,6 +10,29 @@ npm start
 
 ## Configuration
 
+### Firebase
+
+The firebase keeps a transcript of conversations and accrued cost, and can be used to provide api keys for Azure and OpenAI. Note though that no firebase setup is required. Users can use the app without logging in, but in that case they have to specify Azure and OpenAI keys manually.
+
+For setting up the database, it is sufficient to:
+
+1.  Create users (email/password) via Firebase project authentication.
+2.  Updates firestore ruls:
+    ```
+    service cloud.firestore {
+      match /databases/{database}/documents {
+        match /users/{userId}/{document=**} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+        match /{document=**} {
+          allow read, write: if false;
+        }
+      }
+    }
+    ```
+3.  Create a document `users/{uuid}/info/config` with the following keys: `openaiKey`, `azureRegion`, `azureApiKey`.
+
+
 ### Devices
 Allow audio permissions, select the output channel and which microphone should be used for input.
 The Name for the inputs is used to prefix the chat prompts.

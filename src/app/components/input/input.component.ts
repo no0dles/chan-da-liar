@@ -20,6 +20,9 @@ export class InputComponent {
   @Input()
   value?: string | null = '';
 
+  @Input()
+  captureTab?: boolean | null = false;
+
   @ViewChild('input', {static: false})
   input?: ElementRef;
 
@@ -28,6 +31,9 @@ export class InputComponent {
 
   @Output()
   keyDown = new EventEmitter<string>();
+
+  @Output()
+  enterPressed = new EventEmitter<string>();
 
   focusInput() {
     this.input?.nativeElement.focus();
@@ -41,6 +47,13 @@ export class InputComponent {
   handleKeyDown(event: KeyboardEvent) {
     if (event.code === 'Escape') {
       this.input?.nativeElement.blur();
+    }
+    if (event.code === 'Enter') {
+      this.enterPressed.emit(this.input?.nativeElement.value);
+    }
+    if (event.code === 'Tab' && this.captureTab) {
+      event.stopPropagation();
+      event.preventDefault();
     }
     this.keyDown.emit(event.code);
   }
