@@ -1,20 +1,20 @@
 <span class="text-gray-400 text-xs mb-1">Prerecordings</span>
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3" *ngIf="state$ | async as state">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 overflow-y-auto flex-grow min-h-0" *ngIf="state$ | async as state">
   <div
     class="flex items-center space-x-3"
     *ngFor="let rec of state.recordings; let index = index">
-    <div class="relative">
+    <div class="relative flex-grow min-w-0">
       <app-button (click)="play(rec, $event)" class="flex-grow min-w-0">
         <div class="flex items-center space-x-3">
           <fa-icon [icon]="playIcon"></fa-icon>
-          <div class="text-left text-sm">
+          <div class="text-left text-sm truncate">
             {{rec.content}}
           </div>
         </div>
       </app-button>
-      <div class="absolute -bottom-2 right-1 text-teal-800 space-x-2 text-xs">
-        <fa-icon [icon]="modifyIcon" class="cursor-pointer" (click)="modify(index)"></fa-icon>
-        <fa-icon [icon]="deleteIcon" class="cursor-pointer" (click)="delete(index)" *ngIf="developer$ | async"></fa-icon>
+      <div class="absolute -bottom-2 right-1 text-teal-800 space-x-2 text-xs" *ngIf="allowDelete || allowEdit">
+        <fa-icon [icon]="modifyIcon" class="cursor-pointer" (click)="modify(index, rec.content)" *ngIf="allowEdit"></fa-icon>
+        <fa-icon [icon]="deleteIcon" class="cursor-pointer" (click)="delete(index)" *ngIf="allowDelete"></fa-icon>
       </div>
     </div>
   </div>

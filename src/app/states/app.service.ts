@@ -3,25 +3,33 @@ import { ConfigService } from "../config.service";
 import { Observable, combineLatest, map, mergeMap } from "rxjs";
 
 export interface AppState {
-  developer: boolean;
+  overrideMode: boolean;
+  livePresetEdit: boolean
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class AppService {
-  private configDeveloperKey = 'app-developer';
+  private configOverrideModeKey = 'app-override-mode';
+  private configLivePresetEditKey = 'app-live-preset-edit';
 
   state$: Observable<AppState> = combineLatest([
-    this.config.watch<boolean>(this.configDeveloperKey, false),
+    this.config.watch<boolean>(this.configOverrideModeKey, false),
+    this.config.watch<boolean>(this.configLivePresetEditKey, false),
   ]).pipe(
-    map(([developer]) => ({
-      developer: developer!,
+    map(([overrideMode, livePresetEdit]) => ({
+      overrideMode: !!overrideMode,
+      livePresetEdit: !!livePresetEdit,
     }))
   );
 
-  setDeveloper(developer: boolean) {
-    this.config.save(this.configDeveloperKey, developer);
+  setLivePreset(value: boolean) {
+    this.config.save(this.configLivePresetEditKey, value);
+  }
+
+  setOverrideMode(value: boolean) {
+    this.config.save(this.configOverrideModeKey, value);
   }
 
   constructor(private config: ConfigService) {}
