@@ -7,12 +7,4 @@
     [value]="value"
     (valueChanged)="valueChanged($event)"
     (keyDown)="keyDown($event)"></app-input>
-  <div class="flex-col items-center">  <!-- ??? toggle is not centered-->
-    <div>Developer</div>
-    <app-toggle
-      tabindex="-1"
-      [enabled]="!!(developer | async)"
-      (enabledChanged)="setDeveloper($event)">
-    </app-toggle>
-  </div>
 </div>

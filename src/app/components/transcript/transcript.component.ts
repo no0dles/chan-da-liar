@@ -62,7 +62,7 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
     app: AppService,
   ) {
     app.state$.subscribe(state => {
-      this.developer = state.developer;
+      this.developer = state.overrideMode;
     });
     openai.state$.subscribe(state => {
       this.selectedModel = state.selectedModel?.id ?? '?';

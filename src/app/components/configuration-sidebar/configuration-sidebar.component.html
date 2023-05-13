@@ -7,6 +7,36 @@
       *ngFor="let configuration of configurations"
       [component]="configuration.component"
       [state]="configuration.state"></app-configuration-item>
+
+
+    <ng-container *ngIf="appState$ | async as appState">
+      <app-box-container class="flex justify-between space-x-3">
+        <app-explaination
+          [heading]="'Override Mode'"
+          [description]="'Type responses by keyboard'">
+        </app-explaination>
+
+        <app-toggle
+          tabindex="-1"
+          [enabled]="appState.overrideMode"
+          (enabledChanged)="setOverrideMode($event)">
+        </app-toggle>
+      </app-box-container>
+
+      <app-box-container class="flex justify-between space-x-3" *ngIf="appState.overrideMode">
+        <app-explaination
+          [heading]="'Live Edit Mode'"
+          [description]="'Edit responses by keyboard'">
+        </app-explaination>
+
+        <app-toggle
+          tabindex="-1"
+          [enabled]="appState.livePresetEdit"
+          (enabledChanged)="setLiveEdit($event)">
+        </app-toggle>
+      </app-box-container>
+    </ng-container>
+
   </div>
 
   <app-button *ngIf="!state.noneReady" (click)="reset()" [type]="'dangerous'">Reset</app-button>

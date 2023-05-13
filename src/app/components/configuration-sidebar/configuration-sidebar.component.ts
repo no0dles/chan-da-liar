@@ -18,6 +18,8 @@ import {
   ConfigurationLightSidebarComponent
 } from '../configuration-light-sidebar/configuration-light-sidebar.component';
 import { LightService } from '../../states/light.service';
+import { map } from "rxjs";
+import { AppService } from "../../states/app.service";
 
 @Component({
   selector: 'app-configuration-sidebar',
@@ -62,11 +64,13 @@ export class ConfigurationSidebarComponent implements ModalInstance<void> {
       description: 'Configure prerecorded answers',
       component: ConfigurationPrerecordingListSidebarComponent,
       state: this.prerecording,
+      classNames: ['fullscreen']
     },
   ];
 
   modal!: ModalHandle<void>;
   state$ = this.chanDaLiar.state$;
+  appState$ = this.app.state$;
 
   constructor(
     private chanDaLiar: ChanDaLiarService,
@@ -77,7 +81,17 @@ export class ConfigurationSidebarComponent implements ModalInstance<void> {
     private azureCognitive: AzureCognitiveService,
     private firebase: FirebaseService,
     private config: ConfigService,
+    private app: AppService
   ) {}
+
+
+  setOverrideMode(developer: boolean) {
+    this.app.setOverrideMode(developer);
+  }
+
+  setLiveEdit(liveEdit: boolean) {
+    this.app.setLivePreset(liveEdit);
+  }
 
   dismiss() {
     this.modal.dismiss();

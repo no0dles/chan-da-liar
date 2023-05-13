@@ -1,4 +1,4 @@
-import { Component, ViewContainerRef } from '@angular/core';
+import { Component, Input, ViewContainerRef } from "@angular/core";
 import { faPlay, faTrashCan, faPen } from '@fortawesome/free-solid-svg-icons';
 import { ModalService } from '../../modules/modal/modal.service';
 import { ConfigurationPrerecordingSidebarComponent } from '../configuration-prerecording-sidebar/configuration-prerecording-sidebar.component';
@@ -20,14 +20,21 @@ export class PrerecodingLaneComponent {
   deleteIcon = faTrashCan;
   modifyIcon = faPen;
 
+  @Input()
+  allowEdit?: boolean | null = false;
+
+  @Input()
+  allowDelete?: boolean | null = false;
+
+  @Input()
+  editMode: 'inline' | 'sidepanel' = 'inline'
+
   state$ = this.prerecording.state$;
-  developer$ = this.app.state$.pipe(map(state => state.developer!));
   constructor(
     private modal: ModalService,
     private prerecording: PrerecordingService,
     private conversation: ConversationService,
     private viewContainerRef: ViewContainerRef,
-    private app: AppService,
   ) {}
 
   openCreate() {
@@ -56,10 +63,14 @@ export class PrerecodingLaneComponent {
     elm.blur();
   }
 
-  async modify(index: number) {
-    // We first emit '' to force an update if the text input was edited.
-    this.prerecording.editable.next('');
-    this.prerecording.editable.next(this.prerecording.get(index).content);
+  async modify(index: number, content: string) {
+    if (this.editMode === 'inline') {
+      // We first emit '' to force an update if the text input was edited.
+      this.prerecording.editable.next('');
+      this.prerecording.editable.next(content);
+    } else {
+      this.edit(index, content)
+    }
   }
 
   async delete(index: number) {

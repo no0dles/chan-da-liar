@@ -14,7 +14,6 @@ export class OverrideLaneComponent {
 
   destination: string = 'bot';
   value: string = '';
-  developer = this.app.state$.pipe(map(state => state.developer));
 
   @ViewChild('input', {static: false})
   input?: InputComponent;
@@ -63,9 +62,5 @@ export class OverrideLaneComponent {
         'user': 'bot',
       }[this.destination])!;
     }
-  }
-
-  setDeveloper(developer: boolean) {
-    this.app.setDeveloper(developer);
   }
 }

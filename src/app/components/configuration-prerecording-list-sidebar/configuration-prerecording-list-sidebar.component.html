@@ -1,9 +1,6 @@
 <ng-container *ngIf="state$ | async as state">
-  <div class="flex flex-col flex-grow min-h-0 space-y-3">
-    <app-button *ngFor="let recording of state.recordings; let index = index" class="truncate"
-                (click)="edit(index, recording)">
-      {{recording.content}}
-    </app-button>
+  <div class="flex flex-col overflow-y-auto flex-grow min-h-0 space-y-3">
+    <app-prerecoding-lane [allowEdit]="true" [allowDelete]="true" [editMode]="'sidepanel'" class="flex-grow min-h-0"></app-prerecoding-lane>
   </div>
 
   <app-button (click)="create()">Create</app-button>
