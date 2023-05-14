@@ -89,11 +89,12 @@ export class OpenAiService {
       role: 'assistant',
       textPrefix: undefined,
     });
+    const t0 = Date.now();
 
     if (!this.currentState?.settings || !this.currentState?.selectedModel) {
       console.warn('no model/apiKey');
       recognizer.complete();
-      return recognizer.recogniztion();
+      return recognizer.recognition();
     }
 
     fetch('https://api.openai.com/v1/chat/completions', {
@@ -114,6 +115,8 @@ export class OpenAiService {
         recognizer.complete();
         return;
       }
+
+      recognizer.setInitialDelay(Date.now() - t0);
 
       const reader = response.body
         .pipeThrough(new TextDecoderStream())
@@ -144,14 +147,14 @@ export class OpenAiService {
 
       recognizer.complete();
 
-      const completion = await firstValueFrom(recognizer.recogniztion().text$);
+      const completion = await firstValueFrom(recognizer.recognition().text$);
       const oldCost = this.config.get<number>(this.totalCostKey) ?? 0;
       const cost = await this.getCost(JSON.stringify(messages), completion);
       this.firebase.addCost(cost, 'openai');
       this.config.save(this.totalCostKey, oldCost + cost);
     });
 
-    return recognizer.recogniztion();
+    return recognizer.recognition();
   }
 
   async getModels(openai: OpenAIApi) {

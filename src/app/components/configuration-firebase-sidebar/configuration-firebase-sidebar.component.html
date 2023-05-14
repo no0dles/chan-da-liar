@@ -50,9 +50,9 @@
   </div>
 
   <app-button *ngIf="state.canLogin && (loginState | async) !== 'success'"
-    (click)="doLogin()" class="grow"
+    (click)="doLogin()"
     >Login</app-button>
   <app-button *ngIf="(loginState | async) === 'success'"
-    (click)="doLogout()" class="grow"
+    (click)="doLogout()"
     >Logout</app-button>
 </ng-container>

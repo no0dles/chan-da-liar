@@ -99,7 +99,7 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
         textPrefix: this.microphone.prefix,
         role: this.microphone.role,
       });
-      this.spoke.emit(this.ongoingRecognizer.recogniztion())
+      this.spoke.emit(this.ongoingRecognizer.recognition())
     }
     return this.ongoingRecognizer;
   }

@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, combineLatest, map, shareReplay } from 'rxjs';
 import { ConfigService } from '../config.service';
-
-// TODO Use firebase for prerecordings.
+import { FirebaseService } from './firebase.service';
 
 export interface Recording {
   content: string;
@@ -17,6 +16,7 @@ export interface PrerecordingState {
   providedIn: 'root',
 })
 export class PrerecordingService {
+  // TODO Rewrite to use single observable from firebse or config.
   private recordingsKey = 'pre-recordings';
 
   state$ = combineLatest([
@@ -27,9 +27,25 @@ export class PrerecordingService {
   );
   editable = new BehaviorSubject<string>('');
 
-  constructor(private config: ConfigService) {}
+  constructor(private config: ConfigService, private firebase: FirebaseService) {
+    firebase.prerecordings.asObservable().subscribe((firebaseRecordings) => {
+      if (firebaseRecordings) {
+        const recordings = this.config.get<Recording[]>(this.recordingsKey) || []
+        const contents = new Set(recordings.map(rec => rec.content));
+        firebaseRecordings.forEach(content => {
+          if (!contents.has(content)) {
+            recordings.push({content});
+          }
+        });
+        this.config.save(this.recordingsKey, recordings);
+      }
+    });
+  }
 
   private mapState(recs: Recording[] | null): PrerecordingState {
+    if (recs) {
+      this.firebase.mergePrerecordings(recs.map(rec => rec.content));
+    }
     return {
       recordings: recs || [],
       ready: true,
@@ -42,14 +58,19 @@ export class PrerecordingService {
     this.config.save(this.recordingsKey, recordings);
   }
 
-  edit(index: number, content: string) {
+  async edit(index: number, content: string) {
     const recordings = this.config.get<Recording[]>(this.recordingsKey) || [];
+    if (recordings[index].content === content) {
+      return;
+    }
+    this.firebase.deletePrerecording(recordings[index].content);
     recordings[index] = { content };
     this.config.save(this.recordingsKey, recordings);
   }
 
   delete(index: number) {
     const recordings = this.config.get<Recording[]>(this.recordingsKey) || [];
+    this.firebase.deletePrerecording(recordings[index].content);
     recordings.splice(index, 1);
     this.config.save(this.recordingsKey, recordings);
   }

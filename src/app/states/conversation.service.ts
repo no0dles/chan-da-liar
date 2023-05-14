@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, firstValueFrom, map, Observable, shareReplay, Subscription } from "rxjs";
+import { BehaviorSubject, combineLatest, firstValueFrom, Observable, Subscription } from "rxjs";
 import { OpenAiService, OpenAIState, PromptMessage } from "./open-ai.service";
 import { Recording } from "./prerecording.service";
 import { OngoingRecognition } from "./ongoing-recognizer";
@@ -22,6 +22,7 @@ export interface CompletedConversationMessage {
   completed: true;
   prefix: string | null;
   model?: string;
+  initialDelayMs?: number;
 }
 
 export interface OngoingConversationMessage {
@@ -220,8 +221,13 @@ export class ConversationService {
     const ongoingConversation: OngoingConversationRecognition = {
       insertAt: currentIndex,
       recognition,
-      subscription: recognition.completed.subscribe(completed => {
+      subscription: combineLatest([
+        recognition.completed, recognition.initialDelayMs,
+      ]).subscribe(([completed, initialDelayMs]) => {
         const message = this.createCompletedMessage(completed, recognition.role, "open", recognition.textPrefix ?? null);
+        if (initialDelayMs) {
+          message.initialDelayMs = initialDelayMs;
+        }
         this.messagesSubject.value.push(message);
 
         const index = this.messagesSubject.value.indexOf(ongoingMessage);
@@ -277,7 +283,7 @@ export class ConversationService {
       queued: false,
       role,
       completed: true,
-      prefix
+      prefix,
     };
     if (!this.highlightSubject.value && decision === "open") {
       newMessage.highlight = true;

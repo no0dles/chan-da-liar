@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ConfigService } from '../config.service';
-import { BehaviorSubject, combineLatest, fromEvent, mergeMap, shareReplay} from 'rxjs';
+import { BehaviorSubject, combineLatest, mergeMap, shareReplay} from 'rxjs';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 import { FirebaseApp, FirebaseError, FirebaseOptions, deleteApp, initializeApp } from "firebase/app";
 import {
@@ -11,7 +11,10 @@ import {
    collection,
    addDoc,
    doc,
-   setDoc
+   setDoc,
+   getDocs,
+   deleteDoc,
+   runTransaction
 } from 'firebase/firestore/lite';
 import { User, browserLocalPersistence, getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
 
@@ -57,6 +60,7 @@ export class FirebaseService {
   private totalsPath = 'info/totals';
   private configPath = 'info/config';
   private conversationCollection = 'conversation';
+  private prerecordingsCollection = 'prerecordings';
 
   loginState = new BehaviorSubject<LoginState>('load');
   error = new BehaviorSubject<string>('');
@@ -65,6 +69,8 @@ export class FirebaseService {
 
   app: FirebaseApp|null = null;
   firestore: Firestore|null = null;
+
+  prerecordings = new BehaviorSubject<string[]|null>(null);
 
   state$ = combineLatest([
     this.config.watch<string>(this.configApiKey, DEFAULT_API_KEY),
@@ -167,6 +173,45 @@ export class FirebaseService {
     await setDoc(docRef, {conversation});
   }
 
+  async mergePrerecordings(recordings: string[]) {
+    recordings = [...new Set(recordings)];
+    if (this.loginState.value != 'success') {
+      return;
+    }
+    await runTransaction(this.firestore!, async (transaction) => {
+      const coll = collection(this.firestore!, this.getPath(this.prerecordingsCollection));
+      const docs = await getDocs(coll);
+      const existingRecordings = docs.docs.map(doc => doc.data()['content']);
+      const newRecordings = recordings.filter(r => !existingRecordings.includes(r));
+      newRecordings.forEach(content => {
+        transaction.set(doc(coll), {content});
+      });
+    });
+  }
+
+  async deletePrerecording(recording: string) {
+    if (this.loginState.value != 'success') {
+      return;
+    }
+    const coll = collection(this.firestore!, this.getPath(this.prerecordingsCollection));
+    const promises: Promise<void>[] = [];
+    (await getDocs(coll)).forEach(doc => {
+      if (recording === doc.data()['content']) {
+        promises.push(deleteDoc(doc.ref));
+      }
+    });
+    await Promise.all(promises);
+  }
+
+  private async loadPrerecordings() {
+    const coll = collection(this.firestore!, this.getPath(this.prerecordingsCollection));
+    const docs: string[] = [];
+    (await getDocs(coll)).forEach(doc => {
+      docs.push(doc.data()['content'] as string);
+    });
+    this.prerecordings.next(docs);
+  }
+
   private initializeFirebase(apiKey: string, appId: string, projectId: string) {
     // Note: this will never fail, even if provided values are invalid.
     const firebaseConfig = {
@@ -187,6 +232,7 @@ export class FirebaseService {
       if (user) {
         this.uuid = user.uid;
         this.initSchema();
+        this.loadPrerecordings();
         this.loginState.next('success');
         this.setEmail(user.email ?? '');
       }
