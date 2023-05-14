@@ -2,18 +2,20 @@ import { BehaviorSubject, Observable, ReplaySubject } from 'rxjs';
 import { ConversationRole } from './conversation.service';
 
 export interface OngoingRecognition {
-  text$: Observable<string>
-  end: Promise<void>
-  completed: Observable<string>
-  textPrefix?: string
+  text$: Observable<string>;
+  end: Promise<void>;
+  completed: Observable<string>;
+  initialDelayMs: Observable<number|null>;
+  textPrefix?: string;
   role: ConversationRole;
 }
 
 export interface OngoingRecognizer {
   update(text: string): void;
   append(text: string): void;
+  setInitialDelay(ms: number): void;
   complete(): void;
-  recogniztion(): OngoingRecognition;
+  recognition(): OngoingRecognition;
 }
 
 
@@ -23,6 +25,7 @@ export function createOngoingRecognizer(options: {textPrefix: string | undefined
   const startedAt = Date.now();
   const completedSubject = new ReplaySubject<string>()
   const textSubject = new BehaviorSubject<string>('');
+  const initialDelayMs = new BehaviorSubject<number|null>(null);
   const end = new Promise<void>((resolve) => {
     resolveFn = resolve;
   })
@@ -51,13 +54,17 @@ export function createOngoingRecognizer(options: {textPrefix: string | undefined
     update(text: string) {
       textSubject.next(text);
     },
-    recogniztion(): OngoingRecognition {
+    setInitialDelay(ms) {
+      initialDelayMs.next(ms);
+    },
+    recognition(): OngoingRecognition {
       return {
         role: options.role,
         textPrefix: options.textPrefix,
         end,
         completed: completedSubject.asObservable(),
         text$: textSubject.asObservable(),
+        initialDelayMs: initialDelayMs.asObservable(),
       }
     },
   }
