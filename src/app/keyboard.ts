@@ -57,6 +57,7 @@ export class KeyboardService {
         listeners.delete(callback);
         if (listeners.size === 0) {
           this.globalListeners.delete(key);
+          this.globalExclusive.delete(key);
         }
       }
     }
