@@ -1,4 +1,4 @@
-<app-box-container class="flex space-x-3 h-full">
+<app-box-container class="flex space-x-3 h-full relative">
   <app-toggle
     #enabledToggle
     [enabled]="enabledMic"
@@ -12,4 +12,10 @@
     *ngIf="!enabledToggle.enabled"
     [heading]="'Disabled'"
     [description]="microphone.name"></app-explaination>
+
+  <div class="absolute -bottom-2 bg-black rounded text-white px-2 text-xs">
+    <fa-icon class="mr-1"></fa-icon>
+    on/off: {{ index + 1 }}
+  </div>
+
 </app-box-container>

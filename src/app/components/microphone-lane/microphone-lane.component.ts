@@ -9,6 +9,7 @@ import {
 import {ToggleComponent} from '../toggle/toggle.component';
 import {firstValueFrom, Subscription} from 'rxjs';
 import { createOngoingRecognizer, OngoingRecognizer, OngoingRecognition } from '../../states/ongoing-recognizer';
+import { KeyboardService } from 'src/app/keyboard';
 
 @Component({
   selector: 'app-microphone-lane',
@@ -26,6 +27,9 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   @Input()
   microphone!: MicrophoneState;
 
+  @Input()
+  index!: number;
+
   @ViewChild('enabledToggle')
   enabledToggle?: ToggleComponent;
   enabledMic = false;
@@ -33,10 +37,13 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
 
   constructor(
     private azureCognitive: AzureCognitiveService,
-  ) {}
+    private keyboard: KeyboardService,
+  ) {
+  }
 
+  private callbackId = -1;
   ngOnInit() {
-
+    this.callbackId = this.keyboard.registerExclusive('Digit' + (this.index + 1), () => this.enabledToggle?.toggle());
   }
 
   toggleMicrophone(enabled: boolean) {
@@ -107,5 +114,6 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.speechRecognizer?.close();
     this.subscription?.unsubscribe();
+    this.keyboard.unregister(this.callbackId);
   }
 }
