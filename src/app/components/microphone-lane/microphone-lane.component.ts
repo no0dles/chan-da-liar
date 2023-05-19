@@ -1,6 +1,6 @@
 import {Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild} from '@angular/core';
 import {MicrophoneState} from '../../states/device.service';
-import {AzureCognitiveService} from '../../states/azure-cognitive.service';
+import {AugmentedSpeechConfig, AzureCognitiveService} from '../../states/azure-cognitive.service';
 import {SpeechRecognizer} from 'microsoft-cognitiveservices-speech-sdk';
 import {
   Recognizer,
@@ -21,6 +21,8 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   private ongoingRecognizer: OngoingRecognizer | null = null;
   private subscription?: Subscription;
 
+  private latestSpeechConfig?: AugmentedSpeechConfig;
+
   @Output()
   spoke = new EventEmitter<OngoingRecognition>();
 
@@ -39,6 +41,10 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
     private azureCognitive: AzureCognitiveService,
     private keyboard: KeyboardService,
   ) {
+    azureCognitive.state$.subscribe((state) => {
+      // TODO: Implement this with a reactive pattern - `firstValueFrom()` didn't work.
+      if (state.speechConfig) this.latestSpeechConfig = state.speechConfig;
+    });
   }
 
   private callbackId = -1;
@@ -57,14 +63,13 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
 
   private async startListening() {
     console.log('listening on ' + this.microphone.deviceName)
-    const state = await firstValueFrom(this.azureCognitive.state$);
-    if (!state.speechConfig) {
+    if (!this.latestSpeechConfig) {
       console.warn('no speech config')
       return;
     }
 
     const recognizer = await this.azureCognitive.listen(
-      state.speechConfig,
+      this.latestSpeechConfig,
       this.microphone.deviceId,
     );
 
