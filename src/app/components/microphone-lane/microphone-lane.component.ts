@@ -112,7 +112,15 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.speechRecognizer?.close();
+    try {
+      this.speechRecognizer?.close();
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('the object is already disposed')) {
+        console.info('speechRecognizer already disposed');
+      } else {
+        console.error('could not dispose speechRecognizer', error);
+      }
+    }
     this.subscription?.unsubscribe();
     this.keyboard.unregister(this.callbackId);
   }
