@@ -5,6 +5,7 @@ import { Recording } from "./prerecording.service";
 import { OngoingRecognition } from "./ongoing-recognizer";
 import { SpeakerService } from "./speaker.service";
 import { FirebaseService } from "./firebase.service";
+import { KeyboardService } from "../keyboard";
 
 export type ConversationRole = "assistant" | "user" | "system";
 export type Decision = "yes" | "skip" | "open";
@@ -65,6 +66,7 @@ export class ConversationService {
   constructor(
     private openAI: OpenAiService,
     private speaker: SpeakerService,
+    keyboard: KeyboardService,
     firebase: FirebaseService
   ) {
     this.openAI.state$.subscribe((state) => {
@@ -79,34 +81,32 @@ export class ConversationService {
       }
     });
 
-    window.addEventListener("keydown", (evt) => {
-      if (evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-      if (evt.code === "Space") {
-        if (this.highlightSubject.value) {
-          this.highlightSubject.value.decision = "yes";
-          this.goToNextPart(this.highlightSubject.value);
-          this.messagesSubject.next(this.messagesSubject.value);
-        }
-      } else if (evt.code === "ArrowRight" || evt.code === "Backspace") {
-        if (
-          this.highlightSubject.value &&
-          this.highlightSubject.value.decision === "open"
-        ) {
-          this.highlightSubject.value.decision = "skip";
-          this.goToNextPart(this.highlightSubject.value);
-          this.messagesSubject.next(this.messagesSubject.value);
-        }
-        evt.preventDefault();
-        evt.stopPropagation();
-      } else if (evt.code === "ArrowLeft") {
-        if (this.highlightSubject.value) {
-          // TODO allow back
-        }
-      }
-    });
+    keyboard.registerExclusive("Space", () => this.accept());
+    keyboard.registerExclusive("ArrowRight", () => this.skip());
+    keyboard.registerExclusive("Backspace", () => this.skip());
+    // keyboard.registerExclusive("ArrowLeft", () => this.back());
+
   }
+
+  private accept() {
+    if (this.highlightSubject.value) {
+      this.highlightSubject.value.decision = "yes";
+      this.goToNextPart(this.highlightSubject.value);
+      this.messagesSubject.next(this.messagesSubject.value);
+    }
+  }
+
+  private skip() {
+    if (
+      this.highlightSubject.value &&
+      this.highlightSubject.value.decision === "open"
+    ) {
+      this.highlightSubject.value.decision = "skip";
+      this.goToNextPart(this.highlightSubject.value);
+      this.messagesSubject.next(this.messagesSubject.value);
+    }
+  }
+  
 
   private goToNextPart(part: CompletedConversationMessage) {
     part.highlight = false;

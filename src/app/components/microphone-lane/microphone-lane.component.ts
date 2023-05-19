@@ -1,6 +1,6 @@
 import {Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild} from '@angular/core';
 import {MicrophoneState} from '../../states/device.service';
-import {AzureCognitiveService} from '../../states/azure-cognitive.service';
+import {AugmentedSpeechConfig, AzureCognitiveService} from '../../states/azure-cognitive.service';
 import {SpeechRecognizer} from 'microsoft-cognitiveservices-speech-sdk';
 import {
   Recognizer,
@@ -9,6 +9,7 @@ import {
 import {ToggleComponent} from '../toggle/toggle.component';
 import {firstValueFrom, Subscription} from 'rxjs';
 import { createOngoingRecognizer, OngoingRecognizer, OngoingRecognition } from '../../states/ongoing-recognizer';
+import { KeyboardService } from 'src/app/keyboard';
 
 @Component({
   selector: 'app-microphone-lane',
@@ -20,11 +21,16 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   private ongoingRecognizer: OngoingRecognizer | null = null;
   private subscription?: Subscription;
 
+  private latestSpeechConfig?: AugmentedSpeechConfig;
+
   @Output()
   spoke = new EventEmitter<OngoingRecognition>();
 
   @Input()
   microphone!: MicrophoneState;
+
+  @Input()
+  index!: number;
 
   @ViewChild('enabledToggle')
   enabledToggle?: ToggleComponent;
@@ -33,10 +39,17 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
 
   constructor(
     private azureCognitive: AzureCognitiveService,
-  ) {}
+    private keyboard: KeyboardService,
+  ) {
+    azureCognitive.state$.subscribe((state) => {
+      // TODO: Implement this with a reactive pattern - `firstValueFrom()` didn't work.
+      if (state.speechConfig) this.latestSpeechConfig = state.speechConfig;
+    });
+  }
 
+  private callbackId = -1;
   ngOnInit() {
-
+    this.callbackId = this.keyboard.registerExclusive('Digit' + (this.index + 1), () => this.enabledToggle?.toggle());
   }
 
   toggleMicrophone(enabled: boolean) {
@@ -50,14 +63,13 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
 
   private async startListening() {
     console.log('listening on ' + this.microphone.deviceName)
-    const state = await firstValueFrom(this.azureCognitive.state$);
-    if (!state.speechConfig) {
+    if (!this.latestSpeechConfig) {
       console.warn('no speech config')
       return;
     }
 
     const recognizer = await this.azureCognitive.listen(
-      state.speechConfig,
+      this.latestSpeechConfig,
       this.microphone.deviceId,
     );
 
@@ -105,7 +117,16 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.speechRecognizer?.close();
+    try {
+      this.speechRecognizer?.close();
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('the object is already disposed')) {
+        console.info('speechRecognizer already disposed');
+      } else {
+        console.error('could not dispose speechRecognizer', error);
+      }
+    }
     this.subscription?.unsubscribe();
+    this.keyboard.unregister(this.callbackId);
   }
 }

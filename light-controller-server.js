@@ -33,28 +33,46 @@ const net = artnet({
 
 const app = express();
 
-const baseLightValueIdle = 40;
 const universe = 9
 const channel = 13;
+
+
+const baseLightValueIdleMin = 28;
+const baseLightValueIdleMax = 31;
 const baseLightValueSpeak = 30;
 
-net.set(universe, channel, [baseLightValueIdle])
+let idle = true;
+function idling() {
+  const value = Math.round(
+    baseLightValueIdleMin + (baseLightValueIdleMax - baseLightValueIdleMin) * Math.random()
+  );
+  net.set(universe, channel, [value]);
+  idle && setTimeout(idling, 10 + 50 * Math.random());
+}
+idling();
 
 app.use(require('cors')())
 app.use(require('body-parser').json())
 app.post('', (req, res) => {
-  for(const visum of transform(req.body.visums)) {
+  const { visums } = req.body;
+  idle = false;
+  for(const visum of transform(visums)) {
     setTimeout(() => {
-      net.set(universe, channel, [visum.value+baseLightValueSpeak]);
-    }, visum.offset)
+      // https://learn.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-speech-synthesis-viseme?pivots=programming-language-csharp&tabs=visemeid#map-phonemes-to-visemes
+      net.set(universe, channel, [visum.value + baseLightValueSpeak]);
+    }, visum.offset);
   }
 
   setTimeout(() => {
-    net.set(universe, channel, [baseLightValueIdle])
-  }, req.body.visums[req.body.visums.length-1].offset + 100);
+    idle = true;
+    idling();
+  }, visums[visums.length-1].offset + 100);
 
 
   res.status(200);
   res.end()
-})
-app.listen(8080, '0.0.0.0', console.log);
+});
+
+const PORT = 8080;
+console.log('listening', PORT);
+app.listen(PORT, '0.0.0.0', console.log);

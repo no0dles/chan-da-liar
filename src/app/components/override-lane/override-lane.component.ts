@@ -4,6 +4,8 @@ import { InputComponent } from '../input/input.component';
 import { PrerecordingService } from 'src/app/states/prerecording.service';
 import { AppService } from 'src/app/states/app.service';
 import { map } from 'rxjs';
+import { AzureCognitiveService } from 'src/app/states/azure-cognitive.service';
+import { KeyboardService } from 'src/app/keyboard';
 
 @Component({
   selector: 'app-override-lane',
@@ -18,20 +20,18 @@ export class OverrideLaneComponent {
   @ViewChild('input', {static: false})
   input?: InputComponent;
 
+  rate$ = this.azureCognitive.state$.pipe(map(state => state.speechConfig?.rate ?? 1.0));
+  styles$ = this.azureCognitive.state$.pipe(map(state => state.selectedVoice?.styleList ));
+  selectedStyle$ = this.azureCognitive.state$.pipe(map(state => state.selectedStyle ));
+
   constructor(
     private conversation: ConversationService,
     private app: AppService,
+    private azureCognitive: AzureCognitiveService,
     prerecordings: PrerecordingService,
+    keyboard: KeyboardService,
   ) {
-    window.addEventListener('keydown', (event: KeyboardEvent) => {
-      if (event.code === 'KeyO') {
-        if (!(event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement)) {
-          this.input?.focusInput();
-          event.stopPropagation();
-          event.preventDefault();
-        }
-      }
-    });
+    keyboard.registerExclusive('KeyO', () => this.input?.focusInput());
     prerecordings.editable.subscribe((content: string) => {
       if (content && this.input) {
         this.input.value = content;
@@ -62,5 +62,13 @@ export class OverrideLaneComponent {
         'user': 'bot',
       }[this.destination])!;
     }
+  }
+
+  setStyle(style: string) {
+    this.azureCognitive.setStyle(style);
+  }
+
+  setRate(rate: number) {
+    this.azureCognitive.setRate(rate);
   }
 }

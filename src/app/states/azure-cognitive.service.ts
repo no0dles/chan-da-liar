@@ -25,15 +25,24 @@ export interface AzureCognitiveSettings {
   region: string;
 }
 
+export interface AugmentedSpeechConfig {
+  speechConfig: SpeechConfig;
+  rate: number;
+  style: string | null;
+  voiceShortName: string | null;
+}
+
 export interface AzureCognitiveState {
-  speechConfig: SpeechConfig | null;
+  speechConfig: AugmentedSpeechConfig | null;
   settings: AzureCognitiveSettings | null;
   managed: boolean;
   voices: VoiceInfo[];
-  localeVoices: VoiceInfo[];
   locales: string[];
+  localeVoices: VoiceInfo[];
+  localeFilter: boolean;
   selectedLocale: string | null;
   selectedVoice: VoiceInfo | null;
+  selectedStyle: string | null;
   ready: boolean;
   error: string | null;
 }
@@ -48,14 +57,21 @@ export interface SpeakVisum {
   offset: number;
 }
 
+const LOCALE_SELECTION = new Set([
+  'en-US', 'en-GB', 'de-DE', 'de-CH',
+]);
+
 @Injectable({
   providedIn: 'root',
 })
 export class AzureCognitiveService {
   private configApiKey = 'azure-cognitive-key';
   private configRegionKey = 'azure-cognitive-region';
+  private configLocaleFilterKey = 'azure-cognitive-locale-filter';
   private configLocaleKey = 'azure-cognitive-locale';
   private configVoiceKey = 'azure-cognitive-voice';
+  private configRateKey = 'azure-cognitive-rate';
+  private configStyleKey = 'azure-cognitive-style';
 
   private speakSuffixDuration = 750;
 
@@ -66,12 +82,15 @@ export class AzureCognitiveService {
   state$ = combineLatest([
     this.config.watch<string>(this.configApiKey),
     this.config.watch<string>(this.configRegionKey),
+    this.config.watch<boolean>(this.configLocaleFilterKey),
     this.config.watch<string>(this.configLocaleKey),
     this.config.watch<string>(this.configVoiceKey),
     this.managedSettings,
+    this.config.watch<number>(this.configRateKey),
+    this.config.watch<string>(this.configStyleKey),
   ]).pipe(
-    mergeMap(([apiKey, region, locale, voice, managedSettings]) =>
-      fromPromise(this.mapState(apiKey, region, locale, voice, managedSettings)),
+    mergeMap(([apiKey, region, localeFilter, locale, voice, managedSettings, rate, style]) =>
+      fromPromise(this.mapState(apiKey, region, localeFilter, locale, voice, managedSettings, rate, style)),
     ),
     shareReplay(),
   );
@@ -109,12 +128,27 @@ export class AzureCognitiveService {
     this.config.save(this.configVoiceKey, voice);
   }
 
+  setStyle(style: string) {
+    this.config.save(this.configStyleKey, style);
+  }
+
+  setRate(rate: number) {
+    this.config.save(this.configRateKey, rate);
+  }
+
+  setLocaleFilter(value: boolean) {
+    this.config.save(this.configLocaleFilterKey, value);
+  }
+
   async mapState(
     apiKey: string | null,
     region: string | null,
+    localeFilter: boolean | null,
     locale: string | null,
     voice: string | null,
     managedSettings: AzureCognitiveSettings | null,
+    rate: number | null,
+    style: string | null,
   ): Promise<AzureCognitiveState> {
     if (managedSettings) {
       apiKey = managedSettings.apiKey;
@@ -125,12 +159,14 @@ export class AzureCognitiveService {
         settings: null,
         managed: false,
         speechConfig: null,
+        localeFilter: false,
         locales: [],
-        voices: [],
         localeVoices: [],
+        voices: [],
         ready: false,
         selectedLocale: null,
         selectedVoice: null,
+        selectedStyle: null,
         error: null,
       };
     }
@@ -147,8 +183,10 @@ export class AzureCognitiveService {
     );
 
     const locales = voices.reduce<string[]>((locales, voice) => {
-      if (locales.indexOf(voice.locale) === -1) {
-        locales.push(voice.locale);
+      if (!localeFilter || LOCALE_SELECTION.has(voice.locale)) {
+        if (locales.indexOf(voice.locale) === -1) {
+          locales.push(voice.locale);
+        }
       }
       return locales;
     }, []);
@@ -169,8 +207,15 @@ export class AzureCognitiveService {
       return speechConfig;
     });
 
+    let voiceShortName = null;
     if (selectedVoice) {
       speechConfig.speechSynthesisVoiceName = selectedVoice.name;
+      voiceShortName = selectedVoice.shortName;
+      if (style && selectedVoice.styleList.indexOf(style) === -1) {
+        style = null;
+      }
+    } else {
+      style = null;
     }
 
     if (selectedLocale) {
@@ -182,11 +227,18 @@ export class AzureCognitiveService {
       selectedLocale,
       voices,
       locales,
+      localeFilter: !!localeFilter,
       localeVoices,
+      selectedStyle: style,
       ready: !!selectedVoice && !!selectedLocale,
       settings: api,
       managed: !!managedSettings,
-      speechConfig,
+      speechConfig: {
+        speechConfig,
+        rate: rate ?? 1,
+        style,
+        voiceShortName
+      },
       error,
     };
   }
@@ -206,28 +258,49 @@ export class AzureCognitiveService {
   }
 
   async speak(
-    speechConfig: SpeechConfig,
+    speechConfig: AugmentedSpeechConfig,
     deviceId: string,
     text: string,
   ): Promise<SpeakResult> {
     const player = new SpeakerAudioDestination(deviceId);
     const synthAudio = AudioConfig.fromSpeakerOutput(player);
-    const synth = new SpeechSynthesizer(speechConfig, synthAudio);
-    // TODO synth.buildSsml()
+    const synth = new SpeechSynthesizer(speechConfig.speechConfig, synthAudio);
     return new Promise<SpeakResult>((resolve) => {
       const visums: SpeakVisum[] = [];
       synth.visemeReceived = (sender, e) => {
         visums.push({ value: e.visemeId, offset: e.audioOffset / 10000 });
       };
-      synth.speakTextAsync(text, (e) => {
+      const pm = speechConfig.rate >= 1 ? '+': '';
+
+      // This seemed to work for a bit, then it broke again ?!
+      const style_open = speechConfig.style ? `<mstts:express-as style="${speechConfig.style}" styledegree="2">` : '';
+      const style_close = speechConfig.style ? `</mstts:express-as>` : '';
+      // const style_open = '', style_close = '';
+      const lang = speechConfig.voiceShortName?.substring(0, 5);
+      const ssml = `
+      <speak version="1.0"
+          xmlns="http://www.w3.org/2001/10/synthesis"
+          xmlns:mstts="https://www.w3.org/2001/mstts"
+          xml:lang="${lang}">
+        <voice name="${speechConfig.voiceShortName}">
+          ${style_open}
+            <prosody rate="${pm}${(100*(speechConfig.rate-1)).toFixed(2)}%">
+              ${text}
+            </prosody>
+          ${style_close}
+        </voice>
+      </speak>`;
+      // console.log('ssml', ssml);
+      // synth.speakTextAsync(text, (e) => {
+      synth.speakSsmlAsync(ssml, (e) => {
         resolve({ duration: e.audioDuration / 10000 - this.speakSuffixDuration, visums }); // ticks to ms
-      });
+      }, (err) => console.error('speakSsmlAsync err', err));
     });
   }
 
-  listen(speechConfig: SpeechConfig, deviceId: string) {
+  listen(speechConfig: AugmentedSpeechConfig, deviceId: string) {
     const defaultMic = AudioConfig.fromMicrophoneInput(deviceId);
-    const recognizer = new SpeechRecognizer(speechConfig, defaultMic);
+    const recognizer = new SpeechRecognizer(speechConfig.speechConfig, defaultMic);
     recognizer.startContinuousRecognitionAsync();
     return recognizer;
   }

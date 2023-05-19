@@ -3,8 +3,8 @@
     <div class="flex min-w-0 space-x-3">
       <div class="flex flex-grow min-w-0 space-x-3">
         <app-microphone-lane
-          *ngFor="let mic of state.microphones"
-          [microphone]="mic" (spoke)="spoke($event)"></app-microphone-lane>
+          *ngFor="let mic of state.microphones; let idx = index"
+          [microphone]="mic" [index]="idx" (spoke)="spoke($event)"></app-microphone-lane>
       </div>
       <app-status></app-status>
       <app-button class="flex-shrink-0" (click)="openConfigurations(true)">
