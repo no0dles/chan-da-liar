@@ -4,6 +4,7 @@ import { InputComponent } from '../input/input.component';
 import { PrerecordingService } from 'src/app/states/prerecording.service';
 import { AppService } from 'src/app/states/app.service';
 import { map } from 'rxjs';
+import { AzureCognitiveService } from 'src/app/states/azure-cognitive.service';
 
 @Component({
   selector: 'app-override-lane',
@@ -18,9 +19,14 @@ export class OverrideLaneComponent {
   @ViewChild('input', {static: false})
   input?: InputComponent;
 
+  rate$ = this.azureCognitive.state$.pipe(map(state => state.speechConfig?.rate ?? 1.0));
+  styles$ = this.azureCognitive.state$.pipe(map(state => state.selectedVoice?.styleList ));
+  selectedStyle$ = this.azureCognitive.state$.pipe(map(state => state.selectedStyle ));
+
   constructor(
     private conversation: ConversationService,
     private app: AppService,
+    private azureCognitive: AzureCognitiveService,
     prerecordings: PrerecordingService,
   ) {
     window.addEventListener('keydown', (event: KeyboardEvent) => {
@@ -62,5 +68,13 @@ export class OverrideLaneComponent {
         'user': 'bot',
       }[this.destination])!;
     }
+  }
+
+  setStyle(style: string) {
+    this.azureCognitive.setStyle(style);
+  }
+
+  setRate(rate: number) {
+    this.azureCognitive.setRate(rate);
   }
 }

@@ -40,6 +40,18 @@ export class ConfigurationAzureCognitiveSidebarComponent {
     this.azureCognitive.setVoice(voice);
   }
 
+  setStyle(style: string) {
+    this.azureCognitive.setStyle(style);
+  }
+
+  setRate(rate: number) {
+    this.azureCognitive.setRate(rate);
+  }
+
+  setLocaleFilter(localeFilter: boolean) {
+    this.azureCognitive.setLocaleFilter(localeFilter);
+  }
+
   play(state: AzureCognitiveState, text?: string) {
     if (!text) {
       console.warn('no text');
