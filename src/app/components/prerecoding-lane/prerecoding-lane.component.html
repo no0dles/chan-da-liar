@@ -13,7 +13,8 @@
         </div>
       </app-button>
       <div class="absolute -bottom-2 right-1 text-teal-800 space-x-2 text-xs" *ngIf="allowDelete || allowEdit">
-        <fa-icon [icon]="modifyIcon" class="cursor-pointer" (click)="modify(index, rec.content)" *ngIf="allowEdit"></fa-icon>
+        <div class="bg-black text-white rounded-md text-xs inline-block px-2">{{rec.rate ?? 1}}x</div>
+        <fa-icon [icon]="modifyIcon" class="cursor-pointer" (click)="modify(index, rec)" *ngIf="allowEdit"></fa-icon>
         <fa-icon [icon]="deleteIcon" class="cursor-pointer" (click)="delete(index)" *ngIf="allowDelete"></fa-icon>
       </div>
     </div>

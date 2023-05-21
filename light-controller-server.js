@@ -37,17 +37,21 @@ const universe = 9
 const channel = 13;
 
 
-const baseLightValueIdleMin = 28;
-const baseLightValueIdleMax = 31;
-const baseLightValueSpeak = 30;
+const baseLightValueIdleMin = 15;
+const baseLightValueIdleMax = 25;
+const baseLightValueSpeak = 40;
+
+let direction = 1;
+let currentIdle = baseLightValueIdleMin;
 
 let idle = true;
 function idling() {
-  const value = Math.round(
-    baseLightValueIdleMin + (baseLightValueIdleMax - baseLightValueIdleMin) * Math.random()
-  );
-  net.set(universe, channel, [value]);
-  idle && setTimeout(idling, 10 + 50 * Math.random());
+  currentIdle+=direction;
+  if(currentIdle < baseLightValueIdleMin || currentIdle > baseLightValueIdleMax) {
+    direction *= -1;
+  }
+  net.set(universe, channel, [currentIdle]);
+  idle && setTimeout(idling, 100);
 }
 idling();
 

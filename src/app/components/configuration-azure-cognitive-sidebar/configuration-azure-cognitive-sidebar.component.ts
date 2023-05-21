@@ -58,6 +58,6 @@ export class ConfigurationAzureCognitiveSidebarComponent {
       return;
     }
 
-    this.speaker.push('Azure Cognitive', text);
+    this.speaker.push('Azure Cognitive', {content: text, rate: undefined});
   }
 }

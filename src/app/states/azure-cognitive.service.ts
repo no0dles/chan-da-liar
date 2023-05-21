@@ -19,6 +19,7 @@ import {
 } from 'microsoft-cognitiveservices-speech-sdk/distrib/lib/src/sdk/Exports';
 import { LightService } from './light.service';
 import { FirebaseService } from './firebase.service';
+import { Recording } from "./prerecording.service";
 
 export interface AzureCognitiveSettings {
   apiKey: string;
@@ -260,7 +261,7 @@ export class AzureCognitiveService {
   async speak(
     speechConfig: AugmentedSpeechConfig,
     deviceId: string,
-    text: string,
+    rec: Recording,
   ): Promise<SpeakResult> {
     const player = new SpeakerAudioDestination(deviceId);
     const synthAudio = AudioConfig.fromSpeakerOutput(player);
@@ -270,7 +271,8 @@ export class AzureCognitiveService {
       synth.visemeReceived = (sender, e) => {
         visums.push({ value: e.visemeId, offset: e.audioOffset / 10000 });
       };
-      const pm = speechConfig.rate >= 1 ? '+': '';
+      const rate = rec.rate ?? speechConfig.rate;
+      const pm = rate >= 1 ? '+': '';
 
       // This seemed to work for a bit, then it broke again ?!
       const style_open = speechConfig.style ? `<mstts:express-as style="${speechConfig.style}" styledegree="2">` : '';
@@ -284,8 +286,8 @@ export class AzureCognitiveService {
           xml:lang="${lang}">
         <voice name="${speechConfig.voiceShortName}">
           ${style_open}
-            <prosody rate="${pm}${(100*(speechConfig.rate-1)).toFixed(2)}%">
-              ${text}
+            <prosody rate="${pm}${(100*(rate-1)).toFixed(2)}%">
+              ${rec.content}
             </prosody>
           ${style_close}
         </voice>

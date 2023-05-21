@@ -13,6 +13,7 @@ export type Decision = "yes" | "skip" | "open";
 export interface CompletedConversationMessage {
   id: number;
   text: string;
+  rate?: number;
   displayedText: string;
   expandable: boolean;
   decision: Decision;
@@ -28,6 +29,7 @@ export interface CompletedConversationMessage {
 
 export interface OngoingConversationMessage {
   id: number;
+  rate: number | undefined;
   text$: Observable<string>;
   role: ConversationRole;
   textPrefix?: string;
@@ -55,6 +57,7 @@ export class ConversationService {
   highlightSubject = new BehaviorSubject<CompletedConversationMessage | null>(
     null
   );
+  latestOngoingSubject = new BehaviorSubject<OngoingConversationMessage | null>(null);
   conversationId = Date.now().toString();
   ongoingConversations: OngoingConversationRecognition[] = [];
 
@@ -106,7 +109,7 @@ export class ConversationService {
       this.messagesSubject.next(this.messagesSubject.value);
     }
   }
-  
+
 
   private goToNextPart(part: CompletedConversationMessage) {
     part.highlight = false;
@@ -181,7 +184,7 @@ export class ConversationService {
   }
 
   pushAssistant(recording: Recording) {
-    const newMessage = this.createCompletedMessage(recording.content, "assistant", "yes", null);
+    const newMessage = this.createCompletedMessage(recording.content, recording.rate, "assistant", "yes", null);
     this.queue(newMessage);
     const lastDecisionIndex = this.messagesSubject.value.findIndex(m => !m.completed || m.decision === "open");
     if (lastDecisionIndex >= 0) {
@@ -193,7 +196,7 @@ export class ConversationService {
   }
 
   pushUser(recording: Recording) {
-    const newMessage = this.createCompletedMessage(recording.content, "user", "open", null);
+    const newMessage = this.createCompletedMessage(recording.content, recording.rate,"user", "open", null);
     this.messagesSubject.value.push(newMessage);
     this.messagesSubject.next(this.messagesSubject.value);
   }
@@ -202,7 +205,7 @@ export class ConversationService {
     message.queued = true;
     this.messagesSubject.next(this.messagesSubject.value);
 
-    this.speaker.push(message.role, message.text).then(() => {
+    this.speaker.push(message.role, {content: message.text, rate: message.rate}).then(() => {
       message.played = true;
       this.messagesSubject.next(this.messagesSubject.value);
     });
@@ -211,6 +214,7 @@ export class ConversationService {
   push(recognition: OngoingRecognition, insertAt?: number) {
     const ongoingMessage: OngoingConversationMessage = {
       id: Date.now(),
+      rate: recognition.rate,
       text$: recognition.text$,
       completed: false,
       role: recognition.role
@@ -224,7 +228,7 @@ export class ConversationService {
       subscription: combineLatest([
         recognition.completed, recognition.initialDelayMs,
       ]).subscribe(([completed, initialDelayMs]) => {
-        const message = this.createCompletedMessage(completed, recognition.role, "open", recognition.textPrefix ?? null);
+        const message = this.createCompletedMessage(completed, undefined, recognition.role, "open", recognition.textPrefix ?? null);
         if (initialDelayMs) {
           message.initialDelayMs = initialDelayMs;
         }
@@ -235,13 +239,14 @@ export class ConversationService {
           this.messagesSubject.value.splice(index, 1);
           this.messagesSubject.value.push(ongoingMessage);
         }
-        
+
         this.messagesSubject.next(this.messagesSubject.value);
 
         currentIndex++;
       })
     };
 
+    this.latestOngoingSubject.next(ongoingMessage)
     this.ongoingConversations.push(ongoingConversation);
     this.messagesSubject.value.push(ongoingMessage);
     this.messagesSubject.next(this.messagesSubject.value);
@@ -251,6 +256,10 @@ export class ConversationService {
       const index = this.ongoingConversations.indexOf(ongoingConversation);
       if (index >= 0) {
         this.ongoingConversations.splice(index, 1);
+      }
+
+      if(this.latestOngoingSubject.value === ongoingMessage) {
+        this.latestOngoingSubject.next(null)
       }
 
       const ongoingIndex = this.messagesSubject.value.indexOf(ongoingMessage);
@@ -270,12 +279,13 @@ export class ConversationService {
   }
 
   private createCompletedMessage(
-    text: string, role: ConversationRole, decision: Decision, prefix: string | null
+    text: string, rate: number | undefined, role: ConversationRole, decision: Decision, prefix: string | null
   ): CompletedConversationMessage {
     const newMessage: CompletedConversationMessage = {
       id: Date.now(),
       displayedText: this.getDisplayText(role, text),
       expandable: this.isExpandable(role, text),
+      rate,
       text,
       decision,
       highlight: false,

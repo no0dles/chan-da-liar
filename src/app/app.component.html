@@ -22,7 +22,7 @@
       class="flex-grow min-h-0"></app-transcript>
 
       <app-override-lane class="shrink" *ngIf="overrideMode$ | async"></app-override-lane>
-      <app-prerecoding-lane class="h-1/4 flex-shrink-0" [allowEdit]="overrideMode$ | async"
+      <app-prerecoding-lane class="h-1/3 flex-shrink-0" [allowEdit]="overrideMode$ | async"
                             [allowDelete]="liveEditMode$ | async"></app-prerecoding-lane>
   </div>
 </ng-container>

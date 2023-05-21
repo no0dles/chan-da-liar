@@ -5,6 +5,7 @@ import { FirebaseService } from './firebase.service';
 
 export interface Recording {
   content: string;
+  rate?: number;
 }
 
 export interface PrerecordingState {
@@ -25,7 +26,7 @@ export class PrerecordingService {
     map(([recordings]) => this.mapState(recordings)),
     shareReplay(),
   );
-  editable = new BehaviorSubject<string>('');
+  editable = new BehaviorSubject<Recording>({content: '', rate: 1});
 
   constructor(private config: ConfigService, private firebase: FirebaseService) {
     firebase.prerecordings.asObservable().subscribe((firebaseRecordings) => {
@@ -52,19 +53,19 @@ export class PrerecordingService {
     };
   }
 
-  save(content: string) {
+  save(recording: Recording) {
     const recordings = this.config.get<Recording[]>(this.recordingsKey) || [];
-    recordings.push({ content });
+    recordings.push(recording);
     this.config.save(this.recordingsKey, recordings);
   }
 
-  async edit(index: number, content: string) {
+  async edit(index: number, recording: Recording) {
     const recordings = this.config.get<Recording[]>(this.recordingsKey) || [];
-    if (recordings[index].content === content) {
+    if (recordings[index].content === recording.content && recordings[index].rate === recording.rate) {
       return;
     }
     this.firebase.deletePrerecording(recordings[index].content);
-    recordings[index] = { content };
+    recordings[index] = recording;
     this.config.save(this.recordingsKey, recordings);
   }
 
@@ -79,7 +80,7 @@ export class PrerecordingService {
     const recordings = this.config.get<Recording[]>(this.recordingsKey) || [];
     /**
      * there must be a better way?
-     * 
+     *
      * I tried both
      * `await firstValueFrom(this.state$)`
      * and

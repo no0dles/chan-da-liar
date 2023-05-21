@@ -27,7 +27,7 @@ export class ConfigurationPrerecordingListSidebarComponent implements ModalInsta
       subtitle: 'Prescripted answer',
       props: {
         index,
-        content: rec.content,
+        recording: rec,
       },
     })
   }
