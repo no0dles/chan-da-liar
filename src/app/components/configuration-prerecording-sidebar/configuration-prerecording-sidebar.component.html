@@ -1,9 +1,16 @@
 <app-textarea
   #transcript [heading]="'Content'"
-  class="flex-grow min-h-0"
-  [value]="content"></app-textarea>
+  class="flex-grow min-h-0" (valueChange)="recording.content = $event"
+  [value]="recording.content"></app-textarea>
+<div class="flex space-x-3">
+  <div>Speed={{ (recording.rate ?? 1.0).toFixed(2) }}</div>
+  <input class="grow"
+         type="range" min="0.5" max="1.5" step="0.05"
+         [ngModel]="recording.rate"
+         (ngModelChange)="recording.rate = $event">
+</div>
 <app-voice-processor
-  [value]="transcript.value"
+  [value]="transcript.value" [rate]="recording.rate"
   [source]="'Prerecording'"></app-voice-processor>
 
 <app-button class="w-full" (click)="create()">{{

@@ -21,7 +21,7 @@
           : [message.role]
       ">
       <div *ngIf="message.completed && message.prefix">
-        {{ message.prefix }}
+        (prefixed)
       </div>
       <div *ngIf="message.completed">
         {{ expanded ? message.text : message.displayedText }}
@@ -54,6 +54,7 @@
       <div
         *ngIf="message.completed && (message.queued || message.played)"
         class="icons-bottom">
+        <span *ngIf="message.rate" class="bg-black text-white rounded-md text-xs px-2">{{message.rate}}x</span>
         <fa-icon [icon]="checkIcon" *ngIf="!message.played"></fa-icon>
         <fa-icon [icon]="doubleCheckIcon" *ngIf="message.played"></fa-icon>
       </div>

@@ -15,6 +15,9 @@ export class VoiceProcessorComponent {
   value?: string | string[];
 
   @Input()
+  rate?: number | undefined;
+
+  @Input()
   source!: string;
 
   constructor(private speaker: SpeakerService) {}
@@ -26,10 +29,10 @@ export class VoiceProcessorComponent {
 
     if (this.value instanceof Array) {
      for (const item of this.value) {
-       this.speaker.push(this.source, item);
+       this.speaker.push(this.source, {content:item, rate: this.rate});
      }
     } else {
-      this.speaker.push(this.source, this.value);
+      this.speaker.push(this.source, {content: this.value, rate: this.rate});
     }
   }
 }

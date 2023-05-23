@@ -33,6 +33,7 @@ import { OpenAiService } from 'src/app/states/open-ai.service';
 export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
   private subscription?: Subscription;
   private currentHighlight: CompletedConversationMessage | null = null;
+  private lastScrolledTo: number | null = null;
 
   saveIcon = faFloppyDisk;
   speakIcon = faVolumeHigh;
@@ -77,18 +78,23 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    combineLatest([this.conversation.highlight$, interval(100)]).subscribe(([highlight]) => {
+    combineLatest([this.conversation.highlight$, this.conversation.latestOngoingSubject, interval(100)]).subscribe(([highlight, latestOngoing]) => {
       this.currentHighlight = highlight;
 
-      if (!this.container?.nativeElement || !highlight) {
+      if (!this.container?.nativeElement) {
         return;
       }
 
+      const id = highlight ? highlight.id : latestOngoing ? latestOngoing.id : null;
+      if(!id || this.lastScrolledTo === id) {
+        return;
+      }
 
       const part = this.container.nativeElement.querySelector(
-        `[data-part-id="${highlight.id}"]`,
+        `[data-part-id="${id}"]`,
       );
       if (part) {
+        this.lastScrolledTo = id;
         part.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     });
@@ -107,10 +113,13 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async savePrerecording(message: CompletedConversationMessage) {
-    this.prerecordings.save(message.text);
+    this.prerecordings.save({
+      content: message.text,
+      rate: undefined,
+    });
   }
 
   async speakMessage(message: CompletedConversationMessage) {
-    this.speaker.push(message.role, message.text);
+    this.speaker.push(message.role, {content: message.text, rate: message.rate});
   }
 }

@@ -1,7 +1,6 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ModalHandle, ModalInstance } from '../../modules/modal/modal.service';
-import { PrerecordingService } from '../../states/prerecording.service';
-import { TranscriptComponent } from '../transcript/transcript.component';
+import { PrerecordingService, Recording } from "../../states/prerecording.service";
 import { TextareaComponent } from '../textarea/textarea.component';
 
 @Component({
@@ -19,7 +18,7 @@ export class ConfigurationPrerecordingSidebarComponent
   transcript?: TextareaComponent;
 
   @Input()
-  content: string = '';
+  recording: Recording = {content: '', rate: 1};
 
   @Input()
   index?: number;
@@ -37,9 +36,9 @@ export class ConfigurationPrerecordingSidebarComponent
     }
 
     if (this.index !== null && this.index !== undefined && this.index >= 0) {
-      this.prerecording.edit(this.index, this.transcript.value);
+      this.prerecording.edit(this.index, this.recording);
     } else {
-      this.prerecording.save(this.transcript.value);
+      this.prerecording.save(this.recording);
     }
     this.modal.dismiss();
   }

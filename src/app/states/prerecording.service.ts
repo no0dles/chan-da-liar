@@ -5,6 +5,7 @@ import { FirebaseService } from './firebase.service';
 
 export interface Recording {
   content: string;
+  rate?: number;
 }
 
 export interface PrerecordingState {
@@ -25,16 +26,16 @@ export class PrerecordingService {
     map(([recordings]) => this.mapState(recordings)),
     shareReplay(),
   );
-  editable = new BehaviorSubject<string>('');
+  editable = new BehaviorSubject<Recording>({content: '', rate: 1});
 
   constructor(private config: ConfigService, private firebase: FirebaseService) {
     firebase.prerecordings.asObservable().subscribe((firebaseRecordings) => {
       if (firebaseRecordings) {
         const recordings = this.config.get<Recording[]>(this.recordingsKey) || []
-        const contents = new Set(recordings.map(rec => rec.content));
-        firebaseRecordings.forEach(content => {
-          if (!contents.has(content)) {
-            recordings.push({content});
+        firebaseRecordings.forEach(firebaseRecording => {
+          const existing = recordings.find(r => r.rate === firebaseRecording.rate && r.content === firebaseRecording.content)
+          if (!existing) {
+            recordings.push({content: firebaseRecording.content, rate: firebaseRecording.rate});
           }
         });
         this.config.save(this.recordingsKey, recordings);
@@ -44,7 +45,7 @@ export class PrerecordingService {
 
   private mapState(recs: Recording[] | null): PrerecordingState {
     if (recs) {
-      this.firebase.mergePrerecordings(recs.map(rec => rec.content));
+      this.firebase.mergePrerecordings(recs.map(rec => rec));
     }
     return {
       recordings: recs || [],
@@ -52,25 +53,25 @@ export class PrerecordingService {
     };
   }
 
-  save(content: string) {
+  save(recording: Recording) {
     const recordings = this.config.get<Recording[]>(this.recordingsKey) || [];
-    recordings.push({ content });
+    recordings.push(recording);
     this.config.save(this.recordingsKey, recordings);
   }
 
-  async edit(index: number, content: string) {
+  async edit(index: number, recording: Recording) {
     const recordings = this.config.get<Recording[]>(this.recordingsKey) || [];
-    if (recordings[index].content === content) {
+    if (recordings[index].content === recording.content && recordings[index].rate === recording.rate) {
       return;
     }
-    this.firebase.deletePrerecording(recordings[index].content);
-    recordings[index] = { content };
+    this.firebase.deletePrerecording(index, recording);
+    recordings[index] = recording;
     this.config.save(this.recordingsKey, recordings);
   }
 
   delete(index: number) {
     const recordings = this.config.get<Recording[]>(this.recordingsKey) || [];
-    this.firebase.deletePrerecording(recordings[index].content);
+    this.firebase.deletePrerecording(index, recordings[index]);
     recordings.splice(index, 1);
     this.config.save(this.recordingsKey, recordings);
   }
@@ -79,7 +80,7 @@ export class PrerecordingService {
     const recordings = this.config.get<Recording[]>(this.recordingsKey) || [];
     /**
      * there must be a better way?
-     * 
+     *
      * I tried both
      * `await firstValueFrom(this.state$)`
      * and

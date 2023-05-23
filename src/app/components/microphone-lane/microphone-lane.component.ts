@@ -10,6 +10,7 @@ import {ToggleComponent} from '../toggle/toggle.component';
 import {firstValueFrom, Subscription} from 'rxjs';
 import { createOngoingRecognizer, OngoingRecognizer, OngoingRecognition } from '../../states/ongoing-recognizer';
 import { KeyboardService } from 'src/app/keyboard';
+import { SpeakerService } from "../../states/speaker.service";
 
 @Component({
   selector: 'app-microphone-lane',
@@ -20,6 +21,7 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   private speechRecognizer?: SpeechRecognizer;
   private ongoingRecognizer: OngoingRecognizer | null = null;
   private subscription?: Subscription;
+  listening = true;
 
   private latestSpeechConfig?: AugmentedSpeechConfig;
 
@@ -40,11 +42,21 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   constructor(
     private azureCognitive: AzureCognitiveService,
     private keyboard: KeyboardService,
+    private speaker: SpeakerService,
   ) {
     azureCognitive.state$.subscribe((state) => {
       // TODO: Implement this with a reactive pattern - `firstValueFrom()` didn't work.
       if (state.speechConfig) this.latestSpeechConfig = state.speechConfig;
     });
+    speaker.queue$.subscribe(res => {
+      if(res.length > 0 && this.listening) {
+        this.listening = false;
+        this.stopListening();
+      } else if (res.length === 0 && !this.listening) {
+        this.listening = true;
+        this.startListening();
+      }
+    })
   }
 
   private callbackId = -1;
@@ -53,15 +65,29 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   }
 
   toggleMicrophone(enabled: boolean) {
+    console.log(enabled)
+    this.enabledMic = enabled;
     if (enabled) {
       this.startListening();
-    } else if (this.speechRecognizer) {
-      this.speechRecognizer.stopContinuousRecognitionAsync();
-      this.speechRecognizer.close();
+    } else {
+      this.stopListening();
     }
   }
 
+  private stopListening() {
+    if (!this.speechRecognizer) {
+      return
+    }
+    console.log('stop')
+    this.speechRecognizer.stopContinuousRecognitionAsync();
+    this.speechRecognizer.close();
+  }
+
   private async startListening() {
+    console.log(this.enabledMic, this.microphone)
+    if (!this.enabledMic || !this.microphone) {
+      return;
+    }
     console.log('listening on ' + this.microphone.deviceName)
     if (!this.latestSpeechConfig) {
       console.warn('no speech config')

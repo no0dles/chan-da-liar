@@ -3,10 +3,11 @@ import { BehaviorSubject, combineLatest } from 'rxjs';
 import {AzureCognitiveService, SpeakVisum} from './azure-cognitive.service';
 import { DeviceService } from './device.service';
 import { LightService } from './light.service';
+import { Recording } from "./prerecording.service";
 
 export interface OutputQueueItem {
   source: string;
-  content: string;
+  recording: Recording
   playing: boolean;
   duration?: number;
   visums?: SpeakVisum[];
@@ -48,7 +49,7 @@ export class SpeakerService {
           .speak(
             state.speechConfig,
             device.selectedOutput.deviceId,
-            item.content,
+            item.recording,
           )
           .then((result) => {
             item.duration = result.duration;
@@ -83,11 +84,11 @@ export class SpeakerService {
     });
   }
 
-  push(source: string, content: string) {
+  push(source: string, recording: Recording) {
     return new Promise<void>(resolve => {
       this.queueSubject.value.push({
         playing: false,
-        content,
+        recording,
         source,
         resolve,
       });

@@ -4,6 +4,7 @@ import { ConversationRole } from './conversation.service';
 export interface OngoingRecognition {
   text$: Observable<string>;
   end: Promise<void>;
+  rate: number | undefined
   completed: Observable<string>;
   initialDelayMs: Observable<number|null>;
   textPrefix?: string;
@@ -62,6 +63,7 @@ export function createOngoingRecognizer(options: {textPrefix: string | undefined
         role: options.role,
         textPrefix: options.textPrefix,
         end,
+        rate: undefined,
         completed: completedSubject.asObservable(),
         text$: textSubject.asObservable(),
         initialDelayMs: initialDelayMs.asObservable(),
