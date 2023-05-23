@@ -17,6 +17,7 @@ import {
    runTransaction
 } from 'firebase/firestore/lite';
 import { User, browserLocalPersistence, getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { Recording } from "./prerecording.service";
 
 const DEFAULT_API_KEY = 'AIzaSyCbsk8PYE8siL58giIaDG1BjXLmtNWPjSY';
 const DEFAULT_APP_ID = '1:949850774703:web:67bc87b614929fed3a085a';
@@ -82,7 +83,7 @@ export class FirebaseService {
   app: FirebaseApp|null = null;
   firestore: Firestore|null = null;
 
-  prerecordings = new BehaviorSubject<string[]|null>(null);
+  prerecordings = new BehaviorSubject<Recording[]|null>(null);
 
   state$ = combineLatest([
     this.config.watch<string>(this.configApiKey, DEFAULT_API_KEY),
@@ -186,30 +187,29 @@ export class FirebaseService {
     await setDoc(docRef, {conversation});
   }
 
-  async mergePrerecordings(recordings: string[]) {
-    recordings = [...new Set(recordings)];
+  async mergePrerecordings(recordings: Recording[]) {
     if (this.loginState.value != 'success') {
       return;
     }
     await runTransaction(this.firestore!, async (transaction) => {
       const coll = collection(this.firestore!, this.getPath(this.prerecordingsCollection));
       const docs = await getDocs(coll);
-      const existingRecordings = docs.docs.map(doc => doc.data()['content']);
-      const newRecordings = recordings.filter(r => !existingRecordings.includes(r));
+      const existingRecordings = docs.docs.map(doc => doc.data() as Recording);
+      const newRecordings = recordings.filter(r => !existingRecordings.find(e => e.rate === r.rate && e.content === r.content));
       newRecordings.forEach(content => {
-        transaction.set(doc(coll), {content});
+        transaction.set(doc(coll), content);
       });
     });
   }
 
-  async deletePrerecording(recording: string) {
+  async deletePrerecording(index:number, recording: Recording) {
     if (this.loginState.value != 'success') {
       return;
     }
     const coll = collection(this.firestore!, this.getPath(this.prerecordingsCollection));
     const promises: Promise<void>[] = [];
     (await getDocs(coll)).forEach(doc => {
-      if (recording === doc.data()['content']) {
+      if (recording.content === doc.data()['content'] && recording.rate === doc.data()['rate']) {
         promises.push(deleteDoc(doc.ref));
       }
     });
@@ -218,9 +218,17 @@ export class FirebaseService {
 
   private async loadPrerecordings() {
     const coll = collection(this.firestore!, this.getPath(this.prerecordingsCollection));
-    const docs: string[] = [];
+    const docs: Recording[] = [];
     (await getDocs(coll)).forEach(doc => {
-      docs.push(doc.data()['content'] as string);
+      const data = doc.data();
+      if (typeof data['content'] !== 'string') {
+        deleteDoc(doc.ref)
+        return
+      }
+      docs.push({
+        content: data['content'] as string,
+        rate: data['rate'] as number | undefined
+      });
     });
     this.prerecordings.next(docs);
   }

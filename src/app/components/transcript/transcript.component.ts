@@ -33,6 +33,7 @@ import { OpenAiService } from 'src/app/states/open-ai.service';
 export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
   private subscription?: Subscription;
   private currentHighlight: CompletedConversationMessage | null = null;
+  private lastScrolledTo: number | null = null;
 
   saveIcon = faFloppyDisk;
   speakIcon = faVolumeHigh;
@@ -85,7 +86,7 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
       }
 
       const id = highlight ? highlight.id : latestOngoing ? latestOngoing.id : null;
-      if(!id) {
+      if(!id || this.lastScrolledTo === id) {
         return;
       }
 
@@ -93,6 +94,7 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
         `[data-part-id="${id}"]`,
       );
       if (part) {
+        this.lastScrolledTo = id;
         part.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     });
