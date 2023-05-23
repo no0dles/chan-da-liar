@@ -47,6 +47,18 @@ export interface Config {
 export type LoginState = 'load' | 'init' | 'login' | 'success' | 'failure' | 'out';
 export type CostSource = 'openai';
 
+function removeUndefined(d: any): any {
+  if (Array.isArray(d)) {
+    return d.filter(x => 'undefined' !== typeof x).map(removeUndefined);
+  }
+  if (d !== null && 'object' === typeof d) {
+    return Object.fromEntries(
+      Object.entries(d).filter(([k, v]) => 'undefined' !== typeof v).map(([k, v]) => [k, removeUndefined(v)])
+    );
+  }
+  return d;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -170,6 +182,7 @@ export class FirebaseService {
       return;
     }
     const docRef = await doc(this.firestore!, this.getPath(`${this.conversationCollection}/${id}`));
+    conversation = removeUndefined(conversation);
     await setDoc(docRef, {conversation});
   }
 
