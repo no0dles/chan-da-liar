@@ -3,6 +3,7 @@ import { Configuration, Model, OpenAIApi } from 'openai';
 import { ConfigService } from '../config.service';
 import {
   BehaviorSubject,
+  Subject,
   combineLatest,
   firstValueFrom,
   mergeMap,
@@ -50,6 +51,8 @@ export class OpenAiService {
   private apiCache = new Cache<OpenAIApi>();
 
   totalCost = this.config.watch<number>(this.totalCostKey, 0);
+  private tokens = new Subject<number>();
+  tokens$ = this.tokens.asObservable();
 
   private managedSettings = new BehaviorSubject<OpenAISettings|null>(null);
   private currentState: OpenAIState|null = null;
@@ -177,12 +180,13 @@ export class OpenAiService {
   async getCost(prompt: string, completion: string): Promise<number> {
     const promptWords = prompt.split(/\s+/g).length;
     const completionWords = completion.split(/\s+/g).length;
+    this.tokens.next(Math.round((promptWords + completionWords) * 1.5));
     // https://openai.com/pricing
     const model = (await firstValueFrom(this.state$)).selectedModel?.id ?? '';
     if (model.startsWith('gpt-4')) {
-      return 0.03 * promptWords / 1000 + 0.06 * completionWords / 1000;
+      return 0.03 * promptWords * 1.5 / 1000 + 0.06 * completionWords * 1.5 / 1000;
     }
-    return 0.002 * promptWords / 1000 + 0.002 * completionWords / 1000;
+    return 0.002 * promptWords * 1.5 / 1000 + 0.002 * completionWords * 1.5 / 1000;
   }
 
   async mapState(
