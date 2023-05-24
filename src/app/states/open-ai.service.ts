@@ -3,7 +3,6 @@ import { Configuration, Model, OpenAIApi } from 'openai';
 import { ConfigService } from '../config.service';
 import {
   BehaviorSubject,
-  Subject,
   combineLatest,
   debounceTime,
   firstValueFrom,
@@ -52,8 +51,6 @@ export class OpenAiService {
   private apiCache = new Cache<OpenAIApi>();
 
   totalCost = this.config.watch<number>(this.totalCostKey, 0);
-  private tokens = new Subject<number>();
-  tokens$ = this.tokens.asObservable();
 
   private managedSettings = new BehaviorSubject<OpenAISettings|null>(null);
   private currentState: OpenAIState|null = null;
@@ -180,16 +177,21 @@ export class OpenAiService {
     this.config.save(this.configRolePlayKey, script);
   }
 
+  countTokens(text: string): number {
+    const words = text.split(/\s+/g).length;
+    // https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them
+    return Math.round(words * 4 / 3);
+  }
+
   async getCost(prompt: string, completion: string): Promise<number> {
-    const promptWords = prompt.split(/\s+/g).length;
-    const completionWords = completion.split(/\s+/g).length;
-    this.tokens.next(Math.round((promptWords + completionWords) * 1.5));
+    const promptTokens = this.countTokens(prompt);
+    const completionTokens = this.countTokens(completion);
     // https://openai.com/pricing
     const model = (await firstValueFrom(this.state$)).selectedModel?.id ?? '';
     if (model.startsWith('gpt-4')) {
-      return 0.03 * promptWords * 1.5 / 1000 + 0.06 * completionWords * 1.5 / 1000;
+      return 0.03 * promptTokens / 1000 + 0.06 * completionTokens / 1000;
     }
-    return 0.002 * promptWords * 1.5 / 1000 + 0.002 * completionWords * 1.5 / 1000;
+    return 0.002 * promptTokens / 1000 + 0.002 * completionTokens / 1000;
   }
 
   async mapState(

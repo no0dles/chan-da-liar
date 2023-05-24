@@ -62,6 +62,10 @@ export class ConversationService {
   ongoingConversations: OngoingConversationRecognition[] = [];
 
   messages$ = this.messagesSubject.asObservable();
+  promptMessages$ = this.messages$.pipe(map(this.getPromptMessages));
+  tokens$ = this.promptMessages$.pipe(
+    map(messages => this.openAI.countTokens(JSON.stringify(messages)))
+  );
 
   highlight$ = this.highlightSubject.asObservable();
   selectedModel = "?";
@@ -162,10 +166,10 @@ export class ConversationService {
     this.highlightSubject.next(null);
   }
 
-  resolve(untilIndex: number) {
+  private getPromptMessagesUntil(messages: ConversationMessage[], untilIndex: number): PromptMessage[] {
     const promptMessages: PromptMessage[] = [];
     for (let i = 0; i <= untilIndex; i++) {
-      const message = this.messagesSubject.value[i];
+      const message = messages[i];
       if (!message.completed) {
         continue;
       }
@@ -177,9 +181,16 @@ export class ConversationService {
         role: message.role
       });
     }
+    return promptMessages;
+  }
 
-    this.openAI.prompt(promptMessages).then(recogniztion => {
-      this.push(recogniztion, untilIndex + 1);
+  private getPromptMessages(messages: ConversationMessage[]): PromptMessage[] {
+    return this.getPromptMessagesUntil(messages, messages.length - 1);
+  }
+
+  resolve(untilIndex: number, triggerAssistant: boolean) {
+    this.openAI.prompt(this.getPromptMessagesUntil(this.messagesSubject.value, untilIndex)).then(recognition => {
+      this.push(recognition, untilIndex + 1);
     });
   }
 
