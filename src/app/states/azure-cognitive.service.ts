@@ -10,13 +10,9 @@ import {
   VoiceInfo,
   SpeakerAudioDestination,
 } from 'microsoft-cognitiveservices-speech-sdk';
-import { BehaviorSubject, catchError, combineLatest, mergeMap, shareReplay} from 'rxjs';
+import { BehaviorSubject, combineLatest, debounceTime, mergeMap, shareReplay} from 'rxjs';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 import { Cache } from '../utils/cache';
-import {
-  Recognizer,
-  SpeechRecognitionEventArgs,
-} from 'microsoft-cognitiveservices-speech-sdk/distrib/lib/src/sdk/Exports';
 import { LightService } from './light.service';
 import { FirebaseService } from './firebase.service';
 import { Recording } from "./prerecording.service";
@@ -81,8 +77,8 @@ export class AzureCognitiveService {
 
   private managedSettings = new BehaviorSubject<AzureCognitiveSettings|null>(null);
   state$ = combineLatest([
-    this.config.watch<string>(this.configApiKey),
-    this.config.watch<string>(this.configRegionKey),
+    this.config.watch<string>(this.configApiKey).pipe(debounceTime(500)),
+    this.config.watch<string>(this.configRegionKey).pipe(debounceTime(500)),
     this.config.watch<boolean>(this.configLocaleFilterKey),
     this.config.watch<string>(this.configLocaleKey),
     this.config.watch<string>(this.configVoiceKey),

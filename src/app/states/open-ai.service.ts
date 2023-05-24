@@ -5,6 +5,7 @@ import {
   BehaviorSubject,
   Subject,
   combineLatest,
+  debounceTime,
   firstValueFrom,
   mergeMap,
   shareReplay,
@@ -57,8 +58,8 @@ export class OpenAiService {
   private managedSettings = new BehaviorSubject<OpenAISettings|null>(null);
   private currentState: OpenAIState|null = null;
   state$ = combineLatest([
-    this.config.watch<string>(this.configApiKey),
-    this.config.watch<string>(this.configRolePlayKey),
+    this.config.watch<string>(this.configApiKey).pipe(debounceTime(500)),
+    this.config.watch<string>(this.configRolePlayKey).pipe(debounceTime(500)),
     this.config.watch<string>(this.configModelKey),
     this.managedSettings,
   ]).pipe(
@@ -161,6 +162,8 @@ export class OpenAiService {
   }
 
   async getModels(openai: OpenAIApi) {
+    // This triggers a "Refused to set unsafe header" error because
+    // https://github.com/openai/openai-node/issues/6
     const result = await openai.listModels();
     return result.data.data.filter((d) => d.owned_by === 'openai');
   }
@@ -203,7 +206,7 @@ export class OpenAiService {
         ready: false,
         models: [],
         selectedModel: null,
-        rolePlayScript: null,
+        rolePlayScript: rolePlay,
         settings: null,
         managed: false,
         openai: null,
