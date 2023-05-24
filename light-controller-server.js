@@ -44,14 +44,23 @@ const baseLightValueSpeak = 40;
 let direction = 1;
 let currentIdle = baseLightValueIdleMin;
 
+process.on('SIGINT', () => {
+  console.log('caught SIGINT => turn off lights + shut down');
+  idle = false;
+  net.set(universe, channel, [0]);
+  setTimeout(process.exit, 100);
+});
+
+
 let idle = true;
 function idling() {
+  if (!idle) return;
   currentIdle+=direction;
   if(currentIdle < baseLightValueIdleMin || currentIdle > baseLightValueIdleMax) {
     direction *= -1;
   }
   net.set(universe, channel, [currentIdle]);
-  idle && setTimeout(idling, 100);
+  setTimeout(idling, 100);
 }
 idling();
 
