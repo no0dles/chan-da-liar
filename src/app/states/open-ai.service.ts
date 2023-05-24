@@ -65,7 +65,7 @@ export class OpenAiService {
     mergeMap(([api, rolePlay, model, managedSettings]) =>
       fromPromise(this.mapState(api, rolePlay, model, managedSettings)),
     ),
-    shareReplay(),
+    shareReplay(1),
   );
 
   constructor(private config: ConfigService, private firebase: FirebaseService) {

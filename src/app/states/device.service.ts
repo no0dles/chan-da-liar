@@ -42,7 +42,7 @@ export class DeviceService {
     mergeMap(([permissions, outputId, microphones]) =>
       this.mapState(permissions, outputId, microphones),
     ),
-    shareReplay(),
+    shareReplay(1),
   );
 
   constructor(private config: ConfigService) {

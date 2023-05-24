@@ -24,7 +24,7 @@ export class PrerecordingService {
     this.config.watch<Recording[]>(this.recordingsKey),
   ]).pipe(
     map(([recordings]) => this.mapState(recordings)),
-    shareReplay(),
+    shareReplay(1),
   );
   editable = new BehaviorSubject<Recording>({content: '', rate: 1});
 

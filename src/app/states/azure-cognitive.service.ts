@@ -93,7 +93,7 @@ export class AzureCognitiveService {
     mergeMap(([apiKey, region, localeFilter, locale, voice, managedSettings, rate, style]) =>
       fromPromise(this.mapState(apiKey, region, localeFilter, locale, voice, managedSettings, rate, style)),
     ),
-    shareReplay(),
+    shareReplay(1),
   );
 
   constructor(private config: ConfigService, firebase: FirebaseService,

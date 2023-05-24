@@ -20,7 +20,7 @@ export class LightService {
     map(([arnet]) =>
       this.mapState(arnet),
     ),
-    shareReplay(),
+    shareReplay(1),
   );
 
   setServerIp(ip: string) {

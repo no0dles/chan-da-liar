@@ -96,7 +96,7 @@ export class FirebaseService {
     mergeMap(([apiKey, appId, projectId, email, password, loginState]) =>
       fromPromise(this.mapState(apiKey ?? '', appId ?? '', projectId ?? '', email ?? '', password ?? '', loginState)),
     ),
-    shareReplay(),
+    shareReplay(1),
   );
 
   constructor(private config: ConfigService) {}
