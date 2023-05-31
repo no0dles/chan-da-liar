@@ -2,13 +2,14 @@ import { BehaviorSubject, Observable, ReplaySubject } from 'rxjs';
 import { ConversationRole } from './conversation.service';
 
 export interface OngoingRecognition {
+  role: ConversationRole;
+  textPrefix?: string;
   text$: Observable<string>;
-  end: Promise<void>;
   rate: number | undefined
+
+  end: Promise<void>;
   completed: Observable<string>;
   initialDelayMs: Observable<number|null>;
-  textPrefix?: string;
-  role: ConversationRole;
 }
 
 export interface OngoingRecognizer {

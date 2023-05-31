@@ -46,6 +46,6 @@ export class AppComponent {
   }
 
   spoke(content: OngoingRecognition) {
-    this.conversation.push(content);
+    this.conversation.pushOngoing(content);
   }
 }

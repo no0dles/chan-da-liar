@@ -20,7 +20,7 @@ import {
   ConversationMessage,
   ConversationService,
 } from '../../states/conversation.service';
-import { combineLatest, firstValueFrom, interval, Subscription, timer } from 'rxjs';
+import { combineLatest, interval } from 'rxjs';
 import { PrerecordingService } from 'src/app/states/prerecording.service';
 import { AppService } from 'src/app/states/app.service';
 import { OpenAiService } from 'src/app/states/open-ai.service';
@@ -30,9 +30,7 @@ import { OpenAiService } from 'src/app/states/open-ai.service';
   templateUrl: './transcript.component.html',
   styleUrls: ['./transcript.component.scss'],
 })
-export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
-  private subscription?: Subscription;
-  private currentHighlight: CompletedConversationMessage | null = null;
+export class TranscriptComponent implements OnInit, AfterViewInit {
   private lastScrolledTo: number | null = null;
 
   saveIcon = faFloppyDisk;
@@ -79,7 +77,6 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit() {
     combineLatest([this.conversation.highlight$, this.conversation.latestOngoingSubject, interval(100)]).subscribe(([highlight, latestOngoing]) => {
-      this.currentHighlight = highlight;
 
       if (!this.container?.nativeElement) {
         return;
@@ -100,16 +97,19 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  ngOnDestroy() {
-    this.subscription?.unsubscribe();
-  }
-
   clear() {
     this.conversation.clear();
   }
 
   toggleExpanded() {
     this.expanded = !this.expanded;
+  }
+
+  displayMessage(message: CompletedConversationMessage) {
+    if (message.role === "system" && !this.expanded) {
+      return message.text.substring(0, 120) + '...';
+    }
+    return message.text;
   }
 
   async savePrerecording(message: CompletedConversationMessage) {
@@ -122,4 +122,7 @@ export class TranscriptComponent implements OnInit, AfterViewInit, OnDestroy {
   async speakMessage(message: CompletedConversationMessage) {
     this.speaker.push(message.role, {content: message.text, rate: message.rate});
   }
+
+  dump(x: any): string { return JSON.stringify(x); }
+
 }

@@ -11,6 +11,13 @@
   <div class="flex flex-col w-full" #messagelist>
     <div
       *ngFor="let message of messages$ | async; trackBy: trackMessage"
+      class="flex"
+      [ngClass]="[
+      message.completed && message.highlight ? 'highlight' : '',
+      message.role === 'assistant' ? 'justify-end' : 'justify-start',
+      ]"
+      >
+      <div
       class="message"
       [attr.data-part-id]="message.id"
       [ngClass]="
@@ -20,44 +27,50 @@
           ? [message.role, 'decision-' + message.decision]
           : [message.role]
       ">
-      <div *ngIf="message.completed && message.prefix">
-        (prefixed)
-      </div>
-      <div *ngIf="message.completed">
-        {{ expanded ? message.text : message.displayedText }}
-        <button
-          (click)="toggleExpanded()"
-          *ngIf="message.expandable"
-          class="bg-indigo-100 m-1 rounded-md px-1 py-1 text-xs">
-          {{ expanded ? 'Truncate' : 'Expand' }}
-        </button>
-      </div>
-      <div *ngIf="!message.completed" class="part ongoing">
-        {{ message.text$ | async }}...
-      </div>
+        <!-- <div>{{dump(message)}}</div> -->
+        <div *ngIf="message.completed && message.prefix">
+          (prefixed)
+        </div>
+        <div *ngIf="message.completed" class="whitespace-pre-wrap">
+          {{ displayMessage(message) }}
+          <button
+            (click)="toggleExpanded()"
+            *ngIf="message.role === 'system'"
+            class="bg-indigo-100 m-1 rounded-md px-1 py-1 text-xs">
+            {{ expanded ? 'Truncate' : 'Expand' }}
+          </button>
+        </div>
+        <div *ngIf="!message.completed" class="part ongoing">
+          {{ message.text$ | async }}...
+        </div>
 
-      <div class="keys" *ngIf="message.completed && message.highlight">
-        <div class="key">
-          <fa-icon [icon]="checkIcon" class="mr-1"></fa-icon>
-          SPACE
+        <div
+          class="icons-top" *ngIf="developer && message.completed">
+          <fa-icon [icon]="saveIcon" class="cursor-pointer" (click)="savePrerecording(message)"></fa-icon>
+          <fa-icon [icon]="speakIcon" class="cursor-pointer" (click)="speakMessage(message)"></fa-icon>
         </div>
-        <div class="key">
-          <fa-icon [icon]="clearIcon" class="mr-1"></fa-icon>
-          BACKSPACE
+
+        <div
+          *ngIf="message.completed && (message.queued || message.played)"
+          class="icons-bottom">
+          <span *ngIf="message.rate" class="bg-black text-white rounded-md text-xs px-2">{{message.rate}}x</span>
+          <fa-icon [icon]="checkIcon" *ngIf="!message.played"></fa-icon>
+          <fa-icon [icon]="doubleCheckIcon" *ngIf="message.played"></fa-icon>
         </div>
-      </div>
-      <div
-        class="icons-top" *ngIf="developer && message.completed">
-        <fa-icon [icon]="saveIcon" class="cursor-pointer" (click)="savePrerecording(message)"></fa-icon>
-        <fa-icon [icon]="speakIcon" class="cursor-pointer" (click)="speakMessage(message)"></fa-icon>
-      </div>
-      <div
-        *ngIf="message.completed && (message.queued || message.played)"
-        class="icons-bottom">
-        <span *ngIf="message.rate" class="bg-black text-white rounded-md text-xs px-2">{{message.rate}}x</span>
-        <fa-icon [icon]="checkIcon" *ngIf="!message.played"></fa-icon>
-        <fa-icon [icon]="doubleCheckIcon" *ngIf="message.played"></fa-icon>
+
       </div>
     </div>
   </div>
+</div>
+
+<div class="px-3 py-3">
+  <!-- defined inb conversation.service.ts -->
+  <kbd>SPACE</kbd> to accept,
+  <kbd>BACKSPACE</kbd> to reject,
+  <kbd>ENTER</kbd> to generate answer,
+  <!--
+  <kbd>Q</kbd> to abort,
+  <kbd>A</kbd> to add answer,
+  <kbd>E</kbd> to edit.
+  -->
 </div>
