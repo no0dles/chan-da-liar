@@ -55,7 +55,7 @@ export class SpeakerService {
             item.duration = result.duration;
             item.visums = result.visums;
 
-            fetch(light.artnetServerIp, {
+            light.artnetServerIp && fetch(light.artnetServerIp, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

@@ -7,7 +7,7 @@ import {
   SpeechRecognitionEventArgs,
 } from 'microsoft-cognitiveservices-speech-sdk/distrib/lib/src/sdk/Exports';
 import {ToggleComponent} from '../toggle/toggle.component';
-import {firstValueFrom, Subscription} from 'rxjs';
+import {Subscription} from 'rxjs';
 import { createOngoingRecognizer, OngoingRecognizer, OngoingRecognition } from '../../states/ongoing-recognizer';
 import { KeyboardService } from 'src/app/keyboard';
 import { SpeakerService } from "../../states/speaker.service";
@@ -65,7 +65,6 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   }
 
   toggleMicrophone(enabled: boolean) {
-    console.log(enabled)
     this.enabledMic = enabled;
     if (enabled) {
       this.startListening();

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { combineLatest, map, shareReplay } from 'rxjs';
+import { combineLatest, debounceTime, map, shareReplay } from 'rxjs';
 import { ConfigService } from '../config.service';
 
 export interface LightState {
@@ -17,6 +17,7 @@ export class LightService {
   state$ = combineLatest([
     this.config.watch<string>(this.arnetIp),
   ]).pipe(
+    debounceTime(500),
     map(([arnet]) =>
       this.mapState(arnet),
     ),

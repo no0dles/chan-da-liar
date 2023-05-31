@@ -128,7 +128,7 @@ export class OpenAiService {
         return;
       }
 
-      let done = false;
+      let done = false, completion = '';
 
       do {
         const { value, done } = await reader.read();
@@ -136,6 +136,7 @@ export class OpenAiService {
         for (const line of value.split(/\n\n/g)) {
           if (!line.startsWith('data: ')) continue;
           const data = line.replace(/^data: /, '');
+          completion += data;
           if (data !== '[DONE]') {
             const d = JSON.parse(data);
             const delta = d.choices[0].delta.content;
@@ -148,11 +149,12 @@ export class OpenAiService {
 
       recognizer.complete();
 
-      const completion = await firstValueFrom(recognizer.recognition().text$);
       const oldCost = this.config.get<number>(this.totalCostKey) ?? 0;
       const cost = await this.getCost(JSON.stringify(messages), completion);
       this.firebase.addCost(cost, 'openai');
       this.config.save(this.totalCostKey, oldCost + cost);
+    }).catch(error => {
+      console.log('Could not prompt openai', error);
     });
 
     return recognizer.recognition();
@@ -188,10 +190,12 @@ export class OpenAiService {
     const completionTokens = this.countTokens(completion);
     // https://openai.com/pricing
     const model = (await firstValueFrom(this.state$)).selectedModel?.id ?? '';
-    if (model.startsWith('gpt-4')) {
-      return 0.03 * promptTokens / 1000 + 0.06 * completionTokens / 1000;
-    }
-    return 0.002 * promptTokens / 1000 + 0.002 * completionTokens / 1000;
+    const cost = 
+    model.startsWith('gpt-4')
+    ? 0.03 * promptTokens / 1000 + 0.06 * completionTokens / 1000
+    : 0.002 * promptTokens / 1000 + 0.002 * completionTokens / 1000;
+    // console.log('getCost', model, promptTokens, completionTokens, '->', cost);
+    return cost;
   }
 
   async mapState(
