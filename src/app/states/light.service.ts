@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
 import { combineLatest, map, shareReplay } from 'rxjs';
 import { ConfigService } from '../config.service';
+import { artnetLightServer, LightServer, shellyLightServer } from "./light-server";
 
 export interface LightState {
-  artnetServerIp: string
+  lightServer: LightServer | null
+  serverIp: string | null
   ready: boolean
 }
 
@@ -27,10 +29,11 @@ export class LightService {
     this.config.save(this.arnetIp, ip);
   }
 
-  private mapState(arnet: string | null): LightState {
+  private mapState(ip: string | null): LightState {
     return {
       ready: true,
-      artnetServerIp: arnet ?? 'http:///localhost:8080',
+      serverIp: ip,
+      lightServer: !!ip && ip.length > 0 ? artnetLightServer(ip) : null,
     }
   }
 }

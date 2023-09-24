@@ -55,20 +55,10 @@ export class SpeakerService {
             item.duration = result.duration;
             item.visums = result.visums;
 
-            fetch(light.artnetServerIp, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                visums: result.visums,
-                duration: result.duration,
-                start: new Date(),
-                end: new Date(new Date().getTime() + result.duration),
-              }),
-            }).catch(e => {
-              console.log('Could not send to light:', e.message);
-            });
+            if (light.lightServer) {
+              console.log(result.visums)
+              light.lightServer.set(result.visums)
+            }
 
             this.queueSubject.next(this.queueSubject.value);
             setTimeout(() => {

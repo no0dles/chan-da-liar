@@ -1,24 +1,55 @@
-const artnet = require('artnet')
-const express = require('express');
+const artnet = require("artnet");
+const express = require("express");
+const { CoIoTServer, CoIoTClient } = require("coiot-coap");
 
-require('pyextjs')
+const server = new CoIoTServer();
+const devices = [];
+
+server.on("status", (status) => {
+  if (devices.indexOf(status.deviceId) === -1) {
+    devices.push(status.deviceId);
+  }
+});
+
+server.listen().then(() => {
+  console.log("CoIoT server listening");
+});
+
+const mqtt = require("mqtt");
+const client = mqtt.connect("mqtt://localhost:1883");
+
+client.on("connect", () => {
+  console.log("mqtt connected");
+});
+
+function sendToAllDevices(data) {
+  for (const device of devices) {
+    client.publish(`shellies/shellycolorbulb-${device}/color/0/set`, JSON.stringify({
+      turn: "on",
+      mode: "color", green: 255, red: 0, blue: 0, gain: currentIdle,
+      brightness: 0, white: 0, temp: 4750, effect: 0, transition: 0
+    }));
+  }
+}
+
+require("pyextjs");
 
 function transform(data) {
   const result = [];
   const steps = 50;
-  let last = {offset: 0, value: 0};
-  for(const item of data) {
+  let last = { offset: 0, value: 0 };
+  for (const item of data) {
     let targetOffset = (item.offset - last.offset) / steps;
     for (const value of numpy.linspace(last.value, item.value, steps)) {
       result.push({
         offset: last.offset + targetOffset,
-        value: mapValue(value),
-      })
+        value: mapValue(value)
+      });
     }
     result.push({
       offset: item.offset,
-      value: mapValue(item.value),
-    })
+      value: mapValue(item.value)
+    });
   }
   return result;
 }
@@ -28,55 +59,77 @@ function mapValue(num) {
 }
 
 const net = artnet({
-  host: '2.0.1.0',
-})
+  host: "2.0.1.0"
+});
 
 const app = express();
 
-const universe = 9
+const universe = 9;
 const channel = 13;
 
 
 const baseLightValueIdleMin = 15;
-const baseLightValueIdleMax = 25;
-const baseLightValueSpeak = 40;
+const baseLightValueIdleMax = 40;
+const baseLightValueSpeak = 100;
 
-let direction = 1;
+let direction = 5;
 let currentIdle = baseLightValueIdleMin;
 
 let idle = true;
+
 function idling() {
-  currentIdle+=direction;
-  if(currentIdle < baseLightValueIdleMin || currentIdle > baseLightValueIdleMax) {
+  currentIdle += direction;
+  if (currentIdle < baseLightValueIdleMin || currentIdle > baseLightValueIdleMax) {
     direction *= -1;
   }
-  net.set(universe, channel, [currentIdle]);
+
+  sendToAllDevices({
+    turn: "on",
+    mode: "color", green: 255, red: 0, blue: 0, gain: currentIdle,
+    brightness: 0, white: 0, temp: 4750, effect: 0, transition: 0
+  })
   idle && setTimeout(idling, 100);
 }
+
 idling();
 
-app.use(require('cors')())
-app.use(require('body-parser').json())
-app.post('', (req, res) => {
+app.use(require("cors")());
+app.use(require("body-parser").json());
+app.post("", (req, res) => {
   const { visums } = req.body;
   idle = false;
-  for(const visum of transform(visums)) {
-    setTimeout(() => {
-      // https://learn.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-speech-synthesis-viseme?pivots=programming-language-csharp&tabs=visemeid#map-phonemes-to-visemes
-      net.set(universe, channel, [visum.value + baseLightValueSpeak]);
-    }, visum.offset);
+  let promise = Promise.resolve();
+  let offset = 0;
+  for (const visum of visums) {
+    promise = promise.then(() => {
+      sendToAllDevices({
+        turn: "on", mode: "color",
+        green: 255, red: 0, blue: 0, gain: Math.min(100, visum.value * 3 + 40),
+        brightness: 0, white: 0, temp: 4750,
+        effect: 0, transition: 0
+      });
+
+      return new Promise(resolve => {
+        setTimeout(() => {
+          offset = visum.offset;
+          resolve();
+        }, visum.offset - offset);
+      });
+    });
+
   }
 
-  setTimeout(() => {
+  promise.then(() => {
+    console.log("idle");
     idle = true;
     idling();
-  }, visums[visums.length-1].offset + 100);
+  });
 
 
   res.status(200);
-  res.end()
+  res.end();
 });
 
 const PORT = 8080;
-console.log('listening', PORT);
-app.listen(PORT, '0.0.0.0', console.log);
+console.log("listening", PORT);
+app.listen(PORT, "0.0.0.0", console.log);
