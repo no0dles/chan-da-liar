@@ -3,6 +3,9 @@ Connect OpenAI with Azure Cognitive services and create the speaking ChanDaLiar.
 Hosted demo can be viewed here https://chan-da-liar.vercel.app/
 
 ## Start development
+
+Tested with node v18.11.0
+
 ```
 npm install
 npm start
