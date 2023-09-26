@@ -1,5 +1,11 @@
 <ng-container *ngIf="state$ | async as state">
   <div class="flex flex-col space-y-4 flex-grow min-h-0 overflow-y-auto">
+
+    <div *ngIf="!isChrome" class="bg-orange-100 border rounded-md border-orange-700 text-orange-700 px-3 py-2">
+      <fa-icon [icon]="triangleExclamation"></fa-icon>
+      Audio probably only works with Chrome
+    </div>
+
     <app-button (click)="requestPermission()" *ngIf="!state.hasPermission">Request permission</app-button>
 
     <div *ngIf="errorMessage"  class="bg-orange-100 text-red-500 rounded border p-1 border-red-500">
