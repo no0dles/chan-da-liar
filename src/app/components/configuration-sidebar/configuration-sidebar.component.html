@@ -6,6 +6,7 @@
       [classNames]="configuration.classNames"
       *ngFor="let configuration of configurations"
       [component]="configuration.component"
+      [optional]="configuration.optional"
       [state]="configuration.state"></app-configuration-item>
 
 

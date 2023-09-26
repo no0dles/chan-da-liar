@@ -33,6 +33,7 @@ export class ConfigurationSidebarComponent implements ModalInstance<void> {
       description: 'Database settings to persist settings',
       component: ConfigurationFirebaseComponent,
       state: this.firebase,
+      optional: true,
     },
     {
       heading: 'Devices',
