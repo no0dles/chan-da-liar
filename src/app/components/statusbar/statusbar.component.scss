@@ -1,0 +1,19 @@
+:host {
+  max-height: 20vh;
+}
+
+.item {
+  @apply p-1 border rounded;
+}
+
+.info {
+  @apply item bg-blue-50 border-blue-800 text-blue-900;
+}
+
+.warning {
+  @apply item bg-amber-50 border-amber-800 text-amber-900;
+}
+
+.error {
+  @apply item bg-red-50 border-red-800 text-red-900;
+}

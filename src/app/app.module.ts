@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppComponent } from './app.component';
 import { PrerecodingLaneComponent } from './components/prerecoding-lane/prerecoding-lane.component';
@@ -31,6 +31,7 @@ import { ConfigurationPrerecordingListSidebarComponent } from './components/conf
 import { ConfigurationLightSidebarComponent } from './components/configuration-light-sidebar/configuration-light-sidebar.component';
 import { StatusbarComponent } from './components/statusbar/statusbar.component';
 import { AppMainComponent } from './app-main/app-main.component';
+import { StatusbarErrorHandler } from './states/statusbar.service';
 
 @NgModule({
   declarations: [
@@ -69,7 +70,7 @@ import { AppMainComponent } from './app-main/app-main.component';
     ModalModule.forRoot(),
     FormsModule,
   ],
-  providers: [],
+  providers: [{provide: ErrorHandler, useClass: StatusbarErrorHandler}],
   bootstrap: [AppComponent],
 })
 export class AppModule {}
