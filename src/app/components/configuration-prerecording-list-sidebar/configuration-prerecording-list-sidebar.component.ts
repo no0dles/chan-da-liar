@@ -21,7 +21,7 @@ export class ConfigurationPrerecordingListSidebarComponent implements ModalInsta
   modal!: ModalHandle<void>;
 
   edit(index:number, rec: Recording) {
-    this.modalService.sidebar(this.viewContainerRef, {
+    this.modalService.sidebar({
       component: ConfigurationPrerecordingSidebarComponent,
       title: 'Edit prerecording',
       subtitle: 'Prescripted answer',
@@ -33,7 +33,7 @@ export class ConfigurationPrerecordingListSidebarComponent implements ModalInsta
   }
 
   create() {
-    this.modalService.sidebar(this.viewContainerRef, {
+    this.modalService.sidebar({
       component: ConfigurationPrerecordingSidebarComponent,
       title: 'Create prerecording',
       subtitle: 'Prescripted answer',

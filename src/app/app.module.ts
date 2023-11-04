@@ -29,6 +29,8 @@ import { ConfigurationDeviceSidebarComponent } from './components/configuration-
 import { ConfigurationItemComponent } from './components/configuration-item/configuration-item.component';
 import { ConfigurationPrerecordingListSidebarComponent } from './components/configuration-prerecording-list-sidebar/configuration-prerecording-list-sidebar.component';
 import { ConfigurationLightSidebarComponent } from './components/configuration-light-sidebar/configuration-light-sidebar.component';
+import { StatusbarComponent } from './components/statusbar/statusbar.component';
+import { AppMainComponent } from './app-main/app-main.component';
 
 @NgModule({
   declarations: [
@@ -58,6 +60,8 @@ import { ConfigurationLightSidebarComponent } from './components/configuration-l
     ConfigurationItemComponent,
     ConfigurationPrerecordingListSidebarComponent,
     ConfigurationLightSidebarComponent,
+    StatusbarComponent,
+    AppMainComponent,
   ],
   imports: [
     BrowserModule,

@@ -61,7 +61,7 @@ export class ConfigurationItemComponent implements OnInit {
   }
 
   openSidebar() {
-    return this.modal.sidebar(this.viewContainerRef, {
+    return this.modal.sidebar({
       component: this.component,
       title: this.heading,
       subtitle: this.description,
