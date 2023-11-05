@@ -1,6 +1,6 @@
 <div class="flex overflow-x-scroll gap-1">
 
-  <div *ngIf="items.length > 0" class="cursor-pointer px-2"
+  <div *ngIf="!empty()" class="cursor-pointer px-2"
     (click)="clear()">
     <fa-icon [icon]="broomIcon" (click)="clear()"></fa-icon>
   </div>
@@ -16,10 +16,10 @@
   (click)="toggle(idx)"
   >
     <div>
-      <div class="whitespace-nowrap text-sm">
+      <div class="whitespace-nowrap text-sm" title="{{item.ts}}">
         {{item.title}}
       </div>
-      <div *ngIf="item.expanded" class="text-xs whitespace-pre-line">
+      <div *ngIf="item.message && item.expanded" class="text-xs whitespace-pre-line">
         {{item.message}}
       </div>
     </div>

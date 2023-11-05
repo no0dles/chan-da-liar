@@ -1,14 +1,14 @@
 import { Component } from '@angular/core';
 import { faXmark, faBroom } from '@fortawesome/free-solid-svg-icons';
-import { JavascriptError, StatusbarService } from 'src/app/states/statusbar.service';
+import { JavascriptError, StatusbarMessage, StatusbarMessageType, StatusbarService } from 'src/app/states/statusbar.service';
 
-type ItemType = 'info' | 'warning' | 'error';
 interface StatusItem {
-  type: ItemType;
+  type: StatusbarMessageType;
   title: string;
   message?: string;
   expanded: boolean;
   visible: boolean;
+  ts: string;
 }
 
 const MAX_TITLE_LENGTH = 30;
@@ -27,18 +27,22 @@ export class StatusbarComponent {
   constructor(
     service: StatusbarService,
   ) {
-    let lastError = 0;
-    service.errors$.subscribe((errors: JavascriptError[]) => {
-      errors.slice(lastError).map(error => {
-        this.add('error', error.message, error.stack);
+    let lastMessage = 0;
+    service.messages$.subscribe((messages: StatusbarMessage[]) => {
+      messages.slice(lastMessage).map(message => {
+        this.add(message.type, message.title, message.message);
       });
-      lastError = errors.length;
+      lastMessage = messages.length;
     });
   }
 
-  add(type: ItemType, title: string, message?: string) {
+  empty() {
+    return this.items.filter(item => item.visible).length === 0;
+  }
+
+  add(type: StatusbarMessageType, title: string, message?: string) {
     if (title.length > MAX_TITLE_LENGTH) {
-      message = `…${title.substring(MAX_TITLE_LENGTH)}\n\n${message}`;
+      message = `…${title.substring(MAX_TITLE_LENGTH)}\n\n${message || ''}`;
       title = title.substring(0, MAX_TITLE_LENGTH) + '…';
     }
     this.items.push({
@@ -47,6 +51,7 @@ export class StatusbarComponent {
       message,
       expanded: false,
       visible: true,
+      ts: new Date().toISOString().split('T')[1].split('.')[0],
     });
   }
 
