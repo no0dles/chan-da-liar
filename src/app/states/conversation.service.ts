@@ -135,7 +135,7 @@ export class ConversationService {
     });
 
     keyboard.registerExclusive('Space', () => this.decide('yes'));
-    keyboard.registerExclusive('Enter', () => this.prompt());
+    keyboard.registerExclusive('Enter', () => this.allYesAndPrompt());
     keyboard.registerExclusive('Backspace', () => this.decide('skip'));
     // keyboard.registerExclusive('KeyX', () => this.abort());
     // keyboard.registerExclusive('ArrowLeft', () => this.back());
@@ -149,6 +149,11 @@ export class ConversationService {
 
   // private addAssistant() {
   // }
+
+  private allYesAndPrompt() {
+    while (this.highlightSubject.value) this.decide('yes');
+    this.prompt();
+  }
 
   private prompt() {
     const highlight = this.highlightSubject.value;
