@@ -32,6 +32,7 @@ import { ConfigurationLightSidebarComponent } from './components/configuration-l
 import { StatusbarComponent } from './components/statusbar/statusbar.component';
 import { AppMainComponent } from './app-main/app-main.component';
 import { StatusbarErrorHandler } from './states/statusbar.service';
+import { PrerecordingLaneNewComponent } from './components/prerecording-lane-new/prerecording-lane-new.component';
 
 @NgModule({
   declarations: [
@@ -63,6 +64,7 @@ import { StatusbarErrorHandler } from './states/statusbar.service';
     ConfigurationLightSidebarComponent,
     StatusbarComponent,
     AppMainComponent,
+    PrerecordingLaneNewComponent,
   ],
   imports: [
     BrowserModule,

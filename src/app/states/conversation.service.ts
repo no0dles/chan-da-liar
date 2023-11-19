@@ -105,6 +105,7 @@ export class ConversationService {
   latestOngoingSubject = new BehaviorSubject<OngoingConversationMessage | null>(null);
   conversationId = Date.now().toString();
   private ongoingConversations: OngoingConversationRecognition[] = [];
+  pushed = new Subject<void>();
 
   messages$ = this.messagesSubject.asObservable();
   promptMessages$ = this.messages$.pipe(
@@ -233,12 +234,14 @@ export class ConversationService {
       this.messagesSubject.value.push(newMessage);
     }
     this.nextMessages(this.messagesSubject.value);
+    this.pushed.next();
   }
 
   pushUser(recording: Recording) {
     const newMessage = new MessageBuilder(recording.content, 'user').rate(recording.rate).build();
     this.messagesSubject.value.push(newMessage);
     this.nextMessages(this.messagesSubject.value);
+    this.pushed.next();
   }
 
   queue(message: CompletedConversationMessage) {

@@ -10,6 +10,7 @@ export interface Recording {
 
 export interface PrerecordingState {
   recordings: Recording[];
+  currentFilter: string;
   ready: boolean
 }
 
@@ -20,10 +21,13 @@ export class PrerecordingService {
   // TODO Rewrite to use single observable from firebse or config.
   private recordingsKey = 'pre-recordings';
 
+  currentFilter = new BehaviorSubject<string>('');
+
   state$ = combineLatest([
     this.config.watch<Recording[]>(this.recordingsKey),
+    this.currentFilter,
   ]).pipe(
-    map(([recordings]) => this.mapState(recordings)),
+    map(([recordings, currentFilter]) => this.mapState(recordings, currentFilter)),
     shareReplay(1),
   );
   editable = new BehaviorSubject<Recording>({content: '', rate: 1});
@@ -43,12 +47,13 @@ export class PrerecordingService {
     });
   }
 
-  private mapState(recs: Recording[] | null): PrerecordingState {
+  private mapState(recs: Recording[] | null, currentFilter: string): PrerecordingState {
     if (recs) {
       this.firebase.mergePrerecordings(recs.map(rec => rec));
     }
     return {
       recordings: recs || [],
+      currentFilter,
       ready: true,
     };
   }

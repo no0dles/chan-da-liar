@@ -28,7 +28,7 @@ export class OverrideLaneComponent {
     private conversation: ConversationService,
     private app: AppService,
     private azureCognitive: AzureCognitiveService,
-    prerecordings: PrerecordingService,
+    private prerecordings: PrerecordingService,
     keyboard: KeyboardService,
   ) {
     keyboard.registerExclusive('KeyO', () => this.input?.focusInput());
@@ -39,10 +39,17 @@ export class OverrideLaneComponent {
         this.setRate(content.rate ?? 1);
       }
     });
+    conversation.pushed.subscribe(() => this.clear());
   }
 
   valueChanged(value: string) {
     this.value = value;
+    this.prerecordings.currentFilter.next(this.value);
+  }
+
+  private clear() {
+    this.valueChanged('');
+    this.input?.blurInput()
   }
 
   keyDown(keyCode: string) {
@@ -54,8 +61,7 @@ export class OverrideLaneComponent {
           this.conversation.pushUser({content: this.value});
         }
       }
-      this.value = '';
-      this.input?.blurInput()
+      this.clear();
     }
     if (keyCode === 'Tab') {
       this.destination = ({
