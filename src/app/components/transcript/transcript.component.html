@@ -31,7 +31,12 @@
         <div *ngIf="message.completed && message.prefix">
           (prefixed)
         </div>
-        <div *ngIf="message.completed" class="whitespace-pre-wrap">
+
+        <div
+            *ngIf="message.completed && message.id !== editing"
+            class="whitespace-pre-wrap"
+            (click)="edit($event)"
+            >
           {{ displayMessage(message) }}
           <button
             (click)="toggleExpanded()"
@@ -40,6 +45,19 @@
             {{ expanded ? 'Truncate' : 'Expand' }}
           </button>
         </div>
+
+        <div 
+            *ngIf="message.completed && message.id === editing"
+            class="flex-grow flex"
+            >
+          <textarea
+              class="flex-grow outline-none min-height-0 overflow-hidden h-auto resize-none"
+              (blur)="save($event)"
+              >
+            {{message.text}}
+          </textarea>
+        </div>
+
         <div *ngIf="!message.completed" class="part ongoing">
           {{ message.text$ | async }}...
         </div>

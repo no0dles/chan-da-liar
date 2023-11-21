@@ -53,6 +53,8 @@ export class TranscriptComponent implements OnInit, AfterViewInit {
   developer = false;
   selectedModel = '?';
 
+  editing: number|null = null;
+
   constructor(
     private speaker: SpeakerService,
     private conversation: ConversationService,
@@ -124,5 +126,30 @@ export class TranscriptComponent implements OnInit, AfterViewInit {
   }
 
   dump(x: any): string { return JSON.stringify(x); }
+
+  edit(event: MouseEvent) {
+    const el = event.target as HTMLElement;
+    const parent = el.closest('[data-part-id]') as HTMLElement;
+    const id = parseInt(parent.dataset['partId']!!);
+    const messages = this.conversation.messagesSubject.value.filter(
+      message => message.id === id
+    );
+    if (!messages.length) {
+      console.error('could not find id', id);
+      return;
+    }
+    const message = messages[0] as CompletedConversationMessage;
+    if (message.decision === 'open') {
+      this.editing = id;
+    }
+  }
+
+  save(event: FocusEvent) {
+    const el = event.target as HTMLTextAreaElement;
+    const parent = el.closest('[data-part-id]') as HTMLElement;
+    const id = parseInt(parent.dataset['partId']!!);
+    console.log('save', id, el.value);
+    this.editing = null;
+  }
 
 }
