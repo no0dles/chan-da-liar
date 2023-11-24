@@ -40,4 +40,39 @@ export class ConfigurationPrerecordingListSidebarComponent implements ModalInsta
       props: {},
     })
   }
+
+  export() {
+    const data = [
+      ['content', 'rate'],
+    ];
+    for(let i = 0; i < this.prerecording.length(); i++) {
+      const recording = this.prerecording.get(i);
+      data.push([recording.content, (recording.rate || 1).toString()]);
+    }
+    downloadCSV(data, 'preprecordings.csv');
+  }
+
+  import() {
+    alert('Not implemented yet.');
+  }
+}
+
+function downloadCSV(data: string[][], filename: string): void {
+  const csvContent = data.map(row => row.map(escapeAndQuote).join(",")).join("\n");
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('download', filename);
+  link.setAttribute('href', url);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function escapeAndQuote(field: string): string {
+  const escapedField = field.replace(/"/g, '""');
+  if (escapedField.includes(",") || escapedField.includes("\n") || escapedField.includes("\r")) {
+    return `"${escapedField}"`;
+  }
+  return escapedField;
 }
