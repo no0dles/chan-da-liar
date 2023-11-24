@@ -221,6 +221,19 @@ export class ConversationService {
     this.highlightSubject.next(highlight);
   }
 
+  editMessage(id: number, text: string) {
+    const messages = this.messagesSubject.value;
+    const index = messages.findIndex(message => message.id === id);
+    if (index === -1) throw new Error(`Could not find message id=${id}`);
+    const message = messages[index];
+    if (!message.completed) throw new Error('Cannot only edit completed message');
+    const completedMessage = message as CompletedConversationMessage;
+    if (message.decision !== 'open') throw new Error('Can only edit "open" message');
+    message.text = text;
+    messages[index] = message;
+    this.messagesSubject.next(messages);
+  }
+
   private getPromptMessages(messages: ConversationMessage[]): PromptMessage[] {
     return this.getPromptMessagesUntil(messages, messages.length - 1);
   }

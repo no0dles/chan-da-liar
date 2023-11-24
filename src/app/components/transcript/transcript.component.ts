@@ -127,10 +127,14 @@ export class TranscriptComponent implements OnInit, AfterViewInit {
 
   dump(x: any): string { return JSON.stringify(x); }
 
-  edit(event: MouseEvent) {
-    const el = event.target as HTMLElement;
+  private getId(el: HTMLElement): number {
     const parent = el.closest('[data-part-id]') as HTMLElement;
     const id = parseInt(parent.dataset['partId']!!);
+    return id;
+  }
+
+  edit(event: MouseEvent) {
+    const id = this.getId(event.target as HTMLElement);
     const messages = this.conversation.messagesSubject.value.filter(
       message => message.id === id
     );
@@ -144,12 +148,26 @@ export class TranscriptComponent implements OnInit, AfterViewInit {
     }
   }
 
-  save(event: FocusEvent) {
-    const el = event.target as HTMLTextAreaElement;
-    const parent = el.closest('[data-part-id]') as HTMLElement;
-    const id = parseInt(parent.dataset['partId']!!);
-    console.log('save', id, el.value);
-    this.editing = null;
+  focus(event: FocusEvent) {
+    const textarea = event.target as HTMLTextAreaElement;
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }
+
+  keydown(event: KeyboardEvent): boolean {
+    if (event.key === 'Escape') {
+      this.editing = null;
+      return false;
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      event.stopPropagation();
+      const el = event.target as HTMLTextAreaElement;
+      const id = this.getId(el);
+      this.editing = null;
+      const text = el.value;
+      this.conversation.editMessage(id, text);
+      return false;
+    }
+    return true;
   }
 
 }

@@ -51,11 +51,10 @@
             class="flex-grow flex"
             >
           <textarea
-              class="flex-grow outline-none min-height-0 overflow-hidden h-auto resize-none"
-              (blur)="save($event)"
-              >
-            {{message.text}}
-          </textarea>
+              class="flex-grow outline-none"
+              (keydown)="keydown($event)"
+              (focus)="focus($event)"
+              >{{message.text}}</textarea>
         </div>
 
         <div *ngIf="!message.completed" class="part ongoing">
