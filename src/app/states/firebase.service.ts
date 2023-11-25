@@ -222,7 +222,7 @@ export class FirebaseService {
     (await getDocs(coll)).forEach(doc => {
       const data = doc.data();
       if (typeof data['content'] !== 'string') {
-        deleteDoc(doc.ref)
+        // TODO cleanup wrong data deleteDoc(doc.ref)
         return
       }
       docs.push({

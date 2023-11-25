@@ -24,7 +24,6 @@ export class AppComponent {
   constructor(
     private modal: ModalService,
     private viewContainerRef: ViewContainerRef,
-    private openAI: OpenAiService,
     private chanDaLiar: ChanDaLiarService,
     private app: AppService,
     private conversation: ConversationService

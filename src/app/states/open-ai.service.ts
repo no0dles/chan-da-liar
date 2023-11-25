@@ -97,6 +97,74 @@ export class OpenAiService {
       return recognizer.recognition();
     }
 
+    const functions = [
+      {
+        "name": "set_light_color",
+        "description": "Set your mood light to a color",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "red": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255,
+              "description": "the value for color red from 0 to 255",
+            },
+            "green": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255,
+              "description": "the value for color green from 0 to 255",
+            },
+            "blue": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255,
+              "description": "the value for color blue from 0 to 255",
+            },
+          },
+          "required": ["red", "green", "blue"],
+        },
+      },
+      {
+        name: 'set_voice_volume',
+        description: 'Change your voice volume',
+        parameters: {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "integer",
+              minimum: 10,
+              maximum: 100,
+              "description": "the voice volume that you speak from 10 to 100",
+            }
+          },
+          "required": ["volume"],
+        }
+      },
+      {
+        name: 'change_voice',
+        description: 'Change your voice style or tone',
+        parameters: {
+          "type": "object",
+          "properties": {
+            "voiceName": {
+              "type": "string",
+              "enum": ["ryan", "sonia"],
+              "description": "the voice model name",
+            },
+            "voiceStyle": {
+              "type": "string",
+              "enum": ["cheerful", "chat"],
+              "description": "the voice style of speaking",
+            }
+          },
+          "required": ["voiceName", "voiceStyle"],
+        }
+      }
+    ];
+
+
     fetch('https://api.openai.com/v1/chat/completions', {
       method: 'post',
       headers: new Headers({
@@ -108,6 +176,8 @@ export class OpenAiService {
         model: this.currentState.selectedModel.id,
         messages: messages,
         stream: true,
+        functions: functions,
+        function_call: "auto",
       }),
     }).then(async (response) => {
       if (!response.body) {
@@ -128,6 +198,7 @@ export class OpenAiService {
       }
 
       let done = false;
+      let fnCall = { name: '', arguments: '' };
 
       do {
         const { value, done } = await reader.read();
@@ -138,8 +209,19 @@ export class OpenAiService {
           if (data !== '[DONE]') {
             const d = JSON.parse(data);
             const delta = d.choices[0].delta.content;
+            const function_call = d.choices[0].delta.function_call
             if (delta) {
               recognizer.append(delta);
+            } else if(function_call) {
+              if (function_call.arguments) {
+                fnCall.arguments += function_call.arguments;
+              }
+              if (function_call.name) {
+                fnCall.name = function_call.name;
+              }
+            }
+            if (d.choices[0].finish_reason === "function_call") {
+              console.log(JSON.parse(fnCall.arguments), fnCall.name)
             }
           }
         }

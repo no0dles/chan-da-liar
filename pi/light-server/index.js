@@ -1,6 +1,6 @@
-const artnet = require("artnet");
 const express = require("express");
 const { CoIoTServer, CoIoTClient } = require("coiot-coap");
+const mqtt = require("mqtt");
 
 const server = new CoIoTServer();
 const devices = [];
@@ -15,8 +15,7 @@ server.listen().then(() => {
   console.log("CoIoT server listening");
 });
 
-const mqtt = require("mqtt");
-const client = mqtt.connect("mqtt://localhost:1883");
+const client = mqtt.connect("mqtt://rabbitmq:1883");
 
 client.on("connect", () => {
   console.log("mqtt connected");
@@ -32,41 +31,7 @@ function sendToAllDevices(data) {
   }
 }
 
-require("pyextjs");
-
-function transform(data) {
-  const result = [];
-  const steps = 50;
-  let last = { offset: 0, value: 0 };
-  for (const item of data) {
-    let targetOffset = (item.offset - last.offset) / steps;
-    for (const value of numpy.linspace(last.value, item.value, steps)) {
-      result.push({
-        offset: last.offset + targetOffset,
-        value: mapValue(value)
-      });
-    }
-    result.push({
-      offset: item.offset,
-      value: mapValue(item.value)
-    });
-  }
-  return result;
-}
-
-function mapValue(num) {
-  return num;
-}
-
-const net = artnet({
-  host: "2.0.1.0"
-});
-
 const app = express();
-
-const universe = 9;
-const channel = 13;
-
 
 const baseLightValueIdleMin = 15;
 const baseLightValueIdleMax = 40;

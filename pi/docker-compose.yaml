@@ -1,0 +1,25 @@
+services:
+  lightserver:
+    build: ./light-server
+    ports:
+      - 8080:8080
+    volumes:
+      - "./lightserver:/usr/src/app"
+    depends_on:
+      - rabbitmq
+
+  chandaliar:
+    build: ..
+    ports:
+      - 8081:80
+    depends_on:
+      - lightserver
+
+  rabbitmq:
+    image: rabbitmq:3
+    ports:
+      - 15672:15672
+      - 5672:5672
+      - 1883:1883
+    volumes:
+      - "./rabbit_enabled_plugins:/etc/rabbitmq/enabled_plugins"
