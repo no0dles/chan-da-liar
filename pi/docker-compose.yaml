@@ -3,6 +3,7 @@ services:
     build: ./light-server
     ports:
       - 8080:8080
+      - 5683:5683
     volumes:
       - "./lightserver:/usr/src/app"
     depends_on:

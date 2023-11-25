@@ -8,6 +8,7 @@ const devices = [];
 server.on("status", (status) => {
   if (devices.indexOf(status.deviceId) === -1) {
     devices.push(status.deviceId);
+    console.log('discovered', status.deviceId);
   }
 });
 
