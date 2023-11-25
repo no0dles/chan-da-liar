@@ -4,6 +4,7 @@ import { PrerecordingService, Recording } from '../../states/prerecording.servic
 import {
   ConfigurationPrerecordingSidebarComponent
 } from '../configuration-prerecording-sidebar/configuration-prerecording-sidebar.component';
+import * as Papa from 'papaparse';
 
 @Component({
   selector: 'app-configuration-prerecording-list-sidebar',
@@ -52,35 +53,39 @@ export class ConfigurationPrerecordingListSidebarComponent implements ModalInsta
     downloadCSV(data, 'preprecordings.csv');
   }
 
-  import(event: MouseEvent) {
+  async import(event: MouseEvent) {
     const div = (event.target as HTMLElement).closest('div')!;
-    const input = document.createElement('input');
-    input.setAttribute('type', 'file');
-    input.setAttribute('accept', '.csv');
-    input.setAttribute('multiple', 'false');
-    input.style.display = 'none';
-    input.addEventListener('change', () => {
-      if (input.files && input.files.length > 0) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          const csvContent = e.target?.result as string;
-          const csvRows = csvContent.split('\n');
-          const csvData: string[][] = csvRows.map(row => row.split(',').map(unescapeAndUnquote));
-          console.log('Parsed CSV data:', csvData);
-          // --> use https://www.npmjs.com/package/csv-parse
-        };
-        reader.readAsText(input.files[0]);
+    const data = await uploadCSV(div);
+    if (data[0].length !==2 || data[0][0] !== 'content' || data[0][0] !== 'content') {
+      throw new Error('Invalid CSV format');
+    }
+    const map = new Map<string, number>();
+    for (let i = 0; i < this.prerecording.length(); i++) {
+      const recording = this.prerecording.get(i);
+      map.set(recording.content, i);
+    }
+    let updated = 0, inserted = 0;
+    for (let i = 1; i < data.length; i++) {
+      const content = data[i][0];
+      const rate = parseFloat(data[i][1]);
+      const index = map.get(content);
+      if ('undefined' !== typeof index) {
+        updated++;
+        this.prerecording.edit(index, {
+          ...this.prerecording.get(index),
+          ...{content, rate}
+        });
+      } else {
+        inserted++;
+        this.prerecording.save({content, rate});
       }
-      input.remove();
-      alert('not implemented yet.');
-    })
-    div.appendChild(input);
-    input.click();
+    }
+    alert(`Added ${inserted} and updated ${updated} prerecordings.`);
   }
 }
 
 function downloadCSV(data: string[][], filename: string): void {
-  const csvContent = data.map(row => row.map(escapeAndQuote).join(",")).join("\n");
+  const csvContent = tableToCsvString(data);
   const blob = new Blob([csvContent], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -91,18 +96,38 @@ function downloadCSV(data: string[][], filename: string): void {
   document.body.removeChild(link);
 }
 
-function escapeAndQuote(field: string): string {
-  const escapedField = field.replace(/"/g, '""');
-  if (escapedField.includes(",") || escapedField.includes("\n") || escapedField.includes("\r")) {
-    return `"${escapedField}"`;
-  }
-  return escapedField;
+async function uploadCSV(div: HTMLElement): Promise<string[][]> {
+  return new Promise((accept) => {
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', '.csv');
+    input.setAttribute('multiple', 'false');
+    input.style.display = 'none';
+    input.addEventListener('change', () => {
+      if (input.files && input.files.length > 0) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const csvContent = e.target?.result as string;
+          const data = csvStringToTable(csvContent);
+          accept(data);
+        };
+        reader.readAsText(input.files[0]);
+      }
+      input.remove();
+    })
+    div.appendChild(input);
+    input.click();
+  })
 }
 
-function unescapeAndUnquote(field: string): string {
-  const unescapedField = field.replace(/""/g, '"');
-  if (unescapedField.includes(',') || unescapedField.includes('\n') || unescapedField.includes('\r')) {
-    return unescapedField.substring(1, unescapedField.length - 1);
-  }
-  return unescapedField;
+function csvStringToTable(csvString: string): string[][] {
+  const { data } = Papa.parse(csvString, {
+      header: false,
+      skipEmptyLines: true,
+  });
+  return data as string[][];
+}
+
+function tableToCsvString(table: string[][]): string {
+  return Papa.unparse(table);
 }
