@@ -4,6 +4,7 @@ services:
     ports:
       - 8080:8080
       - 5683:5683
+    network_mode: host
     volumes:
       - "./lightserver:/usr/src/app"
     depends_on:
