@@ -3,7 +3,7 @@ const { CoIoTServer, CoIoTClient } = require("coiot-coap");
 const mqtt = require("mqtt");
 
 const server = new CoIoTServer();
-const devices = [];
+const devices = ['3494546E7D45'];
 
 server.on("status", (status) => {
   if (devices.indexOf(status.deviceId) === -1) {
