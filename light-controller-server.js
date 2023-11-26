@@ -33,7 +33,7 @@ const net = artnet({
 
 const app = express();
 
-const universe = 9
+const universe = 9;
 const channel = 13;
 const verbose = process.argv.indexOf('--verbose') !== -1;
 
