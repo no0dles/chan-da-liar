@@ -3,7 +3,6 @@ import {
   Component,
   ElementRef,
   Input,
-  OnDestroy,
   OnInit,
   ViewChild,
 } from '@angular/core';
@@ -54,6 +53,7 @@ export class TranscriptComponent implements OnInit, AfterViewInit {
   selectedModel = '?';
 
   editing: number|null = null;
+  needsfocus = false;
 
   constructor(
     private speaker: SpeakerService,
@@ -145,12 +145,24 @@ export class TranscriptComponent implements OnInit, AfterViewInit {
     const message = messages[0] as CompletedConversationMessage;
     if (message.decision === 'open') {
       this.editing = id;
+      this.needsfocus = true;
     }
   }
 
   focus(event: FocusEvent) {
     const textarea = event.target as HTMLTextAreaElement;
     textarea.style.height = `${textarea.scrollHeight}px`;
+  }
+
+  ngAfterViewChecked() {
+    if (this.needsfocus) {
+      const container: HTMLElement | undefined = this.container?.nativeElement;
+      if (container) {
+        const firstTextarea = container.querySelector('textarea');
+        firstTextarea?.focus();
+        this.needsfocus = false;
+      }
+    }
   }
 
   keydown(event: KeyboardEvent): boolean {

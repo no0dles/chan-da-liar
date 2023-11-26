@@ -36,8 +36,7 @@
             *ngIf="message.completed && message.id !== editing"
             class="whitespace-pre-wrap"
             (click)="edit($event)"
-            >
-          {{ displayMessage(message) }}
+            >{{ displayMessage(message) }}
           <button
             (click)="toggleExpanded()"
             *ngIf="message.role === 'system'"
@@ -57,9 +56,8 @@
               >{{message.text}}</textarea>
         </div>
 
-        <div *ngIf="!message.completed" class="part ongoing">
-          {{ message.text$ | async }}...
-        </div>
+        <div *ngIf="!message.completed" class="part ongoing"
+          >{{ message.text$ | async }}...</div>
 
         <div
           class="icons-top" *ngIf="developer && message.completed">
