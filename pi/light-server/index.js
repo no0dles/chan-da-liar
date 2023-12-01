@@ -16,7 +16,7 @@ server.listen().then(() => {
   console.log("CoIoT server listening");
 });
 
-const client = mqtt.connect("mqtt://rabbitmq:1883");
+const client = mqtt.connect("mqtt://10.3.141.1:1883");
 
 client.on("connect", () => {
   console.log("mqtt connected");
