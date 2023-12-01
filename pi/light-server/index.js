@@ -26,7 +26,7 @@ function sendToAllDevices(data) {
   for (const device of devices) {
     client.publish(`shellies/shellycolorbulb-${device}/color/0/set`, JSON.stringify({
       turn: "on",
-      mode: "color", green: 255, red: 0, blue: 0, gain: currentIdle,
+      mode: "color", green: 0, red: 255, blue: 0, gain: currentIdle,
       brightness: 0, white: 0, temp: 4750, effect: 0, transition: 0
     }));
   }
@@ -38,7 +38,7 @@ const baseLightValueIdleMin = 15;
 const baseLightValueIdleMax = 40;
 const baseLightValueSpeak = 100;
 
-let direction = 5;
+let direction = 1;
 let currentIdle = baseLightValueIdleMin;
 
 let idle = true;
@@ -66,6 +66,7 @@ app.post("", (req, res) => {
   idle = false;
   let promise = Promise.resolve();
   let offset = 0;
+  console.log("received visum");
   for (const visum of visums) {
     promise = promise.then(() => {
       sendToAllDevices({

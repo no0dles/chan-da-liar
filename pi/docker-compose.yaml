@@ -1,6 +1,7 @@
 services:
   lightserver:
     build: ./light-server
+    restart: always
     ports:
       - 8080:8080
       - 5683:5683
@@ -12,6 +13,7 @@ services:
 
   chandaliar:
     build: ..
+    restart: always
     ports:
       - 8081:80
     depends_on:
@@ -19,6 +21,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:3
+    restart: always
     ports:
       - 15672:15672
       - 5672:5672
