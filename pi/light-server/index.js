@@ -23,12 +23,12 @@ client.on("connect", () => {
 });
 
 function sendToAllDevices(data) {
-  for (const device of devices) {
-    client.publish(`shellies/shellycolorbulb-${device}/color/0/set`, JSON.stringify({
-      turn: "on",
-      mode: "color", green: 0, red: 255, blue: 0, gain: currentIdle,
-      brightness: 0, white: 0, temp: 4750, effect: 0, transition: 0
-    }));
+  try {
+    for (const device of devices) {
+      client.publish(`shellies/shellycolorbulb-${device}/color/0/set`, JSON.stringify(data));
+    }
+  } catch (e) {
+    console.error(e);
   }
 }
 
