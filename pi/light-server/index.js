@@ -38,7 +38,7 @@ const baseLightValueIdleMin = 15;
 const baseLightValueIdleMax = 40;
 const baseLightValueSpeak = 100;
 
-let direction = 1;
+let direction = 5;
 let currentIdle = baseLightValueIdleMin;
 
 let idle = true;
