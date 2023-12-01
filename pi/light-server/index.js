@@ -38,7 +38,7 @@ const baseLightValueIdleMin = 15;
 const baseLightValueIdleMax = 40;
 const baseLightValueSpeak = 100;
 
-let direction = 5;
+let direction = 2;
 let currentIdle = baseLightValueIdleMin;
 
 let idle = true;
@@ -54,7 +54,7 @@ function idling() {
     mode: "color", green: 255, red: 0, blue: 0, gain: currentIdle,
     brightness: 0, white: 0, temp: 4750, effect: 0, transition: 0
   })
-  idle && setTimeout(idling, 100);
+  idle && setTimeout(idling, 50);
 }
 
 idling();
