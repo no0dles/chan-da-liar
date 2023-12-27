@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { Configuration, Model, OpenAIApi } from 'openai';
 import { ConfigService } from '../config.service';
 import {
   BehaviorSubject,
@@ -16,6 +15,8 @@ import {
   OngoingRecognition,
 } from './ongoing-recognizer';
 import { FirebaseService, LoginState } from './firebase.service';
+import OpenAI from "openai";
+import { Model } from "openai/resources";
 
 export interface OpenAISettings {
   apiKey: string;
@@ -26,7 +27,7 @@ export interface OpenAIState {
   managed: boolean | null;
 
   rolePlayScript: string | null;
-  openai: OpenAIApi | null;
+  openai: OpenAI | null;
   models: Model[];
   selectedModel: Model | null;
   ready: boolean;
@@ -48,7 +49,7 @@ export class OpenAiService {
   private totalCostKey = 'openai-total-cost';
 
   private modalCache = new Cache<Model[]>();
-  private apiCache = new Cache<OpenAIApi>();
+  private apiCache = new Cache<OpenAI>();
 
   totalCost = this.config.watch<number>(this.totalCostKey, 0);
 
@@ -242,11 +243,12 @@ export class OpenAiService {
     return recognizer.recognition();
   }
 
-  async getModels(openai: OpenAIApi) {
-    // This triggers a "Refused to set unsafe header" error because
-    // https://github.com/openai/openai-node/issues/6
-    const result = await openai.listModels();
-    return result.data.data.filter((d) => d.owned_by === 'openai');
+  async getModels(openai: OpenAI) {
+    return new Promise<Model[]>((resolve, reject) => {
+      openai.models.list({}).then(result => {
+        resolve(result.data.filter((d) => d.owned_by === 'openai'));
+      });
+    });
   }
 
   setKey(key: string) {
@@ -303,10 +305,10 @@ export class OpenAiService {
     }
 
     const openai = await this.apiCache.getOrCreate(key, () => {
-      const configuration = new Configuration({
+      return new OpenAI({
         apiKey: key!,
+        dangerouslyAllowBrowser: true,
       });
-      return new OpenAIApi(configuration);
     });
 
     let error = '';

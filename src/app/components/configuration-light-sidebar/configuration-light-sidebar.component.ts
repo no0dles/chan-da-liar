@@ -21,7 +21,7 @@ export class ConfigurationLightSidebarComponent implements ModalInstance<void> {
   }
 
   async setIdleMax(idleMax: number) {
-    await this.light.send({idleMax});
+    await this.light.setOptions({idleMax});
     this.idleMax = idleMax;
   }
 }

@@ -25,6 +25,10 @@ export class LightService {
     shareReplay(1),
   );
 
+  setOptions(options: {idleMax: number}) {
+    // TODO
+  }
+
   setServerIp(ip: string) {
     this.config.save(this.arnetIp, ip);
   }
