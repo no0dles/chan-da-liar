@@ -15,8 +15,8 @@ export class AppService {
   private configLivePresetEditKey = 'app-live-preset-edit';
 
   state$: Observable<AppState> = combineLatest([
-    this.config.watch<boolean>(this.configOverrideModeKey, false),
-    this.config.watch<boolean>(this.configLivePresetEditKey, false),
+    this.config.watch<boolean>(this.configOverrideModeKey, true),
+    this.config.watch<boolean>(this.configLivePresetEditKey, true),
   ]).pipe(
     map(([overrideMode, livePresetEdit]) => ({
       overrideMode: !!overrideMode,

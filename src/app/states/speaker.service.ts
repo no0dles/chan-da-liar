@@ -3,10 +3,11 @@ import { BehaviorSubject, combineLatest } from 'rxjs';
 import {AzureCognitiveService, SpeakVisum} from './azure-cognitive.service';
 import { DeviceService } from './device.service';
 import { LightService } from './light.service';
+import { Recording } from "./prerecording.service";
 
 export interface OutputQueueItem {
   source: string;
-  content: string;
+  recording: Recording
   playing: boolean;
   duration?: number;
   visums?: SpeakVisum[];
@@ -48,25 +49,17 @@ export class SpeakerService {
           .speak(
             state.speechConfig,
             device.selectedOutput.deviceId,
-            item.content,
+            item.recording,
           )
           .then((result) => {
             item.duration = result.duration;
             item.visums = result.visums;
 
-            fetch(light.artnetServerIp, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                visums: result.visums,
-                duration: result.duration,
-                start: new Date(),
-                end: new Date(new Date().getTime() + result.duration),
-              }),
-            }).catch(e => {
-              console.log('Could not send to light:', e.message);
+            this.light.send({
+              visums: result.visums,
+              duration: result.duration,
+              start: new Date(),
+              end: new Date(new Date().getTime() + result.duration),
             });
 
             this.queueSubject.next(this.queueSubject.value);
@@ -83,11 +76,11 @@ export class SpeakerService {
     });
   }
 
-  push(source: string, content: string) {
+  push(source: string, recording: Recording) {
     return new Promise<void>(resolve => {
       this.queueSubject.value.push({
         playing: false,
-        content,
+        recording,
         source,
         resolve,
       });

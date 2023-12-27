@@ -29,7 +29,7 @@ export class ChanDaLiarService {
     map(([openAi, azureCognitive, device, firebase]) =>
       this.mapState(openAi, azureCognitive, device, firebase),
     ),
-    shareReplay(),
+    shareReplay(1),
   );
 
   constructor(

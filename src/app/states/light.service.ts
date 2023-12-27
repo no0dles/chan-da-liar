@@ -1,36 +1,52 @@
 import { Injectable } from '@angular/core';
-import { combineLatest, map, shareReplay } from 'rxjs';
+import { combineLatest, debounceTime, map, shareReplay } from 'rxjs';
 import { ConfigService } from '../config.service';
 
 export interface LightState {
-  artnetServerIp: string
+  serverAddress: string
   ready: boolean
 }
 
 @Injectable({providedIn: 'root'})
 export class LightService {
-  private arnetIp = 'artnet-ip';
+  private serverAddressKey = 'light-server-address';
+  serverAddress: string | null = null;
 
-  constructor(private config: ConfigService) {
-  }
+  constructor(private config: ConfigService) {}
 
   state$ = combineLatest([
-    this.config.watch<string>(this.arnetIp),
+    this.config.watch<string>(this.serverAddressKey, 'http:///localhost:8080'),
   ]).pipe(
+    debounceTime(500),
     map(([arnet]) =>
       this.mapState(arnet),
     ),
-    shareReplay(),
+    shareReplay(1),
   );
 
   setServerIp(ip: string) {
-    this.config.save(this.arnetIp, ip);
+    this.config.save(this.serverAddressKey, ip);
   }
 
-  private mapState(arnet: string | null): LightState {
+  private mapState(serverAddress: string | null): LightState {
+    this.serverAddress = serverAddress;
     return {
       ready: true,
-      artnetServerIp: arnet ?? 'http:///localhost:8080',
+      serverAddress: serverAddress!!,
+    }
+  }
+
+  async send(body: any) {
+    if (this.serverAddress) {
+      await fetch(this.serverAddress, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      }).catch(e => {
+        console.log('Could not send to light:', e.message);
+      });
     }
   }
 }

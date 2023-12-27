@@ -5,6 +5,7 @@ import {
   MicrophoneState,
 } from '../../states/device.service';
 import {ConversationRole} from '../../states/conversation.service';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-configuration-device-sidebar',
@@ -12,9 +13,11 @@ import {ConversationRole} from '../../states/conversation.service';
   styleUrls: ['./configuration-device-sidebar.component.scss'],
 })
 export class ConfigurationDeviceSidebarComponent {
+  triangleExclamation = faTriangleExclamation;
   modal!: ModalHandle<void>;
   state$ = this.device.state$;
   errorMessage = '';
+  isChrome: boolean = window.navigator.userAgent.indexOf('Chrome/') !== -1;
 
   constructor(private device: DeviceService) {}
 

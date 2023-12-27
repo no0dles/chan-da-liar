@@ -28,6 +28,11 @@
 
     <div *ngIf="showAdvanced" class="space-y-4">
       <app-input
+        [heading]="'Project ID'"
+        [placeholder]="'chandalair-...'"
+        [value]="state.settings.projectId"
+        (valueChanged)="setProjectId($event)"></app-input>
+      <app-input
         [heading]="'API Key'"
         [placeholder]="'AIzaS........'"
         [value]="state.settings.apiKey"

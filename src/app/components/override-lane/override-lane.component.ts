@@ -1,7 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { ConversationService } from '../../states/conversation.service';
 import { InputComponent } from '../input/input.component';
-import { PrerecordingService } from 'src/app/states/prerecording.service';
+import { PrerecordingService, Recording } from "src/app/states/prerecording.service";
 import { AppService } from 'src/app/states/app.service';
 import { map } from 'rxjs';
 import { AzureCognitiveService } from 'src/app/states/azure-cognitive.service';
@@ -28,20 +28,28 @@ export class OverrideLaneComponent {
     private conversation: ConversationService,
     private app: AppService,
     private azureCognitive: AzureCognitiveService,
-    prerecordings: PrerecordingService,
+    private prerecordings: PrerecordingService,
     keyboard: KeyboardService,
   ) {
     keyboard.registerExclusive('KeyO', () => this.input?.focusInput());
-    prerecordings.editable.subscribe((content: string) => {
+    prerecordings.editable.subscribe((content: Recording) => {
       if (content && this.input) {
-        this.input.value = content;
+        this.input.value = content.content;
         this.input?.focusInput();
+        this.setRate(content.rate ?? 1);
       }
     });
+    conversation.pushed.subscribe(() => this.clear());
   }
 
   valueChanged(value: string) {
     this.value = value;
+    this.prerecordings.currentFilter.next(this.value);
+  }
+
+  private clear() {
+    this.valueChanged('');
+    this.input?.blurInput()
   }
 
   keyDown(keyCode: string) {
@@ -53,8 +61,7 @@ export class OverrideLaneComponent {
           this.conversation.pushUser({content: this.value});
         }
       }
-      this.value = '';
-      this.input?.blurInput()
+      this.clear();
     }
     if (keyCode === 'Tab') {
       this.destination = ({

@@ -29,6 +29,8 @@ export class ModalService {
   private modalHandles: { resolver: () => void; handle: ModalHandle<any> }[] =
     [];
 
+  private viewContainerRef?: ViewContainerRef;
+
   constructor() {
     document.addEventListener(
       'keydown',
@@ -45,13 +47,16 @@ export class ModalService {
     );
   }
 
+  setViewContainerRef(viewContainerRef: ViewContainerRef) {
+    this.viewContainerRef = viewContainerRef;
+  }
+
   private createHandle<T>(
-    viewContainerRef: ViewContainerRef,
     componentRef: ComponentRef<any>,
     resolve: (value: T) => void,
   ): ModalHandle<T> {
     const handle: ModalHandle<T> = {
-      viewContainerRef: viewContainerRef,
+      viewContainerRef: this.viewContainerRef!!,
       dismiss: (res: T) => {
         this.removeHandle(handle);
 
@@ -71,21 +76,20 @@ export class ModalService {
   }
 
   async confirm(
-    viewContainerRef: ViewContainerRef,
     options: {
       title: string;
       subtitle?: string;
     },
   ): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
-      const componentRef = viewContainerRef.createComponent(
+      const componentRef = this.viewContainerRef!!.createComponent(
         ModalConfirmComponent,
       );
 
       componentRef.instance.title = options.title;
       componentRef.instance.subtitle = options.subtitle;
 
-      const handle = this.createHandle(viewContainerRef, componentRef, resolve);
+      const handle = this.createHandle(componentRef, resolve);
       this.modalHandles.push({
         resolver: () => resolve(false),
         handle: handle,
@@ -95,7 +99,6 @@ export class ModalService {
   }
 
   sidebar<T extends ModalInstance<R>, R>(
-    viewContainerRef: ViewContainerRef,
     options: {
       title: string;
       classNames?: string[] | string;
@@ -108,7 +111,7 @@ export class ModalService {
     },
   ): Promise<R | null> {
     return new Promise<R | null>((resolve) => {
-      const componentRef = viewContainerRef.createComponent(
+      const componentRef = this.viewContainerRef!!.createComponent(
         ModalSidebarComponent,
       );
       componentRef.instance.title = options.title;
@@ -121,14 +124,13 @@ export class ModalService {
       componentRef.instance.canDismiss = options.canDismiss ?? true;
       componentRef.instance.origin = options.origin || 'right';
 
-      const handle = this.createHandle(viewContainerRef, componentRef, resolve);
+      const handle = this.createHandle(componentRef, resolve);
       this.modalHandles.push({ handle, resolver: () => resolve(null) });
       componentRef.instance.modal = handle;
     });
   }
 
   modal<T extends ModalInstance<R>, R>(
-    viewContainerRef: ViewContainerRef,
     options: {
       title: string;
       classNames?: string[] | string;
@@ -139,7 +141,7 @@ export class ModalService {
     },
   ): Promise<R | null> {
     return new Promise<R | null>((resolve) => {
-      const componentRef = viewContainerRef.createComponent(ModalComponent);
+      const componentRef = this.viewContainerRef!!.createComponent(ModalComponent);
 
       componentRef.instance.title = options.title;
       componentRef.instance.subtitle = options.subtitle;
@@ -149,7 +151,7 @@ export class ModalService {
       componentRef.instance.classNames = options.classNames ?? [];
       componentRef.instance.componentProps = options.props;
 
-      const handle = this.createHandle(viewContainerRef, componentRef, resolve);
+      const handle = this.createHandle(componentRef, resolve);
       this.modalHandles.push({ handle, resolver: () => resolve(null) });
       componentRef.instance.modal = handle;
     });

@@ -7,8 +7,6 @@ import {
   Recording,
 } from '../../states/prerecording.service';
 import { ConversationService } from '../../states/conversation.service';
-import { firstValueFrom, lastValueFrom, map, take } from 'rxjs';
-import { AppService } from 'src/app/states/app.service';
 
 @Component({
   selector: 'app-prerecoding-lane',
@@ -38,20 +36,20 @@ export class PrerecodingLaneComponent {
   ) {}
 
   openCreate() {
-    this.modal.sidebar(this.viewContainerRef, {
+    this.modal.sidebar({
       component: ConfigurationPrerecordingSidebarComponent,
       title: 'Create Prerecording',
       subtitle: 'Scripted responses',
     });
   }
 
-  edit(index: number, content: string) {
-    this.modal.sidebar(this.viewContainerRef, {
+  edit(index: number, recording: Recording) {
+    this.modal.sidebar({
       component: ConfigurationPrerecordingSidebarComponent,
       title: 'Create Prerecording',
       subtitle: 'Scripted responses',
       props: {
-        content,
+        recording,
         index,
       },
     });
@@ -63,13 +61,13 @@ export class PrerecodingLaneComponent {
     elm.blur();
   }
 
-  async modify(index: number, content: string) {
+  async modify(index: number, recording: Recording) {
     if (this.editMode === 'inline') {
       // We first emit '' to force an update if the text input was edited.
-      this.prerecording.editable.next('');
-      this.prerecording.editable.next(content);
+      this.prerecording.editable.next({content: '', rate: 1});
+      this.prerecording.editable.next(recording);
     } else {
-      this.edit(index, content)
+      this.edit(index, recording)
     }
   }
 

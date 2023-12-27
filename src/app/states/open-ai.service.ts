@@ -4,6 +4,7 @@ import { ConfigService } from '../config.service';
 import {
   BehaviorSubject,
   combineLatest,
+  debounceTime,
   firstValueFrom,
   mergeMap,
   shareReplay,
@@ -54,15 +55,15 @@ export class OpenAiService {
   private managedSettings = new BehaviorSubject<OpenAISettings|null>(null);
   private currentState: OpenAIState|null = null;
   state$ = combineLatest([
-    this.config.watch<string>(this.configApiKey),
-    this.config.watch<string>(this.configRolePlayKey),
+    this.config.watch<string>(this.configApiKey).pipe(debounceTime(500)),
+    this.config.watch<string>(this.configRolePlayKey).pipe(debounceTime(500)),
     this.config.watch<string>(this.configModelKey),
     this.managedSettings,
   ]).pipe(
     mergeMap(([api, rolePlay, model, managedSettings]) =>
       fromPromise(this.mapState(api, rolePlay, model, managedSettings)),
     ),
-    shareReplay(),
+    shareReplay(1),
   );
 
   constructor(private config: ConfigService, private firebase: FirebaseService) {
@@ -127,7 +128,7 @@ export class OpenAiService {
         return;
       }
 
-      let done = false;
+      let done = false, completion = '';
 
       do {
         const { value, done } = await reader.read();
@@ -135,6 +136,7 @@ export class OpenAiService {
         for (const line of value.split(/\n\n/g)) {
           if (!line.startsWith('data: ')) continue;
           const data = line.replace(/^data: /, '');
+          completion += data;
           if (data !== '[DONE]') {
             const d = JSON.parse(data);
             const delta = d.choices[0].delta.content;
@@ -147,17 +149,20 @@ export class OpenAiService {
 
       recognizer.complete();
 
-      const completion = await firstValueFrom(recognizer.recognition().text$);
       const oldCost = this.config.get<number>(this.totalCostKey) ?? 0;
       const cost = await this.getCost(JSON.stringify(messages), completion);
       this.firebase.addCost(cost, 'openai');
       this.config.save(this.totalCostKey, oldCost + cost);
+    }).catch(error => {
+      console.log('Could not prompt openai', error);
     });
 
     return recognizer.recognition();
   }
 
   async getModels(openai: OpenAIApi) {
+    // This triggers a "Refused to set unsafe header" error because
+    // https://github.com/openai/openai-node/issues/6
     const result = await openai.listModels();
     return result.data.data.filter((d) => d.owned_by === 'openai');
   }
@@ -174,15 +179,23 @@ export class OpenAiService {
     this.config.save(this.configRolePlayKey, script);
   }
 
+  countTokens(text: string): number {
+    const words = text.split(/\s+/g).length;
+    // https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them
+    return Math.round(words * 4 / 3);
+  }
+
   async getCost(prompt: string, completion: string): Promise<number> {
-    const promptWords = prompt.split(/\s+/g).length;
-    const completionWords = completion.split(/\s+/g).length;
+    const promptTokens = this.countTokens(prompt);
+    const completionTokens = this.countTokens(completion);
     // https://openai.com/pricing
     const model = (await firstValueFrom(this.state$)).selectedModel?.id ?? '';
-    if (model.startsWith('gpt-4')) {
-      return 0.03 * promptWords / 1000 + 0.06 * completionWords / 1000;
-    }
-    return 0.002 * promptWords / 1000 + 0.002 * completionWords / 1000;
+    const cost = 
+    model.startsWith('gpt-4')
+    ? 0.03 * promptTokens / 1000 + 0.06 * completionTokens / 1000
+    : 0.002 * promptTokens / 1000 + 0.002 * completionTokens / 1000;
+    // console.log('getCost', model, promptTokens, completionTokens, '->', cost);
+    return cost;
   }
 
   async mapState(
@@ -199,7 +212,7 @@ export class OpenAiService {
         ready: false,
         models: [],
         selectedModel: null,
-        rolePlayScript: null,
+        rolePlayScript: rolePlay,
         settings: null,
         managed: false,
         openai: null,

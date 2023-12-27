@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppComponent } from './app.component';
 import { PrerecodingLaneComponent } from './components/prerecoding-lane/prerecoding-lane.component';
@@ -29,6 +29,10 @@ import { ConfigurationDeviceSidebarComponent } from './components/configuration-
 import { ConfigurationItemComponent } from './components/configuration-item/configuration-item.component';
 import { ConfigurationPrerecordingListSidebarComponent } from './components/configuration-prerecording-list-sidebar/configuration-prerecording-list-sidebar.component';
 import { ConfigurationLightSidebarComponent } from './components/configuration-light-sidebar/configuration-light-sidebar.component';
+import { StatusbarComponent } from './components/statusbar/statusbar.component';
+import { AppMainComponent } from './app-main/app-main.component';
+import { StatusbarErrorHandler } from './states/statusbar.service';
+import { PrerecordingLaneNewComponent } from './components/prerecording-lane-new/prerecording-lane-new.component';
 
 @NgModule({
   declarations: [
@@ -58,6 +62,9 @@ import { ConfigurationLightSidebarComponent } from './components/configuration-l
     ConfigurationItemComponent,
     ConfigurationPrerecordingListSidebarComponent,
     ConfigurationLightSidebarComponent,
+    StatusbarComponent,
+    AppMainComponent,
+    PrerecordingLaneNewComponent,
   ],
   imports: [
     BrowserModule,
@@ -65,7 +72,7 @@ import { ConfigurationLightSidebarComponent } from './components/configuration-l
     ModalModule.forRoot(),
     FormsModule,
   ],
-  providers: [],
+  providers: [{provide: ErrorHandler, useClass: StatusbarErrorHandler}],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

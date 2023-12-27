@@ -1,0 +1,30 @@
+<div class="flex overflow-x-scroll gap-1">
+
+  <div *ngIf="!empty()" class="cursor-pointer px-2"
+    (click)="clear()">
+    <fa-icon [icon]="broomIcon" (click)="clear()"></fa-icon>
+  </div>
+
+  <div
+  *ngFor="let item of items; index as idx"
+  [ngClass]="[
+      'flex', 'gap-1',
+      item.type,
+      item.message ? 'cursor-pointer' : '',
+      item.visible ? '' : 'hidden',
+  ]"
+  (click)="toggle(idx)"
+  >
+    <div>
+      <div class="whitespace-nowrap text-sm" title="{{item.ts}}">
+        {{item.title}}
+      </div>
+      <div *ngIf="item.message && item.expanded" class="text-xs whitespace-pre-line">
+        {{item.message}}
+      </div>
+    </div>
+    <div class="cursor-pointer text-sm">
+      <fa-icon [icon]="xmarkIcon" (click)="close(idx)"></fa-icon>
+    </div>
+  </div>
+</div>
