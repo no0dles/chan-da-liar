@@ -7,7 +7,7 @@ import {
   SpeechRecognitionEventArgs,
 } from 'microsoft-cognitiveservices-speech-sdk/distrib/lib/src/sdk/Exports';
 import {ToggleComponent} from '../toggle/toggle.component';
-import {firstValueFrom, Subscription} from 'rxjs';
+import {Subscription} from 'rxjs';
 import { createOngoingRecognizer, OngoingRecognizer, OngoingRecognition } from '../../states/ongoing-recognizer';
 import { KeyboardService } from 'src/app/keyboard';
 import { SpeakerService } from "../../states/speaker.service";
@@ -18,7 +18,7 @@ import { SpeakerService } from "../../states/speaker.service";
   styleUrls: ['./microphone-lane.component.scss'],
 })
 export class MicrophoneLaneComponent implements OnInit, OnDestroy {
-  private speechRecognizer?: SpeechRecognizer;
+  private speechRecognizer: SpeechRecognizer | null = null;
   private ongoingRecognizer: OngoingRecognizer | null = null;
   private subscription?: Subscription;
   listening = true;
@@ -65,7 +65,6 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
   }
 
   toggleMicrophone(enabled: boolean) {
-    console.log(enabled)
     this.enabledMic = enabled;
     if (enabled) {
       this.startListening();
@@ -81,10 +80,11 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
     console.log('stop')
     this.speechRecognizer.stopContinuousRecognitionAsync();
     this.speechRecognizer.close();
+    this.speechRecognizer = null;
   }
 
   private async startListening() {
-    console.log(this.enabledMic, this.microphone)
+    // console.log(this.enabledMic, this.microphone)
     if (!this.enabledMic || !this.microphone) {
       return;
     }
@@ -103,7 +103,7 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
       sender: Recognizer,
       event: SpeechRecognitionEventArgs,
     ) => {
-      console.log('recognizing on ' + this.microphone.deviceName)
+      // console.log('recognizing on ' + this.microphone.deviceName)
       const text = event.result.text;
       if (!text) {
         return;
@@ -117,7 +117,7 @@ export class MicrophoneLaneComponent implements OnInit, OnDestroy {
       sender: Recognizer,
       event: SpeechRecognitionEventArgs,
     ) => {
-      console.log('recognized on ' + this.microphone.deviceName)
+      // console.log('recognized on ' + this.microphone.deviceName)
       if (!event.result.text) {
         return;
       }

@@ -1,5 +1,6 @@
 <div class="flex flex-col items-center">
-  <div class="text-lg">Cost: {{cost}} </div>
+  <div class="text-lg">Cost: {{cost$ | async}} </div>
+  <div class="text-xs">~{{tokens$ | async}} tokens</div>
 
   <div *ngIf="(loginState | async) == 'success'" class="flex text-xs space-x-1">
     <div>{{ (firebaseState | async)!.settings.email }}</div>

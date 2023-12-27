@@ -56,7 +56,6 @@ export class SpeakerService {
             item.visums = result.visums;
 
             if (light.lightServer) {
-              console.log(result.visums)
               light.lightServer.set(result.visums)
             }
 

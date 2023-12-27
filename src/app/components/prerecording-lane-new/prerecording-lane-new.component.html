@@ -1,0 +1,13 @@
+<span class="text-gray-400 text-xs mb-1">Prerecordings (P to show/hide)</span>
+<div class="flex flex-col gap-2 overflow-auto flex-grow min-h-0" *ngIf="state$ | async as state">
+  <div
+    [ngClass]="[
+      'hover:bg-gray-200', 'cursor-pointer',
+      visible(state.currentFilter, rec) ? '' : 'hidden',
+    ]"
+    class=""
+    (click)="select(rec)"
+    *ngFor="let rec of state.recordings; let index = index">
+      {{rec.content}}
+  </div>
+</div>

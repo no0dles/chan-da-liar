@@ -36,6 +36,7 @@ export interface FirebaseState {
   ready: boolean;
   canLogin: boolean;
   settings: FirebaseSettings;
+  loginState: LoginState;
   // user: User | null;
 }
 
@@ -45,7 +46,9 @@ export interface Config {
   openaiApiKey: string;
 }
 
-export type LoginState = 'load' | 'init' | 'login' | 'success' | 'failure' | 'out';
+// Login state machine is congtrolled by setting LoginState accordingly.
+// See `mapState()`.
+export type LoginState = 'load' | 'init' | 'login' | 'wait' | 'success' | 'failure' | 'out';
 export type CostSource = 'openai';
 
 function removeUndefined(d: any): any {
@@ -69,9 +72,11 @@ export class FirebaseService {
   private configProjectIdKey = 'firebase-project-id';
   private emailKey = 'firebase-email';
 
-  private costCollection = 'cost';
-  private totalsPath = 'info/totals';
+  // Documents (relative to /users/<uuid>).
   private configPath = 'info/config';
+  private totalsPath = 'info/totals';
+  // Collections (relative to /users/<uuid>).
+  private costCollection = 'cost';
   private conversationCollection = 'conversation';
   private prerecordingsCollection = 'prerecordings';
 
@@ -96,7 +101,7 @@ export class FirebaseService {
     mergeMap(([apiKey, appId, projectId, email, password, loginState]) =>
       fromPromise(this.mapState(apiKey ?? '', appId ?? '', projectId ?? '', email ?? '', password ?? '', loginState)),
     ),
-    shareReplay(),
+    shareReplay(1),
   );
 
   constructor(private config: ConfigService) {}
@@ -118,11 +123,11 @@ export class FirebaseService {
   }
 
   doLogin() {
-    this.loginState.next('login');
+    this.nextState('login');
   }
   async doLogout() {
-    await signOut(getAuth());
-    this.loginState.next('out');
+    await signOut(getAuth(this.app!!));
+    this.nextState('out');
   }
 
   private getPath(path: string) {
@@ -131,10 +136,11 @@ export class FirebaseService {
 
   private async initSchema() {
     // Is there a better pattern for this?
-    const totalsRef = await doc(this.firestore!, this.getPath(this.totalsPath));
-    const totalsSnapshot = await getDoc(totalsRef);
+    const path = this.getPath(this.totalsPath);
+    const totalsRef = await doc(this.firestore!, path);
+    const totalsSnapshot = await getDoc(totalsRef); ///
     if (!totalsSnapshot.exists()) {
-      setDoc(totalsRef, {created: Date.now(), cost: 0});
+      await setDoc(totalsRef, {created: Date.now(), cost: 0});
     }
   }
 
@@ -155,7 +161,7 @@ export class FirebaseService {
     if (this.loginState.value != 'success') {
       return null;
     }
-    const totals = (await getDoc(await doc(this.firestore!, this.getPath(this.totalsPath)))).data() ?? {};
+    const totals = (await getDoc(await doc(this.firestore!, this.getPath(this.totalsPath)))).data() ?? {}; ///
     return totals['cost'] as number;
   }
 
@@ -163,19 +169,14 @@ export class FirebaseService {
     if (this.loginState.value != 'success') {
       return null;
     }
-    try {
-      const config = (await getDoc(await doc(this.firestore!, this.getPath(this.configPath)))).data() ?? {};
-      if (!config['azureApiKey'] || !config['azureRegion'] || !config['openaiApiKey']) {
-        // TODO better error handling (currently it's overwritten).
-        console.error('Got invalid config', this.uuid, config);
-        this.error.next('Invalid config');
-        return null;
-      }
-      return config as Config;
-    } catch (e) {
-      console.error(e);
+    const path = this.getPath(this.configPath);
+    const config = (await getDoc(await doc(this.firestore!, path))).data() ?? {}; ///
+    if (!config['azureApiKey'] || !config['azureRegion'] || !config['openaiApiKey']) {
+      this.error.next(`Invalid config: uuid=${this.uuid} -> config=${JSON.stringify(config)}`);
+      this.nextState('failure');
       return null;
     }
+    return config as Config;
   }
 
   async setConversation(id: string, conversation: any) {
@@ -206,9 +207,8 @@ export class FirebaseService {
     if (this.loginState.value != 'success') {
       return;
     }
-    const coll = collection(this.firestore!, this.getPath(this.prerecordingsCollection));
     const promises: Promise<void>[] = [];
-    (await getDocs(coll)).forEach(doc => {
+    (await this.getDocs(this.prerecordingsCollection)).forEach(doc => {
       if (recording.content === doc.data()['content'] && recording.rate === doc.data()['rate']) {
         promises.push(deleteDoc(doc.ref));
       }
@@ -216,14 +216,20 @@ export class FirebaseService {
     await Promise.all(promises);
   }
 
+  private async getDocs(relativePath: string) {
+    const path = this.getPath(relativePath);
+    const coll = collection(this.firestore!, path);
+    const snap = await getDocs(coll);
+    return snap.docs;
+  }
+
   private async loadPrerecordings() {
-    const coll = collection(this.firestore!, this.getPath(this.prerecordingsCollection));
     const docs: Recording[] = [];
-    (await getDocs(coll)).forEach(doc => {
+    (await this.getDocs(this.prerecordingsCollection)).forEach(doc => {
       const data = doc.data();
       if (typeof data['content'] !== 'string') {
-        // TODO cleanup wrong data deleteDoc(doc.ref)
-        return
+        deleteDoc(doc.ref);
+        return;
       }
       docs.push({
         content: data['content'] as string,
@@ -233,47 +239,69 @@ export class FirebaseService {
     this.prerecordings.next(docs);
   }
 
-  private initializeFirebase(apiKey: string, appId: string, projectId: string) {
+  private firestoreInit(settings: FirebaseSettings) {
     // Note: this will never fail, even if provided values are invalid.
-    const firebaseConfig = {
-      apiKey,
-      authDomain: `${projectId}.firebaseapp.com`,
-      projectId,
-      storageBucket: `${projectId}.appspot.com`,
-      messagingSenderId: appId!.split(':')[1],
-      appId,
+    const firebaseConfig: FirebaseOptions = {
+      apiKey: settings.apiKey,
+      authDomain: `${settings.projectId}.firebaseapp.com`,
+      projectId: settings.projectId,
+      storageBucket: `${settings.projectId}.appspot.com`,
+      messagingSenderId: settings.appId!.split(':')[1],
+      appId: settings.appId,
     };
     if (this.app) {
       deleteApp(this.app);
+      this.app = null;
     }
-    this.app = initializeApp(firebaseConfig as FirebaseOptions);
+    this.app = initializeApp(firebaseConfig, 'firebase-service');
     this.firestore = getFirestore(this.app);
-    getAuth().onAuthStateChanged((user: User|null) => {
+
+    getAuth(this.app).onAuthStateChanged(async (user: User|null) => {
       console.log('onAuthStateChanged', user);
       if (user) {
         this.uuid = user.uid;
-        this.initSchema();
-        this.loadPrerecordings();
-        this.loginState.next('success');
-        this.setEmail(user.email ?? '');
+        this.initFromDatabase();
       }
     });
   }
 
-  private async firestoreLogin(settings: FirebaseSettings) {
-    const {apiKey, appId, projectId, email, password} = settings;
+  private async initFromDatabase() {
+    try {
+      await this.initSchema();
+      await this.loadPrerecordings();
+    } catch (e) {
+      this.nextState('failure');
+      const code = (e as FirebaseError).code;
+      if (code === 'permission-denied') {
+        this.error.next('Permission denied: Could not initialize firestore database. Double check advanced settings and try logging in again.');
+        await this.doLogout();
+        return;
+      }
+      throw e;
+    }
+    this.nextState('success');
+  }
+
+  private async firestoreInitAndLogin(settings: FirebaseSettings) {
+    console.log('firestoreInitAndLogin');
     // Need to re-initialize firebae because some parameter could have changed.
-    this.initializeFirebase(apiKey, appId, projectId);
+    this.firestoreInit(settings);
     this.error.next('');
     try {
-      const auth = getAuth()
+      const auth = getAuth(this.app!!)
       await auth.setPersistence(browserLocalPersistence);
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, settings.email, settings.password);
+      // => Code will resume in 'onAuthStateChanged' callback if successful/
     } catch (err) {
-      console.log('firebase login failure', err);
+      console.error('firebase login failure', err);
       this.error.next('Could not login: ' + (err as FirebaseError).message);
-      this.loginState.next('failure');
+      this.nextState('failure');
     }
+  }
+
+  private nextState(newState: LoginState) {
+    console.log('LoginState', this.loginState.value, '->', newState);
+    this.loginState.next(newState);
   }
 
   async mapState(
@@ -286,27 +314,33 @@ export class FirebaseService {
   ): Promise<FirebaseState> {
 
     const settings: FirebaseSettings = {apiKey, appId, projectId, email, password};
+    const canLogin = !!(apiKey && appId && projectId);
 
     if (loginState === 'load') {
-      if (apiKey && appId && projectId) {
-        console.log('-> init');
-        this.initializeFirebase(apiKey, appId, projectId);
-        this.loginState.next('init');
+      if (canLogin) {
+        this.firestoreInit(settings);
+        this.nextState('init');
+        // If credentials are stored locally, then 'onAuthStateChanged' will
+        // update loginState to 'success'.
       }
     }
 
-    if (loginState === 'login') {
-      this.firestoreLogin(settings);
+    else if (loginState === 'login') {
+      // If credentials are not stored locally, then user can trigger login.
+      this.firestoreInitAndLogin(settings);
+      this.nextState('wait');
+      // (Again, on success 'onAuthStateChanged' will update to 'success')
     }
 
-    if (loginState === 'success') {
+    else if (loginState === 'success') {
       this.error.next('');
     }
 
     return {
       ready: loginState === 'success',
-      canLogin: true,
+      canLogin,
       settings,
+      loginState
     };
   }
 }

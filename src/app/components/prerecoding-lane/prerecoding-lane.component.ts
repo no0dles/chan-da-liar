@@ -36,7 +36,7 @@ export class PrerecodingLaneComponent {
   ) {}
 
   openCreate() {
-    this.modal.sidebar(this.viewContainerRef, {
+    this.modal.sidebar({
       component: ConfigurationPrerecordingSidebarComponent,
       title: 'Create Prerecording',
       subtitle: 'Scripted responses',
@@ -44,7 +44,7 @@ export class PrerecodingLaneComponent {
   }
 
   edit(index: number, recording: Recording) {
-    this.modal.sidebar(this.viewContainerRef, {
+    this.modal.sidebar({
       component: ConfigurationPrerecordingSidebarComponent,
       title: 'Create Prerecording',
       subtitle: 'Scripted responses',

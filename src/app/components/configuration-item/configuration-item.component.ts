@@ -41,6 +41,9 @@ export class ConfigurationItemComponent implements OnInit {
   @Input()
   state!: ReadyStateService;
 
+  @Input()
+  optional?: boolean;
+
   readyStatus$!: Observable<{ ready: boolean; label: string }>;
 
   constructor(
@@ -51,14 +54,14 @@ export class ConfigurationItemComponent implements OnInit {
   ngOnInit() {
     this.readyStatus$ = this.state.state$.pipe(
       map((state) => ({
-        label: state.ready ? 'Ready' : 'Requires setup',
+        label: state.ready ? 'Ready' : this.optional ? 'Optional setup' : 'Requires setup',
         ready: state.ready,
       })),
     );
   }
 
   openSidebar() {
-    return this.modal.sidebar(this.viewContainerRef, {
+    return this.modal.sidebar({
       component: this.component,
       title: this.heading,
       subtitle: this.description,
