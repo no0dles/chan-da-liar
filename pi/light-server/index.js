@@ -3,6 +3,7 @@ const { CoIoTServer, CoIoTClient } = require("coiot-coap");
 const mqtt = require("mqtt");
 
 const server = new CoIoTServer();
+const mqttHost = process.env.MQTT_HOST || 'localhost'
 const devices = ['3494546E7D45'];
 
 server.on("status", (status) => {
@@ -16,7 +17,7 @@ server.listen().then(() => {
   console.log("CoIoT server listening");
 });
 
-const client = mqtt.connect("mqtt://10.3.141.1:1883");
+const client = mqtt.connect(`mqtt://${mqttHost}:1883`);
 
 client.on("connect", () => {
   console.log("mqtt connected");
