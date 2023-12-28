@@ -257,79 +257,41 @@ export class AzureCognitiveService {
     deviceId: string,
     rec: Recording,
   ): Promise<SpeakResult> {
-    const AudioContext = window.AudioContext;
-    const audioContext = new AudioContext({});
+    const player = new SpeakerAudioDestination(deviceId);
+    const synthAudio = AudioConfig.fromSpeakerOutput(player);
+    const synth = new SpeechSynthesizer(speechConfig.speechConfig, synthAudio);
+    return new Promise<SpeakResult>((resolve) => {
+      const visums: SpeakVisum[] = [];
+      synth.visemeReceived = (sender, e) => {
+        visums.push({ value: e.visemeId, offset: e.audioOffset / 10000 });
+      };
+      const rate = rec.rate ?? speechConfig.rate;
+      const pm = rate >= 1 ? '+': '';
 
-    return new Promise<SpeakResult>(resolve => {
-      fetch('https://api.openai.com/v1/audio/speech', {
-        method: 'post',
-        headers: new Headers({
-          Authorization: `Bearer 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`,
-          'Content-Type': 'application/json',
-        }),
-        body: JSON.stringify({
-          "model": "tts-1",
-          "input": rec.content,
-          "voice": "onyx",
-          stream: true,
-          response_format: 'opus',
-        }),
-      }).then(async (response) => {
-        console.log(response)
-
-        const source = audioContext.createBufferSource();
-        source.connect(audioContext.destination);
-
-        const data = await response.arrayBuffer(); //.body!.getReader();
-        console.log(data)
-        audioContext.decodeAudioData(data, s => {
-
-          source.buffer = s;
-          source.start();
-          resolve({
-            duration: s.duration,
-            visums: [],
-          })
-        }, console.error);
-      });
-    })
-
-
-    // const player = new SpeakerAudioDestination(deviceId);
-    // const synthAudio = AudioConfig.fromSpeakerOutput(player);
-    // const synth = new SpeechSynthesizer(speechConfig.speechConfig, synthAudio);
-    // return new Promise<SpeakResult>((resolve) => {
-    //   const visums: SpeakVisum[] = [];
-    //   synth.visemeReceived = (sender, e) => {
-    //     visums.push({ value: e.visemeId, offset: e.audioOffset / 10000 });
-    //   };
-    //   const rate = rec.rate ?? speechConfig.rate;
-    //   const pm = rate >= 1 ? '+': '';
-    //
-    //   // This seemed to work for a bit, then it broke again ?!
-    //   const style_open = speechConfig.style ? `<mstts:express-as style="${speechConfig.style}" styledegree="2">` : '';
-    //   const style_close = speechConfig.style ? `</mstts:express-as>` : '';
-    //   // const style_open = '', style_close = '';
-    //   const lang = speechConfig.voiceShortName?.substring(0, 5);
-    //   const ssml = `
-    //   <speak version="1.0"
-    //       xmlns="http://www.w3.org/2001/10/synthesis"
-    //       xmlns:mstts="https://www.w3.org/2001/mstts"
-    //       xml:lang="${lang}">
-    //     <voice name="${speechConfig.voiceShortName}">
-    //       ${style_open}
-    //         <prosody rate="${pm}${(100*(rate-1)).toFixed(2)}%">
-    //           ${rec.content}
-    //         </prosody>
-    //       ${style_close}
-    //     </voice>
-    //   </speak>`;
-    //   // console.log('ssml', ssml);
-    //   // synth.speakTextAsync(text, (e) => {
-    //   synth.speakSsmlAsync(ssml, (e) => {
-    //     resolve({ duration: e.audioDuration / 10000 - this.speakSuffixDuration, visums }); // ticks to ms
-    //   }, (err) => console.error('speakSsmlAsync err', err));
-    // });
+      // This seemed to work for a bit, then it broke again ?!
+      const style_open = speechConfig.style ? `<mstts:express-as style="${speechConfig.style}" styledegree="2">` : '';
+      const style_close = speechConfig.style ? `</mstts:express-as>` : '';
+      // const style_open = '', style_close = '';
+      const lang = speechConfig.voiceShortName?.substring(0, 5);
+      const ssml = `
+      <speak version="1.0"
+          xmlns="http://www.w3.org/2001/10/synthesis"
+          xmlns:mstts="https://www.w3.org/2001/mstts"
+          xml:lang="${lang}">
+        <voice name="${speechConfig.voiceShortName}">
+          ${style_open}
+            <prosody rate="${pm}${(100*(rate-1)).toFixed(2)}%">
+              ${rec.content}
+            </prosody>
+          ${style_close}
+        </voice>
+      </speak>`;
+      // console.log('ssml', ssml);
+      // synth.speakTextAsync(text, (e) => {
+      synth.speakSsmlAsync(ssml, (e) => {
+        resolve({ duration: e.audioDuration / 10000 - this.speakSuffixDuration, visums }); // ticks to ms
+      }, (err) => console.error('speakSsmlAsync err', err));
+    });
   }
 
   listen(speechConfig: AugmentedSpeechConfig, deviceId: string) {
