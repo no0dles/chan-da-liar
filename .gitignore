@@ -41,4 +41,4 @@ testem.log
 .DS_Store
 Thumbs.db
 
-pi/light-server/node_modules
+node_modules

@@ -1,0 +1,20 @@
+{
+  "name": "arnet-light-server",
+  "version": "1.0.0",
+  "main": "light-controller-server.js",
+  "scripts": {
+    "start": "node light-controller-server.js"
+  },
+  "dependencies": {
+    "artnet": "^1.4.0",
+    "pyextjs": "^0.1.2",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.17"
+  },
+  "private": true
+}

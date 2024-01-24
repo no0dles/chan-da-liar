@@ -1,6 +1,6 @@
 services:
   lightserver:
-    build: ./light-server
+    build: server/mobile-server
     restart: always
     ports:
       - 8080:8080
@@ -12,7 +12,7 @@ services:
       - rabbitmq
 
   chandaliar:
-    build: ..
+    build: .
     restart: always
     ports:
       - 8081:80
