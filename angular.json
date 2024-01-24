@@ -75,10 +75,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "chan-da-liar:build:production"
+              "buildTarget": "chan-da-liar:build:production"
             },
             "development": {
-              "browserTarget": "chan-da-liar:build:development"
+              "buildTarget": "chan-da-liar:build:development"
             }
           },
           "defaultConfiguration": "development"
