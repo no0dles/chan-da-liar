@@ -15,6 +15,6 @@ RUN npx ng build mobile -c production
 ################
 FROM nginx
 
-COPY --from=0 /build/dist/chan-da-liar /usr/share/nginx/html
+COPY --from=0 /build/dist/mobile /usr/share/nginx/html
 
 EXPOSE 80
