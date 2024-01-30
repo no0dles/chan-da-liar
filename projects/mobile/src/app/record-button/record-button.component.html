@@ -1,0 +1,22 @@
+<div class="shadow-blue-600 w-16 h-16 absolute rounded-full transition-all animate-spin shadow-2xl"
+     *ngIf="processing">
+  <div class="shadow-red-600 h-full w-full rotate-90 rounded-full transition-all shadow-2xl">
+    <div class="shadow-amber-600 h-full w-full rotate-90 rounded-full transition-all shadow-2xl">
+      <div class="shadow-purple-600 h-full w-full rotate-90 rounded-full transition-all shadow-2xl">
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="rounded-full border-2 flex transition-all items-center justify-center bg-white disabled:text-gray-400"
+        [disabled]="processing || permissionDenied"
+        [ngClass]="{'recording': started, 'default': !started && !processing, 'processing': processing }"
+        (click)="toggle()">
+  <fa-icon [icon]="microphoneIcon" class="text-4xl " *ngIf="!started && !permissionDenied && !processing"></fa-icon>
+  <fa-icon [icon]="microphoneDisabledIcon" class="text-4xl" *ngIf="!started && permissionDenied && !processing"></fa-icon>
+
+  <div *ngIf="started" class="flex space-x-0.5 h-24 items-center">
+    <div *ngFor="let vuBar of vuBars; trackBy: vueBarIdentify; let first=first; let last=last" class="w-2 rounded-full bg-red-700"
+         [style.height.%]="first || last ? vuBar * 0.8 : vuBar"></div>
+  </div>
+</button>

@@ -1,0 +1,13 @@
+{
+  "defaultLanguage": "de-CH",
+  "languages": {
+    "de-CH": "de-CH-LeniNeural"
+  },
+  "speakRecognitionTimeout": 7000,
+  "cors": {
+    "origin": "http://localhost:4200"
+  },
+  "assistant": {
+    "systemPrompt": "Du bist der Chnopfdruck Assistent und hilfst älteren Menschen Ihre IT-Probleme an Experte weiterzuleiten."
+  }
+}

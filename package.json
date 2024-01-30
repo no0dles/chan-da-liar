@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve control-panel",
+    "start:mobile": "ng serve mobile",
     "server": "node server/arnet-server/light-controller-server.js",
     "build": "ng build control-panel -c production",
     "format": "prettier -w projects/{mobile,control-panel}/src"
@@ -27,11 +28,14 @@
     "@fortawesome/free-brands-svg-icons": "^6.2.1",
     "@fortawesome/free-regular-svg-icons": "^6.2.1",
     "@fortawesome/free-solid-svg-icons": "^6.2.1",
+    "@picovoice/web-voice-processor": "^4.0.8",
     "firebase": "^10.7.2",
     "microsoft-cognitiveservices-speech-sdk": "^1.34.0",
-    "papaparse": "^5.4.1",
+    "msr": "^1.3.4",
     "openai": "^4.20.1",
+    "papaparse": "^5.4.1",
     "rxjs": "~7.8.0",
+    "socket.io-client": "^4.7.4",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.3"
   },

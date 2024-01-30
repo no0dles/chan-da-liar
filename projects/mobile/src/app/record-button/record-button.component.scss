@@ -1,0 +1,15 @@
+:host {
+  @apply relative w-32 h-32 flex items-center justify-center overflow-visible;
+}
+
+.recording {
+  @apply border-red-700 text-red-700 w-32 h-32;
+}
+
+.default {
+  @apply border-gray-300 text-gray-600 w-32 h-32;
+}
+
+.processing {
+  @apply border-purple-600 w-16 h-16;
+}
