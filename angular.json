@@ -125,6 +125,12 @@
                   "maximumError": "4kb"
                 }
               ],
+              "fileReplacements": [
+                {
+                  "replace": "projects/mobile/src/environments/environment.ts",
+                  "with": "projects/mobile/src/environments/environment.production.ts"
+                }
+              ],
               "outputHashing": "all"
             },
             "development": {
