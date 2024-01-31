@@ -37,7 +37,7 @@ export function ask(recognizer: OngoingRecognizer, messages: ChatCompletionMessa
     model: apiModel as 'gpt-3.5-turbo',
     stream: true,
     messages,
-    functions,
+    functions: [],
     function_call: 'auto',
   })
   stream.on('content', async (delta) => {
