@@ -5,6 +5,7 @@ require('dotenv').config()
 import express from 'express';
 import { lightController } from './pulse';
 import { Server, Socket } from 'socket.io';
+import {join} from 'path'
 import { createServer } from 'node:http';
 import {
   SpeechConfig,
@@ -14,6 +15,11 @@ import { createOngoingRecognizer } from './ongoing-recognizer';
 import config from 'config';
 
 const app = express();
+app.use(express.static('public'));
+app.get('/', (req, res) => {
+  return res.sendFile(join(process.cwd(), './public/index.html'));
+})
+
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
@@ -117,4 +123,6 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8080;
-server.listen(PORT, '0.0.0.0', console.log);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Listening on port ${PORT}`);
+});

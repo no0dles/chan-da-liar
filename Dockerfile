@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:20-alpine as frontend
 
 WORKDIR /build
 COPY package.json .
@@ -12,9 +12,31 @@ COPY projects/mobile/tsconfig.app.json projects/mobile/tsconfig.app.json
 COPY projects/mobile/src projects/mobile/src
 RUN npx ng build mobile -c production
 
+
 ################
-FROM nginx
+FROM node:20-alpine as server
 
-COPY --from=0 /build/dist/mobile /usr/share/nginx/html
+WORKDIR /build/server/mobile-server
+COPY server/mobile-server/package.json package.json
+COPY server/mobile-server/package-lock.json package-lock.json
+RUN npm ci
 
-EXPOSE 80
+COPY server/mobile-server/tsconfig.json tsconfig.json
+COPY server/mobile-server/src src
+RUN npx tsc -b
+
+################
+FROM node:20-alpine
+
+WORKDIR /app
+COPY server/mobile-server/package.json package.json
+COPY server/mobile-server/package-lock.json package-lock.json
+RUN npm ci --omit=dev
+
+COPY server/mobile-server/config/default.json /app/config/default.json
+COPY --from=server /build/server/mobile-server/dist /app
+COPY --from=frontend /build/dist/mobile/browser /app/public
+
+EXPOSE 8080
+
+CMD ["node", "index.js"]
