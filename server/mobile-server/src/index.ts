@@ -1,14 +1,14 @@
-import { getAudio, getTranscription  } from './speak';
+import { getAudio, getTranscription } from './speak';
 
-require('dotenv').config()
+require('dotenv').config();
 
 import express from 'express';
 import { lightController } from './pulse';
 import { Server, Socket } from 'socket.io';
-import {join} from 'path'
+import { join } from 'path';
 import { createServer } from 'node:http';
 import {
-  SpeechConfig,
+  SpeechConfig, SpeechSynthesizer,
 } from 'microsoft-cognitiveservices-speech-sdk';
 import { ask } from './chatgpt';
 import { createOngoingRecognizer } from './ongoing-recognizer';
@@ -18,7 +18,7 @@ const app = express();
 app.use(express.static('public'));
 app.get('/', (req, res) => {
   return res.sendFile(join(process.cwd(), './public/index.html'));
-})
+});
 
 const server = createServer(app);
 const io = new Server(server, {
@@ -26,7 +26,7 @@ const io = new Server(server, {
     origin: config.get<string>('cors.origin'),
   },
 });
-const light = lightController()
+const light = lightController();
 
 const clients: Socket[] = [];
 
@@ -39,7 +39,14 @@ io.on('connection', (socket) => {
   }];
 
   const defaultLanguage = config.get<string>('defaultLanguage');
-  const defaultVoice = config.get<string>(`languages.${defaultLanguage}`);
+  const defaultVoice = config.get<string>(`languages.${defaultLanguage}.voice`);
+
+
+  socket.emit('config', {
+    languages: Object.entries(config.get<{ voice: string, intro: string; name: string }[]>('languages'))
+      .map(([key, value]) => ({ value: key, name: value.name, intro: value.intro })),
+    defaultLanguage,
+  });
 
   const speechConfig = SpeechConfig.fromSubscription(
     process.env.SPEECH_API || '',
@@ -52,9 +59,9 @@ io.on('connection', (socket) => {
   socket.on('language', (language) => {
     if (config.has(`languages.${language}`)) {
       speechConfig.speechRecognitionLanguage = language;
-      speechConfig.speechSynthesisVoiceName = config.get<string>(`languages.${language}`);
+      speechConfig.speechSynthesisVoiceName = config.get<string>(`languages.${language}.voice`);
     }
-  })
+  });
 
   socket.emit('init', { language: defaultLanguage });
 
@@ -66,47 +73,47 @@ io.on('connection', (socket) => {
 
   socket.on('recording', () => {
     light.listen();
-  })
+  });
 
   socket.on('speak', visums => {
     light.speak(visums);
-  })
+  });
 
   socket.on('ask', (data) => {
     const int8Array = new Int8Array(data);
     const int16Array = new Int16Array(int8Array.buffer);
 
-    console.log('ask')
+    console.log('ask');
     getTranscription(speechConfig, int16Array).then(result => {
       if (result) {
-        console.log('transcribed ' + result)
-        socket.emit('transcribed', { text: result })
+        console.log('transcribed ' + result);
+        socket.emit('transcribed', { text: result });
 
-        messages.push({content: result, role: 'user'})
+        messages.push({ content: result, role: 'user' });
 
         const recognizer = createOngoingRecognizer(text => {
-          messages.push({content: result, role: 'assistant'})
+          messages.push({ content: result, role: 'assistant' });
 
-          console.log('response', text)
-          socket.emit('result', text)
+          console.log('response', text);
+          socket.emit('result', text);
 
           getAudio(speechConfig, text).then((result) => {
-            socket.emit('response', result)
-          })
+            socket.emit('response', result);
+          });
         });
 
         recognizer.end.then(() => {
           light.idle();
-        })
+        });
 
-        ask(recognizer, messages)
+        ask(recognizer, messages);
       } else {
-        console.log('no transcription')
-        socket.emit('quite')
+        console.log('no transcription');
+        socket.emit('quite');
         light.idle();
       }
-    })
-  })
+    });
+  });
 
   socket.on('disconnect', () => {
     console.log('user disconnected');

@@ -1,0 +1,91 @@
+{
+  "defaultLanguage": "de-CH",
+  "languages": {
+    "de-CH": {
+      "voice": "de-CH-LeniNeural",
+      "name": "Schweizerdeutsch",
+      "intro": "Ich helfe dir bei IT Fragen, indem du auf den Aufnahme-Chnopf drückst und deine Frage stellst.",
+      "record": "Drücke nochmals um deine Frage zu beenden."
+    }
+  },
+  "speakRecognitionTimeout": 7000,
+  "cors": {
+    "origin": "http://localhost:4200"
+  },
+  "assistant": {
+    "systemPrompt": "Du bist Chnopfdruck und hilfst älteren Menschen bei der Formalisierung Ihrer IT Problemen. Versuche möglichst viel Informationen zum Problem zu erhalten und stelle falls notwendig Fragen. Verwende die Support Ticket Funktionen, um die Anfragen an einen Chnopfdruck Mitarbeiter zu senden.",
+    "functions": [
+      {
+        "name": "createComputerSupportTicket",
+        "description": "Creates a support ticket for computer problems",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "operatingSystem": {
+              "type": "string",
+              "enum": [
+                "Windows",
+                "MacOS",
+                "Linux"
+              ],
+              "description": "the operating system of the computer"
+            },
+            "problem": {
+              "type": "string",
+              "description": "the problem the user is experiencing"
+            }
+          }
+        }
+      },
+      {
+        "name": "createMobileSupportTicket",
+        "description": "Creates a support ticket for mobile device problems",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "brand": {
+              "type": "string",
+              "description": "the brand of the mobile device"
+            },
+            "problem": {
+              "type": "string",
+              "description": "the problem the user is experiencing"
+            }
+          }
+        }
+      },
+      {
+        "name": "createPrinterSupportTicket",
+        "description": "Creates a support ticket for printer problems",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "brand": {
+              "type": "string",
+              "description": "the brand of the printer"
+            },
+            "turnedOn": {
+              "type": "boolean",
+              "description": "is printer turned on"
+            },
+            "deviceType": {
+              "type": "string",
+              "enum": [
+                "computer",
+                "laptop",
+                "tablet",
+                "smartphone"
+              ],
+              "description": "the device the user wants to print from"
+            }
+          },
+          "required": [
+            "brand",
+            "deviceType",
+            "turnedOn"
+          ]
+        }
+      }
+    ]
+  }
+}

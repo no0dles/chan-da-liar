@@ -27,6 +27,7 @@ RUN npx tsc -b
 
 ################
 FROM node:20-alpine
+LABEL org.opencontainers.image.source https://github.com/no0dles/chan-da-liar
 
 WORKDIR /app
 COPY server/mobile-server/package.json package.json

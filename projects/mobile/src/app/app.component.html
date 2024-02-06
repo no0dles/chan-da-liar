@@ -1,11 +1,21 @@
 
 <ng-container *ngIf="state.type === 'initial' || (state.type === 'recording' && state.messages.length === 0)">
+  <div *ngIf="language.type === 'loaded' && language.languages.length > 1"
+       class="w-full mb-2 rounded-md border border-gray-300 text-gray-600 bg-white px-3 py-3">
+    <label class="flex items-center justify-between">
+      <fa-icon [icon]="languageIcon"></fa-icon>
+      <select class="rounded border-0 outline-0 focus:outline-0 bg-white px-2 py-1"
+              [ngModel]="language.current" (ngModelChange)="updateLanguage($event)">
+        <option *ngFor="let lang of language.languages" [value]="lang">{{lang.name}}</option>
+      </select>
+    </label>
+  </div>
   <div class="rounded-md border text-center border-gray-300 text-gray-600 bg-white mb-8 px-3 py-3">
-    <ng-container *ngIf="state.type === 'initial'">
-      Sprich mit Chan da Liar, indem du auf den Aufnahme-Button klickst und deine Frage stellst.
+    <ng-container *ngIf="state.type === 'initial' && language.type === 'loaded'">
+      {{language.current.intro}}
     </ng-container>
-    <ng-container *ngIf="state.type === 'recording' && state.messages.length === 0">
-      Drücke nochmals um deine Frage zu beenden.
+    <ng-container *ngIf="state.type === 'recording' && language.type === 'loaded' && state.messages.length === 0">
+      {{language.current.record}}
     </ng-container>
   </div>
 

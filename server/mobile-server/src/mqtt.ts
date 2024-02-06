@@ -4,14 +4,22 @@ import { CoIoTServer } from 'coiot-coap';
 
 const devices = ['3494546E7D45'];
 const mqttHost = process.env.MQTT_HOST || 'localhost';
+const mqttEnabled = process.env.MQTT_ENABLED === 'true';
 
-const client = mqtt.connect(`mqtt://${mqttHost}:1883`);
-client.on('connect', () => {
-  console.log('mqtt connected');
-});
+const client = mqttEnabled ? mqtt.connect(`mqtt://${mqttHost}:1883`) : null;
+
+if (client) {
+  client.on('connect', () => {
+    console.log('mqtt connected');
+  });
+}
 
 
 export function sendToAllDevices(data: ShellyData) {
+  if (!client) {
+    return;
+  }
+
   try {
     for (const device of devices) {
       client.publish(`shellies/shellycolorbulb-${device}/color/0/set`, JSON.stringify(data));
