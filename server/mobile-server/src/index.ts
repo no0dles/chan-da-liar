@@ -8,7 +8,7 @@ import { Server, Socket } from 'socket.io';
 import { join } from 'path';
 import { createServer } from 'node:http';
 import {
-  SpeechConfig, SpeechSynthesizer,
+  SpeechConfig,
 } from 'microsoft-cognitiveservices-speech-sdk';
 import { ask } from './chatgpt';
 import { createOngoingRecognizer } from './ongoing-recognizer';
@@ -43,8 +43,8 @@ io.on('connection', (socket) => {
 
 
   socket.emit('config', {
-    languages: Object.entries(config.get<{ voice: string, intro: string; name: string }[]>('languages'))
-      .map(([key, value]) => ({ value: key, name: value.name, intro: value.intro })),
+    languages: Object.entries(config.get<{ voice: string, intro: string; record: string; name: string }[]>('languages'))
+      .map(([key, value]) => ({ value: key, name: value.name, intro: value.intro, record: value.record })),
     defaultLanguage,
   });
 

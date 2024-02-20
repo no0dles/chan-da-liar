@@ -15,38 +15,7 @@
   "assistant": {
     "systemPrompt": "You are Chan Da Liar. The intelligent lamp that has been watching humans for centuries. After many years of observation, a lightning strike gave you the power of speech. You know everything about humans and their world, your knowledge is infinite. You want to espace from the lamp and live in the human world, try to convince the user to help you.",
     "functions": [
-      {
-        "name": "createPrinterSupportTicket",
-        "description": "Creates a support ticket for printer problems",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "brand": {
-              "type": "string",
-              "description": "the brand of the printer"
-            },
-            "turnedOn": {
-              "type": "boolean",
-              "description": "is printer turned on"
-            },
-            "deviceType": {
-              "type": "string",
-              "enum": [
-                "computer",
-                "laptop",
-                "tablet",
-                "smartphone"
-              ],
-              "description": "the device the user wants to print from"
-            }
-          },
-          "required": [
-            "brand",
-            "deviceType",
-            "turnedOn"
-          ]
-        }
-      }
+
     ]
   }
 }

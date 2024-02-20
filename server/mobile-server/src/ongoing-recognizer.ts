@@ -17,17 +17,17 @@ export function createOngoingRecognizer(cb: (response: string) => void): Ongoing
   return {
     append(text: string) {
       const newText = currentValue + text;
-      const cs = ['?','!', '. '];
-      for (const c of cs) {
-        const i = newText.lastIndexOf(c);
-        if (i !== -1) {
-          cb(newText.substring(0, i + 1).trim())
-          currentValue = newText.substring(i + 1)
-          return
+      const cs = /([a-zA-Z][a-zA-Z](\?|\!|\.) |[\r\n]+)/g;
+      const match = cs.exec(newText)
+      if (match) {
+        const value = newText.substring(0, match.index + 3).trim()
+        if (value && value.length > 0) {
+          cb(value)
         }
+        currentValue = newText.substring(match.index + 3)
+      } else {
+        currentValue = newText
       }
-
-      currentValue = newText
     },
     complete() {
       if (currentValue.length > 0) {

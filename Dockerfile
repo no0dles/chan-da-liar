@@ -28,13 +28,15 @@ RUN npx tsc -b
 ################
 FROM node:20-alpine
 LABEL org.opencontainers.image.source https://github.com/no0dles/chan-da-liar
+ARG CONFIG_ENV=default
 
 WORKDIR /app
 COPY server/mobile-server/package.json package.json
 COPY server/mobile-server/package-lock.json package-lock.json
 RUN npm ci --omit=dev
 
-COPY server/mobile-server/config/default.json /app/config/default.json
+COPY server/mobile-server/config /app/config
+RUN cp /app/config/${CONFIG_ENV}.json /app/config/default.json
 COPY --from=server /build/server/mobile-server/dist /app
 COPY --from=frontend /build/dist/mobile/browser /app/public
 

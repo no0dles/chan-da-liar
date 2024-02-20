@@ -6,7 +6,7 @@
       <fa-icon [icon]="languageIcon"></fa-icon>
       <select class="rounded border-0 outline-0 focus:outline-0 bg-white px-2 py-1"
               [ngModel]="language.current" (ngModelChange)="updateLanguage($event)">
-        <option *ngFor="let lang of language.languages" [value]="lang">{{lang.name}}</option>
+        <option *ngFor="let lang of language.languages" [ngValue]="lang">{{lang.name}}</option>
       </select>
     </label>
   </div>

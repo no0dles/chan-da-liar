@@ -159,7 +159,7 @@ export class AppComponent {
   }
 
   updateLanguage(lang: Language) {
-    this.socket.emit('language', lang);
+    this.socket.emit('language', lang.value);
     if (this.language.type === 'loaded') {
       this.language = {
         ...this.language,
