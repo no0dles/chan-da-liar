@@ -188,19 +188,29 @@ export class AppComponent {
     }, audio.data.duration * 1000);
   }
 
-  startRecording() {
+  private async createAudioContext(): Promise<AudioContext> {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const audioOutputs = devices.filter(device => device.kind == "audiooutput");
+    console.log(audioOutputs)
+    //const deviceId = audioOutputs[0].deviceId;
+    const ctx = new AudioContext();
+    //(ctx as any).setSinkId(deviceId);
+    return ctx;
+  }
+
+  async startRecording() {
     this.state = {
       type: 'recording',
-      audioContext: this.state.type === 'initial' ? new AudioContext() : this.state.audioContext,
+      audioContext: this.state.type === 'initial' ? await this.createAudioContext() : this.state.audioContext,
       messages: this.state.type === 'initial' ? [] : this.state.messages,
     };
     this.socket.emit('recording');
   }
 
-  recorded(data: Int16Array) {
+  async recorded(data: Int16Array) {
     this.state = {
       type: 'thinking',
-      audioContext: this.state.type === 'initial' ? new AudioContext() : this.state.audioContext,
+      audioContext: this.state.type === 'initial' ? await this.createAudioContext() : this.state.audioContext,
       messages: this.state.type === 'initial' ? [] : this.state.messages,
     };
     this.socket.emit('ask', data.buffer);
