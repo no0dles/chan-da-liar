@@ -1,12 +1,6 @@
 {
   "defaultLanguage": "en-GB",
   "languages": {
-    "en-GB": {
-      "voice": "en-GB-RyanNeural",
-      "name": "English",
-      "intro": "Speak to Chan da Liar by touching on the record button and asking your question.",
-      "record": "Touch again to end your question."
-    }
   },
   "speakRecognitionTimeout": 7000,
   "cors": {
